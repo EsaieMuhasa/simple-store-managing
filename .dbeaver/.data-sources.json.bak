@@ -1,0 +1,30 @@
+{
+	"folders": {},
+	"connections": {
+		"sqlite_jdbc-1823540a5a6-23d342e42b3db358": {
+			"provider": "sqlite",
+			"driver": "sqlite_jdbc",
+			"name": "database.db",
+			"save-password": true,
+			"read-only": false,
+			"configuration": {
+				"database": "D:\\workspace\\jse-default\\simple-store-managing\\database.db",
+				"url": "jdbc:sqlite:D:\\workspace\\jse-default\\simple-store-managing\\database.db",
+				"type": "dev",
+				"auth-model": "native",
+				"handlers": {}
+			}
+		}
+	},
+	"connection-types": {
+		"dev": {
+			"name": "Development",
+			"color": "255,255,255",
+			"description": "Regular development database",
+			"auto-commit": true,
+			"confirm-execute": false,
+			"confirm-data-change": false,
+			"auto-close-transactions": false
+		}
+	}
+}

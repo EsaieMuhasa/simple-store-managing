@@ -225,6 +225,49 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	}
 
 	@Override
+	public T[] findAll (String... keys) throws DAOException {
+		final Object [] params = new Object[keys.length];
+		String in = "";
+		
+		for (int i = 0; i < keys.length; i++) {
+			params[i] = keys[i];
+			in += " ?,";
+		}
+		in = in.substring(0, in.length()-1);
+		String sql =String.format("SELECT * FROM %s WHERE id IN (%s)", getViewName(), in);
+		try (
+				Connection connection = daoFactory.getConnection();
+				PreparedStatement statement = prepareReadOnly(sql, connection, params);
+				ResultSet result = statement.executeQuery()
+			) {
+			final int count  = result.last()? result.getRow() : 0;
+
+			if(count != 0) {
+				T [] data = createArray(count);
+				result.beforeFirst();
+				while(result.next())
+					data[result.getRow()-1] = mapping(result);
+				return data;
+			} else 
+				throw new DAOException("Aucunne donnée cartographiable pour l'intervale choisie");
+		} catch (SQLException e) {
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+		}
+	}
+
+	@Override
+	public void goFindAll(int requestId) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void goFindAll(int requestId, int limit, int offset) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
 	public int countAll() throws DAOException {
 		int count = 0;
 		try (

@@ -14,6 +14,7 @@ public abstract class CashMoney extends DBEntity {
 	
 	protected double amount;
 	protected Date date;
+	protected Currency currency;
 
 	/**
 	 * 
@@ -34,6 +35,20 @@ public abstract class CashMoney extends DBEntity {
 	 */
 	public void setAmount(double amount) {
 		this.amount = amount;
+	}
+
+	/**
+	 * @return the currency
+	 */
+	public Currency getCurrency() {
+		return currency;
+	}
+
+	/**
+	 * @param currency the currency to set
+	 */
+	public void setCurrency(Currency currency) {
+		this.currency = currency;
 	}
 
 	/**

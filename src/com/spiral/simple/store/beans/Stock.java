@@ -16,8 +16,9 @@ public class Stock extends DBEntity {
 	private Product product;
 	private double quantity;
 	private double buyingPrice;
-	private String salesUnit;
-	private double defaultUnitPrice;
+	private Currency buyingCurrency;
+	private Currency salesCurrency;
+	private double defaultUnitPrice;//default unit price when selling
 	private Date date;
 	private Date manufacturingDate;
 	private Date expiryDate;
@@ -73,17 +74,31 @@ public class Stock extends DBEntity {
 	}
 
 	/**
-	 * @return the salesUnit
+	 * @return the buyingCurrency
 	 */
-	public String getSalesUnit() {
-		return salesUnit;
+	public Currency getBuyingCurrency() {
+		return buyingCurrency;
 	}
 
 	/**
-	 * @param salesUnit the salesUnit to set
+	 * @param buyingCurrency the buyingCurrency to set
 	 */
-	public void setSalesUnit(String salesUnit) {
-		this.salesUnit = salesUnit;
+	public void setBuyingCurrency(Currency buyingCurrency) {
+		this.buyingCurrency = buyingCurrency;
+	}
+
+	/**
+	 * @return the salesCurrency
+	 */
+	public Currency getSalesCurrency() {
+		return salesCurrency;
+	}
+
+	/**
+	 * @param salesCurrency the salesCurrency to set
+	 */
+	public void setSalesCurrency(Currency salesCurrency) {
+		this.salesCurrency = salesCurrency;
 	}
 
 	/**

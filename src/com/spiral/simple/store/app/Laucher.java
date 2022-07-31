@@ -29,6 +29,9 @@ public final class Laucher {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
 		}
+		
+		MainWindow main = new MainWindow();
+		main.setVisible(true);
 	}
 
 }

@@ -11,8 +11,7 @@
 				"database": "D:\\workspace\\jse-default\\simple-store-managing\\database.db",
 				"url": "jdbc:sqlite:D:\\workspace\\jse-default\\simple-store-managing\\database.db",
 				"type": "dev",
-				"auth-model": "native",
-				"handlers": {}
+				"auth-model": "native"
 			}
 		}
 	},

@@ -25,13 +25,13 @@ public final class Laucher {
 		
 		try {
 			DAOFactory factory = DAOFactory.getInstance();
+			MainWindow main = new MainWindow(factory);
+			main.setVisible(true);
 		} catch (DAOConfigException e) {
 			System.out.println(e.getMessage());
 			e.printStackTrace();
 		}
 		
-		MainWindow main = new MainWindow();
-		main.setVisible(true);
 	}
 
 }

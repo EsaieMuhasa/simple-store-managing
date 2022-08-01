@@ -107,7 +107,7 @@ public class RoundedPanel extends JPanel {
     protected void paintComponent (Graphics grphcs) {
         Graphics2D g2 = (Graphics2D) grphcs.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        g2.setPaint(new GradientPaint(0, 0, new Color(130, 130, 130), getWidth(), 0, new Color(200, 200, 200)));
+        g2.setPaint(new GradientPaint(0, 0, Color.WHITE.darker().darker().darker(), getWidth(), 0, Color.WHITE.darker()));
         Area area = new Area(createRoundTopLeft());
         if (roundTopRight > 0)
             area.intersect(createRoundTopRight());

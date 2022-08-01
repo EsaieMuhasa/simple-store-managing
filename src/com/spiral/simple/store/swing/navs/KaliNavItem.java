@@ -20,7 +20,7 @@ public class KaliNavItem extends JButton {
 	
 	private static final Dimension DEFAULT_SIZE = new Dimension(40, 40);
 	private static final Dimension TRANSFORM_SIZE = new Dimension(50, 50);
-	private static final Color COLOR_ACTIVE = new Color(0x505050);
+	private static final Color COLOR_ACTIVE = new Color(0x454545);
 
     private final Animation animation;
     private Image image;

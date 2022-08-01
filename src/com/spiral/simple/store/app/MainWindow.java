@@ -12,7 +12,9 @@ import java.awt.event.WindowEvent;
 import javax.swing.Box;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
+import com.spiral.simple.store.dao.DAOFactory;
 import com.spiral.simple.store.swing.navs.KaliNav;
 import com.spiral.simple.store.tools.Config;
 
@@ -33,7 +35,7 @@ public class MainWindow extends JFrame {
 	private final KaliNav navigation = new KaliNav();
 	
 	
-	public MainWindow() {
+	public MainWindow(DAOFactory factory) {
 		super(Config.get("appName"));
 		
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
@@ -45,13 +47,14 @@ public class MainWindow extends JFrame {
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(windowAdapter);
 		
+		JPanel content = (JPanel) getContentPane();
 		final Box left = Box.createVerticalBox();
 		
 		left.add(Box.createVerticalGlue());
 		left.add(navigation);
 		left.add(Box.createVerticalGlue());
 		
-		getContentPane().add(left, BorderLayout.WEST);
+		content.add(left, BorderLayout.WEST);
 	}
 	
 	/**

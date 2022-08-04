@@ -1,0 +1,45 @@
+/**
+ * 
+ */
+package com.spiral.simple.store.swing.navs;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.swing.Box;
+import javax.swing.JPanel;
+
+/**
+ * @author Esaie MUHASA
+ *
+ */
+public class Navbar extends JPanel {
+	private static final long serialVersionUID = 1292212363276203184L;
+	
+	private final Box nav = Box.createHorizontalBox();
+	private final List<NavbarItem> items = new ArrayList<>();
+	
+	public Navbar() {
+		setPreferredSize(new Dimension(400, 50));
+		setLayout(new BorderLayout());
+		nav.setOpaque(false);
+		
+		add(nav, BorderLayout.CENTER);
+	}
+	
+	public Navbar addItem (NavbarItem item) {
+		items.add(item);
+		nav.add(item);
+		nav.add(Box.createHorizontalStrut(5));
+		return this;
+	}
+	
+	public Navbar addItem (String item) {
+		NavbarItem c = new NavbarItem(item);
+		addItem(c);
+		return this;
+	}
+
+}

@@ -65,4 +65,8 @@ public class Config {
 		return null;
 	}
 
+	public static String getIcon(String icon) {
+		return "icon/"+icon+".png";
+	}
+
 }

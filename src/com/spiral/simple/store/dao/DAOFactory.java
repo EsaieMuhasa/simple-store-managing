@@ -39,7 +39,7 @@ public interface DAOFactory {
 	 * @param dao
 	 * @return
 	 */
-	static <T extends DAOInterface<H>, H extends DBEntity> T getDa (Class<T> dao) {
+	static <T extends DAOInterface<H>, H extends DBEntity> T getDao (Class<T> dao) {
 		try {
 			return getInstance().find(dao);
 		} catch (DAOConfigException e) {

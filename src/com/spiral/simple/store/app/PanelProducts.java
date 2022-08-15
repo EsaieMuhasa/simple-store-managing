@@ -4,7 +4,6 @@
 package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -15,9 +14,14 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
 import com.spiral.simple.store.app.form.ProductForm;
+import com.spiral.simple.store.app.models.ProductTableModel;
+import com.spiral.simple.store.dao.DAOFactory;
+import com.spiral.simple.store.dao.ProductDao;
+import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.tools.UIComponentBuilder;
 
 /**
@@ -35,15 +39,30 @@ public class PanelProducts extends JPanel {
 	{
 		btnAdd.addActionListener(listenerBtnAdd);
 	}
+	
+	private ProductTableModel tableModel;
+	private CustomTable table;
 
 	public PanelProducts() {
 		super(new BorderLayout());
 		
+		tableModel = new ProductTableModel(DAOFactory.getDao(ProductDao.class));
+		table = new CustomTable(tableModel);
 		
 		add(createBody(), BorderLayout.CENTER);
 		add(createHeader(), BorderLayout.NORTH);
 		setBorder(UIComponentBuilder.EMPTY_BORDER_5);
-
+		
+		tableModel.reload();
+		
+		int [] cols = {0, 1};
+		
+		for (int col : cols) {
+			table.getColumnModel().getColumn(col).setWidth(50);
+			table.getColumnModel().getColumn(col).setMaxWidth(50);
+			table.getColumnModel().getColumn(col).setResizable(false);
+		}
+		
 	}
 	
 	@Override
@@ -71,8 +90,11 @@ public class PanelProducts extends JPanel {
 	}
 	
 	private JPanel createBody () {
-		JPanel panel = new JPanel();
-		panel.setBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+		JPanel panel = new JPanel(new BorderLayout());
+		panel.setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
+		JScrollPane scroll = new JScrollPane(table);
+		scroll.setBorder(null);
+		panel.add(scroll, BorderLayout.CENTER);
 		return panel;
 	}
 	

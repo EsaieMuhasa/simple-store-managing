@@ -37,5 +37,18 @@ public class SimpleTextField extends JPanel {
 		add(field, BorderLayout.CENTER);
 	}
 
+	/**
+	 * @return the label
+	 */
+	public JLabel getLabel() {
+		return label;
+	}
+
+	/**
+	 * @return the field
+	 */
+	public JTextField getField() {
+		return field;
+	}
 
 }

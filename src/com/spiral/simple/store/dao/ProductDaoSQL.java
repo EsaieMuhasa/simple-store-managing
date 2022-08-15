@@ -3,6 +3,9 @@
  */
 package com.spiral.simple.store.dao;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import com.spiral.simple.store.beans.Product;
 
 /**
@@ -54,6 +57,15 @@ class ProductDaoSQL extends UtilSQL<Product> implements ProductDao {
 	@Override
 	protected String getTableName() {
 		return Product.class.getSimpleName();
+	}
+	
+	@Override
+	protected Product mapping(ResultSet result) throws SQLException {
+		Product p = super.mapping(result);
+		p.setName(result.getString("name"));
+		p.setDescription(result.getString("description"));
+		p.setPicture(result.getString("picture"));
+		return p;
 	}
 	
 }

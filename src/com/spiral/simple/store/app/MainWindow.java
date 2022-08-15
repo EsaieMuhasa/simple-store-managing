@@ -96,6 +96,7 @@ public class MainWindow extends JFrame {
         }
         
         containers[1] = new PanelProducts();
+        containers[4] = new ConfigWorkspace();
         
         navigation.setItems(navs);
         navigation.addNavListener(navListener);

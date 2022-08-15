@@ -3,6 +3,10 @@
  */
 package com.spiral.simple.store.beans;
 
+import javax.swing.ImageIcon;
+
+import com.spiral.simple.store.tools.Config;
+
 /**
  * @author Esaie MUHASA
  *
@@ -24,6 +28,8 @@ public class Product extends DBEntity {
 	 * picture file name in data store (in soft workspace)
 	 */
 	private String picture;
+	
+	private ImageIcon image;
 
 	/**
 	 * 
@@ -68,10 +74,21 @@ public class Product extends DBEntity {
 	}
 
 	/**
+	 * @return the image
+	 */
+	public ImageIcon getImage() {
+		return image;
+	}
+
+	/**
 	 * @param picture the picture to set
 	 */
 	public void setPicture(String picture) {
 		this.picture = picture;
+		if(picture != null)
+			image = new ImageIcon(Config.get("workspace")+picture);
+		else 
+			image = null;
 	}
 
 }

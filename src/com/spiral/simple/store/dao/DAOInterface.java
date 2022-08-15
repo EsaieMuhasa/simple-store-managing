@@ -45,6 +45,14 @@ public interface DAOInterface <T extends DBEntity> {
 	void delete (int requestId, String... keys);
 	
 	/**
+	 * check if data exist
+	 * @param offset
+	 * @return
+	 * @throws DAOException
+	 */
+	boolean checkAll (int offset) throws DAOException;
+	
+	/**
 	 * return occurrence owner of primary key in method parameter
 	 * @param id
 	 * @return

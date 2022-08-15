@@ -178,50 +178,29 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 
 	@Override
 	public T[] findAll() throws DAOException {
-		T [] data = null;
 		try (
 				Connection connection = daoFactory.getConnection();
-				Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+				Statement statement = connection.createStatement();
 				ResultSet result = statement.executeQuery("SELECT * FROM "+getViewName())
 			) {
-			int count  = result.last()? result.getRow() : 0;
-
-			if(count != 0) {
-				result.beforeFirst();
-				data = createArray(count);
-				while(result.next())
-					data[result.getRow()-1] = mapping(result);
-					
-			} else 
-				throw new DAOException("Aucunne donnee cartographiable pour l'intervale choisie");
+			return readAll(result, "Aucunne donnee cartographiable dans la table/vue "+getViewName());
 		} catch (SQLException e) {
 			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
 		}
-		return data;
 	}
 
 	@Override
 	public T[] findAll (int limit, int offset) throws DAOException {
-		T [] data = null;
 		try (
 				Connection connection = daoFactory.getConnection();
-				Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+				Statement statement = connection.createStatement();
 				ResultSet result = statement.executeQuery("SELECT * FROM "+getViewName()+" LIMIT "+limit+" OFFSET "+offset)
 			) {
-			int count  = result.last()? result.getRow() : 0;
-
-			if(count != 0) {
-				result.beforeFirst();
-				data = createArray(count);
-				while(result.next())
-					data[result.getRow()-1] = mapping(result);
-					
-			} else 
-				throw new DAOException("Aucunne donnee cartographiable pour l'intervale choisie");
+			return readAll(result, "Aucunne donnee cartographiable pour l'intervale choisie");
 		} catch (SQLException e) {
+			e.printStackTrace();
 			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
 		}
-		return data;
 	}
 
 	@Override
@@ -240,16 +219,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 				PreparedStatement statement = prepareReadOnly(sql, connection, params);
 				ResultSet result = statement.executeQuery()
 			) {
-			final int count  = result.last()? result.getRow() : 0;
-
-			if(count != 0) {
-				T [] data = createArray(count);
-				result.beforeFirst();
-				while(result.next())
-					data[result.getRow()-1] = mapping(result);
-				return data;
-			} else 
-				throw new DAOException("Aucunne donnée cartographiable pour l'intervale choisie");
+			return readAll(result, "Aucunne donnee cartographiable pour le tableau des ID proposer");
 		} catch (SQLException e) {
 			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
 		}
@@ -284,6 +254,19 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	}
 	
 	@Override
+	public boolean checkAll(int offset) throws DAOException {
+		try (
+				Connection connection = daoFactory.getConnection();
+				Statement statement =  connection.createStatement();
+				ResultSet result = statement.executeQuery("SELECT id FROM "+getViewName()+" LIMIT 1 OFFSET "+offset)
+			) {
+			return (result.next());
+		} catch (SQLException e) {
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+		}
+	}
+
+	@Override
 	public void addBaseListener(DAOBaseListener<T> listener) {
 		if(!baseListeners.contains(listener))
 			baseListeners.add(listener);
@@ -304,6 +287,23 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	public void addProgressListener(DAOProgressListener<T> listener) {
 		if(!progressListeners.contains(listener))
 			progressListeners.add(listener);
+	}
+	
+	protected T [] readAll (ResultSet result, String message) throws SQLException {
+		List<T> list = new ArrayList<>();
+
+		while(result.next())
+			list.add(mapping(result));
+		if(list.isEmpty()) 
+			throw new DAOException(message);
+		T [] data = createArray(list.size());
+		data = list.toArray(data);
+		list.clear();
+		return data;
+	}
+	
+	protected T [] readAll (ResultSet result) throws SQLException {
+		return readAll(result, "Aucunne donnee cartographiable pour la requette de selection");
 	}
 
 	protected boolean check (String columnName, Object value) throws DAOException {

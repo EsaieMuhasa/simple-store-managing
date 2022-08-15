@@ -15,6 +15,7 @@ public class Stock extends DBEntity {
 	
 	private Product product;
 	private double quantity;
+	private String quantityUnit;
 	private double buyingPrice;
 	private Currency buyingCurrency;
 	private Currency salesCurrency;
@@ -181,6 +182,20 @@ public class Stock extends DBEntity {
 	 */
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	/**
+	 * @return the quantityUnit
+	 */
+	public String getQuantityUnit() {
+		return quantityUnit;
+	}
+
+	/**
+	 * @param quantityUnit the quantityUnit to set
+	 */
+	public void setQuantityUnit(String quantityUnit) {
+		this.quantityUnit = quantityUnit;
 	}
 
 }

@@ -183,7 +183,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 				Statement statement = connection.createStatement();
 				ResultSet result = statement.executeQuery("SELECT * FROM "+getViewName())
 			) {
-			return readAll(result, "Aucunne donnee cartographiable dans la table/vue "+getViewName());
+			return readData(result, "Aucunne donnee cartographiable dans la table/vue "+getViewName());
 		} catch (SQLException e) {
 			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
 		}
@@ -196,7 +196,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 				Statement statement = connection.createStatement();
 				ResultSet result = statement.executeQuery("SELECT * FROM "+getViewName()+" LIMIT "+limit+" OFFSET "+offset)
 			) {
-			return readAll(result, "Aucunne donnee cartographiable pour l'intervale choisie");
+			return readData(result, "Aucunne donnee cartographiable pour l'intervale choisie");
 		} catch (SQLException e) {
 			e.printStackTrace();
 			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
@@ -219,7 +219,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 				PreparedStatement statement = prepareReadOnly(sql, connection, params);
 				ResultSet result = statement.executeQuery()
 			) {
-			return readAll(result, "Aucunne donnee cartographiable pour le tableau des ID proposer");
+			return readData(result, "Aucunne donnee cartographiable pour le tableau des ID proposer");
 		} catch (SQLException e) {
 			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
 		}
@@ -289,7 +289,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			progressListeners.add(listener);
 	}
 	
-	protected T [] readAll (ResultSet result, String message) throws SQLException {
+	protected T [] readData (ResultSet result, String message) throws SQLException {
 		List<T> list = new ArrayList<>();
 
 		while(result.next())
@@ -302,8 +302,46 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 		return data;
 	}
 	
-	protected T [] readAll (ResultSet result) throws SQLException {
-		return readAll(result, "Aucunne donnee cartographiable pour la requette de selection");
+	protected T [] readData (ResultSet result) throws SQLException {
+		return readData(result, "Aucunne donnee cartographiable pour la requette de selection");
+	}
+	
+	/**
+	 * utility method to execute SQL query to select data
+	 * @param sqlQuery
+	 * @param params
+	 * @return
+	 */
+	protected T [] readData (String sqlQuery, Object...params) {
+		try (
+				Connection connection = daoFactory.getConnection();
+				PreparedStatement statement = prepare(sqlQuery, connection, false, params);
+				ResultSet result = statement.executeQuery()
+			) {
+			return readData(result);
+		} catch (SQLException e) {
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+		}
+	}
+	
+	/**
+	 * utility to execute SQL query to count occurrence
+	 * @param sqlQuery : the SQL query must be the form <strong>SELECT COUNT(*) AS label FROM ... </strong>
+	 * @param params
+	 * @return
+	 */
+	protected int countData (String sqlQuery, Object...params) {
+		try (
+				Connection connection = daoFactory.getConnection();
+				PreparedStatement statement = prepare(sqlQuery, connection, false, params);
+				ResultSet result = statement.executeQuery()
+			) {
+			if(result.next())
+				return result.getInt(1);
+		} catch (SQLException e) {
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+		}
+		return 0;
 	}
 
 	protected boolean check (String columnName, Object value) throws DAOException {

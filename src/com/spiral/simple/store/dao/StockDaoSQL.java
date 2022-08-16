@@ -17,7 +17,7 @@ import com.spiral.simple.store.beans.Stock;
 class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 	
 	private final String [] TABLE_FIELDS = { 
-			"id", "quantity", "quantityUnit", "description", "defaultUnitPrice", "sallesCurrency",
+			"id", "quantity", "measureUnit", "description", "defaultUnitPrice", "sallesCurrency",
 			"buyingPrice", "buyingCurrency", "manifacturingDate", "expiryDate",
 			"product", "date", "recordingDate", "lastUpdateDate" };
 
@@ -72,7 +72,7 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 		return new Object[] {
 				entity.getId(),
 				entity.getQuantity(),
-				entity.getQuantityUnit(),
+				entity.getMeasureUnit().getId(),
 				entity.getDescription(),
 				entity.getDefaultUnitPrice(),
 				entity.getSalesCurrency().getId(),
@@ -102,7 +102,7 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 		Stock s = super.mapping(result);
 		s.setBuyingCurrency(new Currency());
 		s.setQuantity(result.getDouble("quantity"));
-		s.setQuantityUnit(result.getString("quantityUnit"));
+		s.setMeasureUnit(daoFactory.get(MeasureUnitDao.class).findById(result.getString("measurUnit")));
 		s.setDescription(result.getString("description"));
 		s.setDefaultUnitPrice(result.getDouble("defaultUnitPrice"));
 		s.setBuyingPrice(result.getDouble("buyingPrice"));

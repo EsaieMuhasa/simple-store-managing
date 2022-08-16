@@ -15,7 +15,7 @@ public class Stock extends DBEntity {
 	
 	private Product product;
 	private double quantity;
-	private String quantityUnit;
+	private MeasureUnit measureUnit;
 	private double buyingPrice;
 	private Currency buyingCurrency;
 	private Currency salesCurrency;
@@ -185,17 +185,17 @@ public class Stock extends DBEntity {
 	}
 
 	/**
-	 * @return the quantityUnit
+	 * @return the measureUnit
 	 */
-	public String getQuantityUnit() {
-		return quantityUnit;
+	public MeasureUnit getMeasureUnit() {
+		return measureUnit;
 	}
 
 	/**
-	 * @param quantityUnit the quantityUnit to set
+	 * @param measureUnit the measureUnit to set
 	 */
-	public void setQuantityUnit(String quantityUnit) {
-		this.quantityUnit = quantityUnit;
+	public void setMeasureUnit(MeasureUnit measureUnit) {
+		this.measureUnit = measureUnit;
 	}
 
 }

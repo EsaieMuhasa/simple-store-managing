@@ -9,6 +9,7 @@ import javax.swing.Box;
 import javax.swing.DefaultComboBoxModel;
 
 import com.spiral.simple.store.beans.Currency;
+import com.spiral.simple.store.beans.MeasureUnit;
 import com.spiral.simple.store.swing.CaptionnablePanel;
 import com.spiral.simple.store.swing.SimpleComboBox;
 import com.spiral.simple.store.swing.SimpleDateField;
@@ -23,10 +24,10 @@ public class StockForm extends AbstractForm {
 	
 	private final DefaultComboBoxModel<Currency> buyingComboModel = new DefaultComboBoxModel<>();
 	private final DefaultComboBoxModel<Currency> salesComboModel = new DefaultComboBoxModel<>();
-	private final DefaultComboBoxModel<String> measurUnitComboModel = new DefaultComboBoxModel<>();
+	private final DefaultComboBoxModel<MeasureUnit> measurUnitComboModel = new DefaultComboBoxModel<>();
 	
 	private final SimpleTextField fieldQuantity = new SimpleTextField("Quantité");
-	private final SimpleComboBox<String> fieldQuantityUnit = new SimpleComboBox<>("Unité", measurUnitComboModel);
+	private final SimpleComboBox<MeasureUnit> fieldQuantityUnit = new SimpleComboBox<>("Unité", measurUnitComboModel);
 	private final SimpleTextField fieldBuyingPrice = new SimpleTextField("Montant");
 	private final SimpleTextField fieldDefaultUnitPrice = new SimpleTextField("Montant");
 	

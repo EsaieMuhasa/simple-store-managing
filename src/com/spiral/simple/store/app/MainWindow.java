@@ -41,6 +41,7 @@ public class MainWindow extends JFrame {
 	private final MainWorkspace workspace = new MainWorkspace();
 	private final KaliNavListener navListener = (nav, index) -> {
 		workspace.showAt(index);
+		setTitle(Config.get("appName")+" / "+workspace.getComponent(index).getName());
 	};
 	
 	public MainWindow(DAOFactory factory) {
@@ -96,6 +97,7 @@ public class MainWindow extends JFrame {
         }
         
         containers[1] = new PanelProducts();
+        containers[2] = new PanelStocks();
         containers[4] = new ConfigWorkspace();
         
         navigation.setItems(navs);

@@ -42,6 +42,8 @@ public class PanelProducts extends JPanel {
 	
 	private ProductTableModel tableModel;
 	private CustomTable table;
+	
+	private JDialog dialogFormProduct;
 
 	public PanelProducts() {
 		super(new BorderLayout());
@@ -67,7 +69,7 @@ public class PanelProducts extends JPanel {
 	
 	@Override
 	public String getName() {
-		return getClass().getName();
+		return "Articles";
 	}
 	
 	/**
@@ -99,16 +101,16 @@ public class PanelProducts extends JPanel {
 	}
 	
 	private void createProduct (ActionEvent event) {
-		JDialog d = new JDialog(MainWindow.getLastInstance(), "Formulaire d'insersion des articles", true);
-		d.setSize(850, 500);
-		d.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-		d.setLocationRelativeTo(d.getOwner());
-		
-		JPanel c = (JPanel) d.getContentPane();
-		d.add(new ProductForm(), BorderLayout.CENTER);
-		c.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
-		
-		d.setVisible(true);
+		if(dialogFormProduct == null) {
+			dialogFormProduct = new JDialog(MainWindow.getLastInstance(), "Formulaire d'insersion des articles", true);
+			dialogFormProduct.setSize(850, 500);
+			dialogFormProduct.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			dialogFormProduct.add(new ProductForm(), BorderLayout.CENTER);
+			JPanel c = (JPanel) dialogFormProduct.getContentPane();
+			c.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+		}
+		dialogFormProduct.setLocationRelativeTo(dialogFormProduct.getOwner());
+		dialogFormProduct.setVisible(true);
 	}
 
 }

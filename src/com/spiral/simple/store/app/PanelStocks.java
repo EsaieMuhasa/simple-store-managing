@@ -26,6 +26,7 @@ public class PanelStocks extends JPanel{
 	}
 	
 	private JDialog dialogFormStock;
+	private StockForm stockForm;
 
 	public PanelStocks() {
 		super(new BorderLayout());
@@ -62,11 +63,14 @@ public class PanelStocks extends JPanel{
 		if(dialogFormStock == null) {
 			dialogFormStock = new JDialog(MainWindow.getLastInstance(), "Formulaire d'insersion d'un nouveau stock", true);
 			dialogFormStock.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-			dialogFormStock.add(new StockForm(), BorderLayout.CENTER);
+
+			stockForm = new StockForm();
+			stockForm.reload();
 			JPanel c = (JPanel) dialogFormStock.getContentPane();
+			c.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+			c.add(stockForm, BorderLayout.CENTER);
 			dialogFormStock.pack();
 			dialogFormStock.setSize(450, dialogFormStock.getHeight()+20);
-			c.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
 		}
 		dialogFormStock.setLocationRelativeTo(dialogFormStock.getOwner());
 		dialogFormStock.setVisible(true);

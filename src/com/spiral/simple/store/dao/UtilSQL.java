@@ -11,6 +11,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import com.spiral.simple.store.beans.DBEntity;
@@ -26,6 +27,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	protected final DefaultDAOFactorySql daoFactory;
 	protected final List<DAOBaseListener<T>> baseListeners = new ArrayList<>();
 	protected final List<DAOProgressListener<T>> progressListeners = new ArrayList<>();
+	protected final List<DAOErrorListener> errorListeners = new ArrayList<>();
 
 	/**
 	 * @param daoFactory
@@ -100,7 +102,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			fireOnProgress(requestId, t.length+1, null);
 			fireOnCreate(requestId, t);
 		} catch (SQLException e) {
-			DAOException err = new DAOException("Une erreur est survenue lors l'insersion des donnees dans la base de donnees", e, ErrorType.ON_CREATE);
+			DAOException err = new DAOException("Une erreur est survenue lors l'insersion des donnees dans la base de donnees \n"+e.getMessage(), e, ErrorType.ON_CREATE);
 			fireOnError(requestId, err);
 		}
 	}
@@ -268,6 +270,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 
 	@Override
 	public void addBaseListener(DAOBaseListener<T> listener) {
+		Objects.requireNonNull(listener);
 		if(!baseListeners.contains(listener))
 			baseListeners.add(listener);
 		
@@ -275,20 +278,36 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 
 	@Override
 	public void removeBaseListener(DAOBaseListener<T> listener) {
+		Objects.requireNonNull(listener);
 		baseListeners.remove(listener);
 	}
 
 	@Override
 	public void removeProgressListener(DAOProgressListener<T> listener) {
+		Objects.requireNonNull(listener);
 		progressListeners.remove(listener);
 	}
 
 	@Override
 	public void addProgressListener(DAOProgressListener<T> listener) {
+		Objects.requireNonNull(listener);
 		if(!progressListeners.contains(listener))
 			progressListeners.add(listener);
 	}
 	
+	@Override
+	public void addErrorListener(DAOErrorListener listener) {
+		Objects.requireNonNull(listener);
+		if(!errorListeners.contains(listener))
+			errorListeners.add(listener);
+	}
+
+	@Override
+	public void removeErrorListener(DAOErrorListener listener) {
+		Objects.requireNonNull(listener);
+		errorListeners.remove(listener);
+	}
+
 	protected T [] readData (ResultSet result, String message) throws SQLException {
 		List<T> list = new ArrayList<>();
 
@@ -343,11 +362,41 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 		}
 		return 0;
 	}
+	
+	/**
+	 * check if sqlQuery has data in database
+	 * @param sqlQuery
+	 * @param params
+	 * @return
+	 */
+	protected boolean checkData (String sqlQuery, Object...params) {
+		try (
+				Connection connection = daoFactory.getConnection();
+				PreparedStatement statement = prepare(sqlQuery, connection, false, params);
+				ResultSet result = statement.executeQuery()
+			) {
+			return (result.next());
+		} catch (SQLException e) {
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+		}
+	}
 
 	protected boolean check (String columnName, Object value) throws DAOException {
 		try (
 				Connection connection = daoFactory.getConnection();
 				PreparedStatement statement = prepare(String.format("SELECT * FROM %s WHERE %s = ?", getViewName(), columnName), connection, false, value);
+				ResultSet result = statement.executeQuery()
+			) {
+			return result.next();
+		} catch (SQLException e) {
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+		}
+	}
+	
+	protected boolean check (String columnName, Object value, String id) throws DAOException {
+		try (
+				Connection connection = daoFactory.getConnection();
+				PreparedStatement statement = prepare(String.format("SELECT * FROM %s WHERE %s = ? AND id != ?", getViewName(), columnName), connection, false, value, id);
 				ResultSet result = statement.executeQuery()
 			) {
 			return result.next();
@@ -492,9 +541,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 		T t = instantiate();
 		t.setId(result.getString("id"));
 		t.initRecordingDate(result.getLong("recordingDate"));
-		long last = result.getLong("lastUpdateDate");
-		if(last != 0)
-			t.initLastUpdateDate(last);
+		t.initLastUpdateDate(result.getLong("lastUpdateDate"));
 		return t;
 	}
 	
@@ -585,7 +632,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	 * @param e
 	 */
 	protected synchronized void fireOnError (int requestId, DAOException e) {
-		for (DAOProgressListener<T> ls : progressListeners)
+		for (DAOErrorListener ls : errorListeners)
 			ls.onError(requestId, e);
 	}
 	

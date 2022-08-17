@@ -133,5 +133,17 @@ public interface DAOInterface <T extends DBEntity> {
 	 * @param listener
 	 */
 	void addProgressListener(DAOProgressListener<T> listener);
+	
+	/**
+	 * Subscribe a new listener for all DAO errors
+	 * @param listener
+	 */
+	void addErrorListener (DAOErrorListener listener);
+	
+	/**
+	 * Unsubscribe listener for all DAO errors
+	 * @param listener
+	 */
+	void removeErrorListener (DAOErrorListener listener);
 
 }

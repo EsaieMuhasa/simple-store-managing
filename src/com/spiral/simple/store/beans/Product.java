@@ -90,5 +90,10 @@ public class Product extends DBEntity {
 		else 
 			image = null;
 	}
+	
+	@Override
+	public String toString() {
+		return name;
+	}
 
 }

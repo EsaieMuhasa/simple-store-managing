@@ -4,6 +4,8 @@
 package com.spiral.simple.store.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Font;
 
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
@@ -19,7 +21,8 @@ import com.spiral.simple.store.tools.UIComponentBuilder;
 public class CaptionnablePanel extends JPanel {
 
 	private static final long serialVersionUID = 2224079186371984152L;
-	private JLabel title = new JLabel();
+	private final JPanel header = new JPanel(new BorderLayout());
+	private final JLabel title = new JLabel();
 	private JComponent container;
 
 	/**
@@ -44,21 +47,65 @@ public class CaptionnablePanel extends JPanel {
 	}
 	
 	private void init () {
-		title.setOpaque(true);
-		add(title, BorderLayout.NORTH);
+		add(header, BorderLayout.NORTH);
 		if(container  != null)
 			add(container, BorderLayout.CENTER);
 		
-		title.setBackground(CustomTable.GRID_COLOR);
-		setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
+		header.add(title, BorderLayout.CENTER);
+		header.setBackground(CustomTable.GRID_COLOR);
+		setBorder(BorderFactory.createLineBorder(header.getBackground()));
 	}
 	
 	/**
 	 * the title setter
 	 * @param title
 	 */
-	public void setTitle(String title) {
+	public void setCaption(String title) {
 		this.title.setText(title);
+	}
+	
+	/**
+	 * update padding by caption component
+	 * @param padding
+	 */
+	public void setCaptionPadding (int padding) {
+		if(padding <= 0)
+			header.setBorder(null);
+		else
+			header.setBorder(BorderFactory.createEmptyBorder(padding, padding, padding, padding));
+	}
+	
+	/**
+	 * the title font setter
+	 * @param font
+	 */
+	public void setCaptionFont (Font font) {
+		title.setFont(font);
+	}
+	
+	/**
+	 * the background color for caption and border color of container
+	 * @param color
+	 */
+	public void setCaptionBackground (Color color) {
+		header.setBackground(color);
+		setBorder(BorderFactory.createLineBorder(color));
+	}
+	
+	/**
+	 * the title background color getter
+	 * @return
+	 */
+	public Color getCaptionBackground () {
+		return header.getBackground();
+	}
+	
+	/**
+	 * the title font getter
+	 * @return
+	 */
+	public Font getCaptioneFont () {
+		return title.getFont();
 	}
 	
 	/**
@@ -76,5 +123,12 @@ public class CaptionnablePanel extends JPanel {
 		add(container, BorderLayout.CENTER);
 		revalidate();
 		repaint();
+	}
+
+	/**
+	 * @return the header
+	 */
+	public JPanel getHeader() {
+		return header;
 	}
 }

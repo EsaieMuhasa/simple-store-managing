@@ -39,12 +39,5 @@ public interface DAOProgressListener <T extends DBEntity> {
 	 */
 	@SuppressWarnings(value="unchecked")
 	void onFinish (int requestId, T... data);
-	
-	/**
-	 * emit if error occurred in process
-	 * @param requestId
-	 * @param exception
-	 */
-	void onError (int requestId, DAOException exception);
 
 }

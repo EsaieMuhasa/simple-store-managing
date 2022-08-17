@@ -61,5 +61,10 @@ public class Currency extends DBEntity {
 	public void setSymbol(String symbol) {
 		this.symbol = symbol;
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("%s (%s)", shortName, fullName);
+	}
 
 }

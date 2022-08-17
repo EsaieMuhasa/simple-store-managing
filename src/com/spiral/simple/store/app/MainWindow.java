@@ -10,6 +10,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.swing.Box;
+import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -50,6 +51,7 @@ public class MainWindow extends JFrame {
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 		setSize(screen.width - screen.width/4, screen.height - screen.height/4);
 		setLocationRelativeTo(null);
+		setIconImage(new ImageIcon(Config.getIcon("panier")).getImage());
 		
 		init();
 		
@@ -66,6 +68,7 @@ public class MainWindow extends JFrame {
 		content.add(left, BorderLayout.WEST);
 		content.add(workspace, BorderLayout.CENTER);
 		
+		instance = this;
 	}
 	
 	/**

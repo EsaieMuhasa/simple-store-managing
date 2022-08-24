@@ -4,17 +4,21 @@
 package com.spiral.simple.store.app.form;
 
 import java.awt.BorderLayout;
+import java.awt.GridLayout;
 import java.util.Date;
 
 import javax.swing.Box;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 
 import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.beans.MeasureUnit;
 import com.spiral.simple.store.beans.Product;
 import com.spiral.simple.store.beans.Stock;
+import com.spiral.simple.store.dao.CurrencyDao;
 import com.spiral.simple.store.dao.DAOFactory;
+import com.spiral.simple.store.dao.MeasureUnitDao;
 import com.spiral.simple.store.dao.ProductDao;
 import com.spiral.simple.store.dao.StockDao;
 import com.spiral.simple.store.swing.CaptionnablePanel;
@@ -50,6 +54,8 @@ public class StockForm extends AbstractForm<Stock> {
 
 	private final StockDao stockDao;
 	private final ProductDao productDao;
+	private final MeasureUnitDao measureUnitDao;
+	private final CurrencyDao currencyDao;
 	
 	private boolean accept;
 	private String [] rejectCause;
@@ -59,6 +65,8 @@ public class StockForm extends AbstractForm<Stock> {
 		
 		stockDao = DAOFactory.getDao(StockDao.class);
 		productDao = DAOFactory.getDao(ProductDao.class);
+		measureUnitDao = DAOFactory.getDao(MeasureUnitDao.class);
+		currencyDao = DAOFactory.getDao(CurrencyDao.class);
 		
 		build();
 	}
@@ -69,19 +77,19 @@ public class StockForm extends AbstractForm<Stock> {
 	private void build() {
 		Box fields = Box.createVerticalBox();
 		
-		Box boxQuantity = Box.createHorizontalBox();
+		final JPanel boxQuantity = new JPanel(new GridLayout(1, 2));
 		boxQuantity.add(fieldQuantity);
 		boxQuantity.add(fieldQuantityUnit);
 		
-		Box boxUnitPrice = Box.createHorizontalBox();
+		final JPanel boxUnitPrice = new JPanel(new GridLayout(1, 2));
 		boxUnitPrice.add(fieldDefaultUnitPrice);
 		boxUnitPrice.add(fieldSalesCurrency);
 		
-		Box boxBuyingPrice = Box.createHorizontalBox();
+		final JPanel boxBuyingPrice = new JPanel(new GridLayout(1, 2));
 		boxBuyingPrice.add(fieldBuyingPrice);
 		boxBuyingPrice.add(fieldBuyingCurrency);
 		
-		Box boxProductDates = Box.createHorizontalBox();
+		final JPanel boxProductDates = new JPanel(new GridLayout(1, 2));
 		boxProductDates.add(fieldManufacturingDate);
 		boxProductDates.add(fieldExpiryDate);
 		
@@ -109,6 +117,21 @@ public class StockForm extends AbstractForm<Stock> {
 			for (Product p : products)
 				productComboModel.addElement(p);
 		}
+		
+		if (measureUnitDao.countAll()  != 0) {
+			MeasureUnit [] units = measureUnitDao.findAll();
+			for (MeasureUnit unit : units) {
+				measurUnitComboModel.addElement(unit);
+			}
+		}
+		
+		if (currencyDao.countAll() != 0) {
+			Currency [] currencies = currencyDao.findAll();
+			for (Currency currency : currencies) {
+				buyingComboModel.addElement(currency);
+				salesComboModel.addElement(currency);
+			}
+		}
 	}
 
 	@Override
@@ -123,6 +146,20 @@ public class StockForm extends AbstractForm<Stock> {
 	protected void doValidate() {
 		String cause ="";
 		Stock s = new Stock();
+		
+		double quantity = Integer.parseInt(fieldQuantity.getField().getText().trim());
+		
+		s.setQuantity(quantity);
+		s.setDate(fieldDate.getField().getDate());
+		s.setProduct(productComboModel.getElementAt(fieldProduct.getField().getSelectedIndex()));
+		s.setBuyingCurrency(buyingComboModel.getElementAt(fieldBuyingCurrency.getField().getSelectedIndex()));
+		s.setSalesCurrency(salesComboModel.getElementAt(fieldSalesCurrency.getField().getSelectedIndex()));
+		s.setMeasureUnit(measurUnitComboModel.getElementAt(fieldQuantityUnit.getField().getSelectedIndex()));
+		
+		s.setManufacturingDate(fieldManufacturingDate.getField().getDate());
+		s.setExpiryDate(fieldExpiryDate.getField().getDate());
+		s.setDefaultUnitPrice(Float.parseFloat(fieldDefaultUnitPrice.getField().getText()));
+		s.setBuyingPrice(Float.parseFloat(fieldBuyingPrice.getField().getText()));
 		
 		if(cause != "")
 			rejectCause = cause.split(";");

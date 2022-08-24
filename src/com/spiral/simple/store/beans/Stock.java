@@ -198,4 +198,12 @@ public class Stock extends DBEntity {
 		this.measureUnit = measureUnit;
 	}
 
+	@Override
+	public String toString() {
+		return "Stock [product=" + product + ", quantity=" + quantity + ", measureUnit=" + measureUnit
+				+ ", buyingPrice=" + buyingPrice + ", buyingCurrency=" + buyingCurrency + ", salesCurrency="
+				+ salesCurrency + ", defaultUnitPrice=" + defaultUnitPrice + ", date=" + date + ", manufacturingDate="
+				+ manufacturingDate + ", expiryDate=" + expiryDate + ", description=" + description + "]";
+	}
+
 }

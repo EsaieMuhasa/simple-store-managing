@@ -42,8 +42,12 @@ public class ProductForm extends AbstractForm<Product> {
 		public void onCreate(Product... data) {
 			File file = new File(Config.get("workspace") + data[0].getPicture());
 			BufferedImage image = imagePicker.getImage();
+			if(image == null)
+				return;
+			
 			try {
 				ImageIO.write(image, imagePicker.getImageType(), file);
+				imagePicker.show(null);
 			} catch (IOException e) {
 				JOptionPane.showMessageDialog(ProductForm.this, e.getMessage(),
 						"Erreur d'ecriture de l'image sur le disquedur", JOptionPane.ERROR_MESSAGE);
@@ -87,7 +91,6 @@ public class ProductForm extends AbstractForm<Product> {
 	protected void doCleanFields() {
 		fieldName.getField().setText("");
 		fieldDescription.setText("");
-		imagePicker.show(null);
 	}
 
 	@Override

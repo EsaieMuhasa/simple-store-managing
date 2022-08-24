@@ -3,6 +3,8 @@
  */
 package com.spiral.simple.store.beans;
 
+import java.io.File;
+
 import javax.swing.ImageIcon;
 
 import com.spiral.simple.store.tools.Config;
@@ -85,10 +87,13 @@ public class Product extends DBEntity {
 	 */
 	public void setPicture(String picture) {
 		this.picture = picture;
-		if(picture != null)
+		File file = new File(Config.get("workspace")+picture);
+		
+		if(picture != null && file.exists())
 			image = new ImageIcon(Config.get("workspace")+picture);
-		else 
-			image = null;
+		else {
+			image = new ImageIcon(Config.getIcon("fav"));
+		}
 	}
 	
 	@Override

@@ -187,7 +187,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			) {
 			return readData(result, "Aucunne donnee cartographiable dans la table/vue "+getViewName());
 		} catch (SQLException e) {
-			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee\n "+e.getMessage(), e);
 		}
 	}
 
@@ -581,8 +581,8 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	 * @param entity
 	 */
 	protected synchronized void fireOnCreate (int requestId, T... data) {
-		for (DAOBaseListener<T> ls : baseListeners)
-			ls.onCreate(data);
+		for (int i = 0, count = baseListeners.size(); i < count; i++)
+			baseListeners.get(i).onCreate(data);
 	}
 	
 	/**

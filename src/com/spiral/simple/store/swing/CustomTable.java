@@ -179,8 +179,9 @@ public class CustomTable extends JTable {
 	        Ellipse2D.Double oval = new Ellipse2D.Double(x+1, y+1, size-2, size-2);
 	        area.subtract(new Area(oval));
 	        
-	        g2.drawImage(image, x, y, size, size, null);
 	        g2.setColor(getBackground());
+	        g2.fillRect(0, 0, getWidth(), getHeight());
+	        g2.drawImage(image, x, y, size, size, null);
 	        g2.fill(area);
 	        
 	        g2.dispose();

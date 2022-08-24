@@ -158,8 +158,8 @@ public class StockForm extends AbstractForm<Stock> {
 		
 		s.setManufacturingDate(fieldManufacturingDate.getField().getDate());
 		s.setExpiryDate(fieldExpiryDate.getField().getDate());
-		s.setDefaultUnitPrice(Float.parseFloat(fieldDefaultUnitPrice.getField().getText()));
-		s.setBuyingPrice(Float.parseFloat(fieldBuyingPrice.getField().getText()));
+		s.setDefaultUnitPrice(Double.parseDouble(fieldDefaultUnitPrice.getField().getText()));
+		s.setBuyingPrice(Double.parseDouble(fieldBuyingPrice.getField().getText()));
 		
 		if(cause != "")
 			rejectCause = cause.split(";");

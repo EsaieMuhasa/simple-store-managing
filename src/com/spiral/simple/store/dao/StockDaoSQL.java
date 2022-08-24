@@ -7,7 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import com.spiral.simple.store.beans.Currency;
-import com.spiral.simple.store.beans.Product;
 import com.spiral.simple.store.beans.Stock;
 
 /**
@@ -17,7 +16,7 @@ import com.spiral.simple.store.beans.Stock;
 class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 	
 	private final String [] TABLE_FIELDS = { 
-			"id", "quantity", "measureUnit", "description", "defaultUnitPrice", "sallesCurrency",
+			"id", "quantity", "measureUnit", "description", "defaultUnitPrice", "salesCurrency",
 			"buyingPrice", "buyingCurrency", "manifacturingDate", "expiryDate",
 			"product", "date", "recordingDate", "lastUpdateDate" };
 
@@ -102,17 +101,16 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 		Stock s = super.mapping(result);
 		s.setBuyingCurrency(new Currency());
 		s.setQuantity(result.getDouble("quantity"));
-		s.setMeasureUnit(daoFactory.get(MeasureUnitDao.class).findById(result.getString("measurUnit")));
+		s.setMeasureUnit(daoFactory.get(MeasureUnitDao.class).findById(result.getString("measureUnit")));
 		s.setDescription(result.getString("description"));
 		s.setDefaultUnitPrice(result.getDouble("defaultUnitPrice"));
 		s.setBuyingPrice(result.getDouble("buyingPrice"));
 		s.setSalesCurrency(daoFactory.get(CurrencyDao.class).findById(result.getString("salesCurrency")));
 		s.setBuyingCurrency(daoFactory.get(CurrencyDao.class).findById(result.getString("buyingCurrency")));
-		s.initManufacturingDate(result.getLong("manufacturingDate"));
+		s.initManufacturingDate(result.getLong("manifacturingDate"));
 		s.initExpiryDate(result.getLong("expiryDate"));
 		s.initDate(result.getLong("date"));
-		s.setProduct(new Product());
-		s.getProduct().setId(result.getString("product"));
+		s.setProduct(daoFactory.get(ProductDao.class).findById(result.getString("product")));
 		return s;
 	}
 

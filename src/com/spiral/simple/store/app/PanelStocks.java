@@ -2,16 +2,12 @@ package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
-import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
@@ -26,15 +22,7 @@ import com.spiral.simple.store.tools.UIComponentBuilder;
 
 public class PanelStocks extends JPanel{
 	private static final long serialVersionUID = 290296541824600761L;
-	
-	private JLabel title = UIComponentBuilder.createH1("Stocks");
-	private JButton btnAdd = new JButton("Nouveau stock", UIComponentBuilder.loadIcon("new"));
-	
-	private final ActionListener listenerBtnAdd = event -> createStock(event);
-	{
-		btnAdd.addActionListener(listenerBtnAdd);
-	}
-	
+
 	private JDialog dialogFormStock;
 	private StockForm stockForm;
 	
@@ -68,8 +56,6 @@ public class PanelStocks extends JPanel{
 	private JPanel createHeader() {
 		JPanel top = new JPanel(new BorderLayout());
 		top.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
-		top.add(title, BorderLayout.CENTER);
-		top.add(btnAdd, BorderLayout.EAST);
 		return top;
 	}
 	
@@ -80,7 +66,17 @@ public class PanelStocks extends JPanel{
 		return panel;
 	}
 	
-	private void createStock(ActionEvent event) {
+	/**
+	 * utilitaire de demande de creation d'un nouveau stock
+	 */
+	public void addStock () {
+		createStock();
+	}
+	
+	/**
+	 * gere l'instatiation de la boite e dialogue d'insersion d'un stock
+	 */
+	private void createStock() {
 		if(dialogFormStock == null) {
 			dialogFormStock = new JDialog(MainWindow.getLastInstance(), "Formulaire d'insersion d'un nouveau stock", true);
 			dialogFormStock.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);

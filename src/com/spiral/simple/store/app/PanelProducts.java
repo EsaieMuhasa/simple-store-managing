@@ -5,17 +5,11 @@ package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 
 import com.spiral.simple.store.app.form.ProductForm;
 import com.spiral.simple.store.app.models.ProductTableModel;
@@ -30,15 +24,6 @@ import com.spiral.simple.store.tools.UIComponentBuilder;
  */
 public class PanelProducts extends JPanel {
 	private static final long serialVersionUID = -4084647016832997773L;
-	
-	private JLabel title = UIComponentBuilder.createH1("Articles");
-	private JTextField fieldSerch = new JTextField();
-	private JButton btnAdd = new JButton("Nouveau produit", UIComponentBuilder.loadIcon("new"));
-	
-	private final ActionListener listenerBtnAdd = event -> createProduct(event);
-	{
-		btnAdd.addActionListener(listenerBtnAdd);
-	}
 	
 	private ProductTableModel tableModel;
 	private CustomTable table;
@@ -80,14 +65,6 @@ public class PanelProducts extends JPanel {
 		JPanel top = new JPanel(new GridLayout());
 		top.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
 		
-		Box box = Box.createHorizontalBox();
-		
-		box.add(fieldSerch);
-		box.add(Box.createHorizontalStrut(10));
-		box.add(btnAdd);
-		
-		top.add(title);
-		top.add(box);
 		return top;
 	}
 	
@@ -100,7 +77,15 @@ public class PanelProducts extends JPanel {
 		return panel;
 	}
 	
-	private void createProduct (ActionEvent event) {
+	/**
+	 * utilitaire de demande d'ouverture du frame qui contiens le formulaire d'insersion 
+	 * d'un nouveau produit
+	 */
+	public void addProduct () {
+		createProduct();
+	}
+	
+	private void createProduct () {
 		if(dialogFormProduct == null) {
 			dialogFormProduct = new JDialog(MainWindow.getLastInstance(), "Formulaire d'insersion des articles", true);
 			dialogFormProduct.setSize(850, 500);

@@ -16,7 +16,7 @@ import javax.swing.border.EmptyBorder;
  */
 public final class UIComponentBuilder {
 	
-	private static final Font FONT_H1 = new Font("Arial", Font.PLAIN, 20);
+	private static final Font FONT_H1 = new Font("Arial", Font.PLAIN, 20), FONT_H2 = new Font("Arial", Font.PLAIN, 18);
 	public static final EmptyBorder EMPTY_BORDER_5 = new EmptyBorder(5, 5, 5, 5);
 
 	private UIComponentBuilder() {}
@@ -35,6 +35,7 @@ public final class UIComponentBuilder {
 	
 	public static JLabel createH2 (String title) {
 		JLabel label = new JLabel(title);
+		label.setFont(FONT_H2);
 		return label;
 	}
 	

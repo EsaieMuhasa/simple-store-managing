@@ -99,6 +99,7 @@ public class MainWindow extends JFrame {
         	containers[i].setName("container"+i);
         }
         
+        containers[1] = new SellerWorkspace();
         containers[2] = new WorckspaceProduct();
         containers[4] = new ConfigWorkspace();
         

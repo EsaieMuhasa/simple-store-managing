@@ -5,6 +5,9 @@ package com.spiral.simple.store.app.components;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -34,6 +37,15 @@ public class SellerSidebar extends JPanel {
 	private final DefaultCardModel<Double> cardModelInput = new DefaultCardModel<>(CustomTable.GRID_COLOR, Color.BLACK, Config.getIcon("btn-add"), "$");
 	private final DefaultCardModel<Double> cardModelOutput = new DefaultCardModel<>(CustomTable.GRID_COLOR, Color.BLACK, Config.getIcon("btn-minus"), "$");
 	private final DefaultCardModel<Double> cardModelAvailable = new DefaultCardModel<>(CustomTable.GRID_COLOR, Color.BLACK, Config.getIcon("caisse"), "$");
+	
+	private final List<SellerSidebarListener> listeners = new ArrayList<>();
+	
+	{
+		btnAddCommand.addActionListener(event -> {
+			for (SellerSidebarListener ls : listeners)
+				ls.onNewCommand();
+		});
+	}
 	
 	public SellerSidebar() {
 		super(new BorderLayout());
@@ -98,10 +110,53 @@ public class SellerSidebar extends JPanel {
 		box.add(Box.createVerticalStrut(10));
 		box.add(cardAvailable);
 		
-		
 		panel.add(box, BorderLayout.CENTER);
 		panel.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
 		return panel;
+	}
+	
+	/**
+	 * change status button sender for creation new command request
+	 * @param enabled
+	 */
+	public void setEnabledAddCommand (boolean enabled ) {
+		btnAddCommand.setEnabled(enabled);
+	}
+	
+	/**
+	 * subscribe a new listener on side bar events
+	 * @param listener
+	 */
+	public void addSidebarListener (SellerSidebarListener listener) {
+		if(!listeners.contains(listener))
+			listeners.add(listener);
+	}
+	
+	/**
+	 * unsubscribe listener on side bar events
+	 * @param listener
+	 */
+	public void removeSidebarListener (SellerSidebarListener listener) {
+		listeners.remove(listener);
+	}
+	
+	/**
+	 * @author Esaie Muhasa
+	 * interface to listening seller side bar event
+	 */
+	public static interface SellerSidebarListener {
+		
+		/**
+		 * Called on selected date change in JCalendar panel
+		 * @param date
+		 */
+		void onDateChange (Date date);
+		
+		/**
+		 * called when user click on add new command button
+		 */
+		void onNewCommand ();
+		
 	}
 	
 }

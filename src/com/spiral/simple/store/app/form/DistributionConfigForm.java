@@ -4,8 +4,10 @@
 package com.spiral.simple.store.app.form;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +29,6 @@ import com.spiral.simple.store.dao.BudgetRubricDao;
 import com.spiral.simple.store.dao.DAOFactory;
 import com.spiral.simple.store.dao.DistributionConfigDao;
 import com.spiral.simple.store.dao.DistributionConfigItemDao;
-import com.spiral.simple.store.swing.CaptionnablePanel;
 import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.tools.Config;
 import com.spiral.simple.store.tools.UIComponentBuilder;
@@ -41,7 +42,7 @@ public class DistributionConfigForm extends JPanel{
 	
 	private final List<FieldDistributionConfigItem> items = new ArrayList<>();
 	private DistributionConfig config;//la configuration encours d'edition
-	private final Box container = Box.createVerticalBox();
+	private final JPanel container = new JPanel(new BorderLayout());
 	
 	private final JLabel labelMax = new JLabel();
 	private final JLabel labelTitle = new JLabel();
@@ -67,6 +68,7 @@ public class DistributionConfigForm extends JPanel{
 		labelMax.setFont(new Font("Arial", Font.PLAIN, 18));
 		btns.add(btnValidate);
 		btns.add(btnCancel);
+		btns.setOpaque(false);
 		bottom.add(labelMax, BorderLayout.CENTER);
 		bottom.add(btns, BorderLayout.EAST);
 		bottom.setBackground(CustomTable.GRID_COLOR);
@@ -81,12 +83,14 @@ public class DistributionConfigForm extends JPanel{
 		
 		scroll.setBorder(null);
 		
+		center.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
 		center.add(scroll);
 		center.add(new JPanel());// ==> pie chart
 		
 		add(top, BorderLayout.NORTH);
 		add(center, BorderLayout.CENTER);
 		add(bottom, BorderLayout.SOUTH);
+		setBorder(BorderFactory.createLineBorder(CustomTable.BKG_COLOR_2));
 	}
 	
 	/**
@@ -122,6 +126,8 @@ public class DistributionConfigForm extends JPanel{
 			return;
 		
 		BudgetRubric [] rubrics = budgetRubricDao.findAll();
+		Box box = Box.createVerticalBox();
+		box.add(Box.createVerticalGlue());
 		for (BudgetRubric rubric : rubrics) {
 			DistributionConfigItem item = null;
 
@@ -135,29 +141,41 @@ public class DistributionConfigForm extends JPanel{
 			item.setRubric(rubric);
 			item.setOwner(config);
 			
-			FieldDistributionConfigItem field = new FieldDistributionConfigItem(item);
+			FieldDistributionConfigItem field = new FieldDistributionConfigItem();
+			field.setItem(item);
 			items.add(field);
-			container.add(field);
-			container.add(Box.createVerticalStrut(10));
+			box.add(field);
+			box.add(Box.createVerticalStrut(10));
 		}
 		
-		container.add(Box.createVerticalGlue());
+		box.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+		box.add(Box.createVerticalGlue());
+		container.add(box, BorderLayout.CENTER);
+	}
+	
+	/**
+	 * add actions listener to buttons
+	 * @param validate
+	 * @param cancel
+	 */
+	public void setCommandActionListener (ActionListener validate, ActionListener cancel) {
+		btnValidate.addActionListener(validate);
+		btnCancel.addActionListener(cancel);
 	}
 
 
-	public static class FieldDistributionConfigItem extends CaptionnablePanel implements CaretListener {
+	public static class FieldDistributionConfigItem extends JPanel implements CaretListener {
 		private static final long serialVersionUID = 2687141923271567849L;
 		
 		private DistributionConfigItem item;
+		private final JLabel label = new JLabel();
 		private final JTextField field = new JTextField();
 		
 		/**
 		 * construct to initialize distribution field
-		 * @param item
 		 */
-		public FieldDistributionConfigItem(DistributionConfigItem item) {
-			super(item.getRubric().getLabel());
-			this.item = item;
+		public FieldDistributionConfigItem() {
+			super(new BorderLayout());
 			buildUI();
 			field.addCaretListener(this);
 		}
@@ -166,10 +184,17 @@ public class DistributionConfigForm extends JPanel{
 		 * builder of UI components
 		 */
 		private void buildUI() {
-			Box box = Box.createHorizontalBox();
+			Box box = Box.createVerticalBox();
 			box.add(field);
 			box.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
-			setContainer(box);
+			add(label, BorderLayout.NORTH);
+			add(box, BorderLayout.CENTER);
+			
+			setMaximumSize(new Dimension(1000, 32));
+			setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
+			
+			label.setOpaque(true);
+			label.setBackground(CustomTable.GRID_COLOR);
 		}
 
 		/**
@@ -180,11 +205,22 @@ public class DistributionConfigForm extends JPanel{
 		}
 		
 		/**
+		 * @param item the item to set
+		 */
+		public void setItem(DistributionConfigItem item) {
+			this.item = item;
+			if(item != null) {				
+				label.setText(" "+item.getRubric().getLabel());
+				field.setText(item.getPercent()+"");
+			}
+		}
+
+		/**
 		 * if data written in text field has valid number format
 		 * true value are returned, otherwise false
 		 */
-		public boolean isValid () {
-			if (!field.getText().trim().isEmpty())
+		public boolean dataIsValid () {
+			if (field != null && !field.getText().trim().isEmpty())
 				try {
 					Double.parseDouble(field.getText().trim());
 					return true;
@@ -201,7 +237,7 @@ public class DistributionConfigForm extends JPanel{
 
 		@Override
 		public void caretUpdate(CaretEvent e) {
-			if (isValid())
+			if (dataIsValid())
 				item.setPercent(Double.parseDouble(field.getText().trim()));
 		}
 	}

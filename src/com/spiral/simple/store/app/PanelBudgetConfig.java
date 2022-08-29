@@ -4,6 +4,7 @@
 package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
@@ -26,10 +27,13 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 
 import com.spiral.simple.store.app.form.BudgetRubricForm;
+import com.spiral.simple.store.app.form.DistributionConfigForm;
 import com.spiral.simple.store.app.models.BudgetRubricTableModel;
 import com.spiral.simple.store.beans.DistributionConfig;
 import com.spiral.simple.store.beans.Product;
 import com.spiral.simple.store.dao.DAOFactory;
+import com.spiral.simple.store.dao.DistributionConfigDao;
+import com.spiral.simple.store.dao.DistributionConfigItemDao;
 import com.spiral.simple.store.dao.ProductDao;
 import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.tools.Config;
@@ -181,14 +185,36 @@ public class PanelBudgetConfig extends JPanel {
 		private final JButton btnUpdateConfig = new JButton("Modifier", new ImageIcon(Config.getIcon("edit")));
 		private final JButton btnAddConfig = new JButton("Nouvelle configuration", new ImageIcon(Config.getIcon("new")));
 
-		private ProductDao productDao = DAOFactory.getDao(ProductDao.class);
-
+		private final JPanel toolContainer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		private DistributionConfigForm configForm;
+		private JPanel chartContainer = new JPanel(new BorderLayout());//homePanel in cardLayout
+		
+		//workspace manager
+		private final CardLayout cardLayout = new CardLayout();
+		private final JPanel workspace = new JPanel(cardLayout);
+		//==
+		
+		private final ProductDao productDao = DAOFactory.getDao(ProductDao.class);
+		private final DistributionConfigDao distributionConfigDao = DAOFactory.getDao(DistributionConfigDao.class);
+		private final DistributionConfigItemDao distributionConfigItemDao = DAOFactory.getDao(DistributionConfigItemDao.class);
+		
+		
+		//listeners to validate/cancel form configuration buttons
+		private final ActionListener validateActionListener = event -> {};
+		private final ActionListener cancelActionListener = event -> {
+			cardLayout.show(workspace, "homePanel");
+			toolContainer.setVisible(true);
+			configForm.setConfig(null);
+		};
+		//==
 		
 		public BudgetRepartitionPanel () {
 			super(new BorderLayout());
 			build();
 			productList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			productList.addListSelectionListener(event -> onItemSelected(event));
+			btnAddConfig.addActionListener(event -> onNewConfigListener());
+			workspace.add(chartContainer, "homePanel");
 			load();
 		}
 		
@@ -213,6 +239,31 @@ public class PanelBudgetConfig extends JPanel {
 		 */
 		private void onItemSelected (ListSelectionEvent event) {
 			Product product = productListModel.getElementAt(productList.getSelectedIndex());
+			
+		}
+		
+		private void onNewConfigListener () {
+			Product product = productListModel.getElementAt(productList.getSelectedIndex());
+			
+			if(configForm == null) {
+				configForm = new DistributionConfigForm();
+				configForm.setCommandActionListener(validateActionListener, cancelActionListener);
+				workspace.add(configForm, "configForm");
+				cardLayout.addLayoutComponent(configForm, "configForm");
+			}
+			
+			DistributionConfig config = null;
+			
+			if (distributionConfigDao.checkAvailableByProduct(product.getId())) {
+				config = distributionConfigDao.findAvailableByProduct(product.getId());
+			} else {
+				config = new DistributionConfig();
+			}
+			
+			config.setProduct(product);	
+			configForm.setConfig(config);
+			cardLayout.show(workspace, "configForm");
+			toolContainer.setVisible(false);
 		}
 		
 		/**
@@ -225,7 +276,6 @@ public class PanelBudgetConfig extends JPanel {
 				paddingLeft = new JPanel(new BorderLayout());
 			
 			final JPanel pieContainer = new JPanel(new BorderLayout());
-			final JPanel toolContainer = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 			
 			final Box leftTop = Box.createHorizontalBox();
 			final JScrollPane scroll = new JScrollPane(productList);
@@ -241,7 +291,12 @@ public class PanelBudgetConfig extends JPanel {
 			paddingLeft.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
 			paddingLeft.add(left, BorderLayout.CENTER);
 			
-			pieContainer.add(toolContainer, BorderLayout.SOUTH);
+			pieContainer.add(workspace, BorderLayout.CENTER);//the workspace component has card layout manager
+			chartContainer.add(toolContainer, BorderLayout.SOUTH);
+			chartContainer.setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
+			final JPanel pieBorder = new JPanel(new BorderLayout());
+			pieBorder.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+			pieBorder.add(pieContainer, BorderLayout.CENTER);
 			
 //			toolContainer.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
 			comboConfig.setPreferredSize(new Dimension(250, comboConfig.getPreferredSize().height + 4));
@@ -250,7 +305,7 @@ public class PanelBudgetConfig extends JPanel {
 			toolContainer.add(comboConfig);
 			toolContainer.add(btnAddConfig);
 			
-			final JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, paddingLeft, pieContainer);
+			final JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, paddingLeft, pieBorder);
 			add(split, BorderLayout.CENTER);
 		}
 		

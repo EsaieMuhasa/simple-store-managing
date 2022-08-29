@@ -5,6 +5,7 @@ package com.spiral.simple.store.beans;
 
 import java.io.Serializable;
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -15,6 +16,7 @@ public abstract class DBEntity implements Serializable{
 
 	private static final long serialVersionUID = 6959053409534426415L;
 	public static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#,##0.##");
+	public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy");
 
 	/**
 	 * 

@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -23,6 +25,9 @@ import com.spiral.simple.store.dao.DAOException.ErrorType;
  */
 @SuppressWarnings(value = "unchecked")
 abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
+	
+	public static final SimpleDateFormat DATE_TIME_FORMAT = new SimpleDateFormat("dd-MM-yyyy hh:mm:ss");
+	public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd-MM-yyyy");
 	
 	protected final DefaultDAOFactorySql daoFactory;
 	protected final List<DAOBaseListener<T>> baseListeners = new ArrayList<>();
@@ -84,19 +89,9 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	protected final synchronized void doCreate (int requestId, T... t) {
 		try (Connection connection = daoFactory.getConnection()) {
 			fireOnStart(requestId);
-			Date now = new Date();
 			connection.setAutoCommit(false);
 			fireOnPrepared(requestId, t.length + 1);
-			for (int i = 0; i < t.length; i++) {
-				if(t[i].getId() == null || t[i].getId().trim().isEmpty() || checkById(connection, t[i].getId()))
-					t[i].setId(generateId(connection));
-				
-				if(t[i].getRecordingDate() == null)
-					t[i].setRecordingDate(now);
-				
-				fireOnProgress(requestId, i+1, t[i]);
-			}
-			
+
 			create(connection, requestId, t);
 			connection.commit();
 			fireOnProgress(requestId, t.length+1, null);
@@ -307,7 +302,68 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 		Objects.requireNonNull(listener);
 		errorListeners.remove(listener);
 	}
+	
+	
+	/**
+	 * return the Date object represent a last timetemps at date day in method parameter
+	 * @param date
+	 * @return
+	 * @throws DAOException
+	 */
+	public static Date toMaxTimestampOfDay (Date date) throws DAOException{
+		String date2str = DATE_FORMAT.format(date);
+		Date maxDate = null;
+		try {
+			maxDate = DATE_TIME_FORMAT.parse(date2str+" 23:59:59");
+		} catch (ParseException e) {
+			throw new DAOException(e.getMessage(), e);
+		}
+		return maxDate;
+	}
+	
+	/**
+	 * return the meddle timestemps of date day in method parameter
+	 * @param date
+	 * @return
+	 * @throws DAOException
+	 */
+	public static Date toMiddleTimestampOfDay (Date date) throws DAOException{
+		String date2str = DATE_FORMAT.format(date);
+		Date maxDate = null;
+		try {
+			maxDate = DATE_TIME_FORMAT.parse(date2str+" 12:00:00");
+		} catch (ParseException e) {
+			throw new DAOException(e.getMessage(), e);
+		}
+		return maxDate;
+	}
+	
+	/**
+	 * return the min timestamps of date day in method parameter
+	 * @param date
+	 * @return
+	 * @throws DAOException
+	 */
+	public static Date toMinTimestampOfDay (Date date) throws DAOException{
+		String date2str = DATE_FORMAT.format(date);
+		Date minDate = null;
+		try {
+			minDate = DATE_TIME_FORMAT.parse(date2str+" 00:00:00");
+		} catch (ParseException e) {
+			throw new DAOException(e.getMessage(), e);
+		}
+		return minDate;
+	}
 
+	/**
+	 * Fetching for result set and mapping data in this result set.
+	 * if result set is empty, DAOEzception was Up, and message in this exception is value 
+	 * of second parameter of this method
+	 * @param result
+	 * @param message
+	 * @return
+	 * @throws SQLException
+	 */
 	protected T [] readData (ResultSet result, String message) throws SQLException {
 		List<T> list = new ArrayList<>();
 
@@ -448,8 +504,15 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 		String [] labels = getTableFields();
 		String sql = "INSERT INTO "+getTableName()+" ( "+String.join(", ", labels)+" ) VALUES";
 		Object [] values = new Object[labels.length * t.length]; 
+		Date now = new Date();
 		
 		for (int i = 0; i < t.length; i++) {
+			if(t[i].getId() == null || t[i].getId().trim().isEmpty() || checkById(connection, t[i].getId()))
+				t[i].setId(generateId(connection));
+			
+			if(t[i].getRecordingDate() == null)
+				t[i].setRecordingDate(now);
+			
 			Object [] subValues = getOccurrenceValues(t[i]);
 			
 			String sub = "";
@@ -459,6 +522,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			}
 			sub = sub.substring(0, sub.length() - 1);
 			sql += " ("+sub+"),";
+			fireOnProgress(requestId, i+1, t[i]);
 		}
 		
 		sql = sql.substring(0, sql.length() -1);

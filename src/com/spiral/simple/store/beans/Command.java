@@ -3,7 +3,9 @@
  */
 package com.spiral.simple.store.beans;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author Esaie MUHASA
@@ -16,6 +18,11 @@ public class Command extends DBEntity {
 	private Date date;
 	private boolean delivered;
 	private Client client;
+	
+	/**
+	 * all item associate with this client command
+	 */
+	private final List<CommandItem> items = new ArrayList<>();
 
 	/**
 	 * 
@@ -64,6 +71,51 @@ public class Command extends DBEntity {
 	 */
 	public void setClient(Client client) {
 		this.client = client;
+	}
+	
+	/**
+	 * adding command items
+	 * @param items
+	 */
+	public void addItem (CommandItem...items) {
+		for (CommandItem item : items){
+			this.items.add(item);
+			item.setCommand(this);
+		}
+	}
+	
+	/**
+	 * remove item in this command
+	 * @param item
+	 */
+	public void removeItem (CommandItem item) {
+		items.remove(item);
+	}
+	
+	/**
+	 * remove item at index, in command
+	 * @param index
+	 */
+	public void removeItemAt (int index) {
+		items.remove(index);
+	}
+	
+	/**
+	 * remove all items in command
+	 */
+	public void removeItems () {
+		items.clear();
+	}
+	
+	/**
+	 * get all item in client command
+	 * @return
+	 */
+	public CommandItem [] getItems () {
+		if(items.size() == 0)
+			return null;
+		
+		return items.toArray(new CommandItem[items.size()]);
 	}
 
 }

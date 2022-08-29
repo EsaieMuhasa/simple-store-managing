@@ -27,7 +27,7 @@ public interface AffectedStockDao extends DAOInterface<AffectedStock> {
 	 * @return
 	 * @throws DAOException
 	 */
-	AffectedStock [] findByKey (String stockId, String itemId) throws DAOException;
+	AffectedStock findByKey (String stockId, String itemId) throws DAOException;
 	
 	/**
 	 * check if stock is already used at least once

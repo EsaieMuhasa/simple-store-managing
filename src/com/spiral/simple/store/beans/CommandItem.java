@@ -3,6 +3,9 @@
  */
 package com.spiral.simple.store.beans;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Esaie MUHASA
  *
@@ -14,6 +17,8 @@ public class CommandItem extends DBEntity {
 	private Product product;
 	private double quantity;
 	private DistributionConfig config;
+	
+	private final List<AffectedStock> stocks = new ArrayList<>();
 
 	/**
 	 * 
@@ -76,6 +81,54 @@ public class CommandItem extends DBEntity {
 	 */
 	public void setConfig(DistributionConfig config) {
 		this.config = config;
+	}
+	
+	/**
+	 * adding new affected stock
+	 * @param stocks
+	 */
+	public void addStock (AffectedStock ...stocks) {
+		for (AffectedStock stock : stocks){
+			this.stocks.add(stock);
+			stock.setItem(this);
+		}
+	}
+	
+	/**
+	 * return table of affected stock by this client command item
+	 * @return
+	 */
+	public AffectedStock [] getStocks () {
+		if(stocks.size() == 0)
+			return null;
+		return stocks.toArray(new AffectedStock[stocks.size()]);
+	}
+	
+	public AffectedStock getStockAt (int index) {
+		return stocks.get(index);
+	}
+	
+	/**
+	 * remove affected stock
+	 * @param stock
+	 */
+	public void removeStock (AffectedStock stock) {
+		stocks.remove(stock);
+	}
+	
+	/**
+	 * removing stock affected at index
+	 * @param index
+	 */
+	public void removeStockAt (int index) {
+		stocks.remove(index);
+	}
+	
+	/**
+	 * removing all stock affected by item command
+	 */
+	public void removeStocks () {
+		stocks.clear();
 	}
 
 }

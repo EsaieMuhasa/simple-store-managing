@@ -25,6 +25,6 @@ public interface ClientDao extends DAOInterface<Client> {
 	 * @return
 	 * @throws DAOException
 	 */
-	boolean findByTelephone (String telephone) throws DAOException;
+	Client findByTelephone (String telephone) throws DAOException;
 
 }

@@ -27,7 +27,7 @@ public interface CommandDao extends DAOInterface<Command> {
 	 * @return
 	 * @throws DAOException
 	 */
-	boolean [] checkByClient (String key) throws DAOException;
+	boolean checkByClient (String key) throws DAOException;
 
 	/**
 	 * return all command performed a date interval

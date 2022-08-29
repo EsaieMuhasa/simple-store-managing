@@ -22,9 +22,16 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 
+import com.spiral.simple.store.beans.Command;
 import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.beans.MeasureUnit;
 import com.spiral.simple.store.beans.Product;
+import com.spiral.simple.store.dao.CommandDao;
+import com.spiral.simple.store.dao.CurrencyDao;
+import com.spiral.simple.store.dao.DAOFactory;
+import com.spiral.simple.store.dao.DAOListenerAdapter;
+import com.spiral.simple.store.dao.MeasureUnitDao;
+import com.spiral.simple.store.dao.ProductDao;
 import com.spiral.simple.store.swing.CaptionnablePanel;
 import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.swing.SimpleComboBox;
@@ -52,6 +59,11 @@ public class CommandDialog extends JDialog {
 	private final PanelFieldsCommand fieldsCommand = new PanelFieldsCommand();
 	private final CustomTable itemTable = new CustomTable();
 	
+	private final MeasureUnitDao measureUnitDao = DAOFactory.getDao(MeasureUnitDao.class);
+	private final ProductDao productDao = DAOFactory.getDao(ProductDao.class);
+	private final CommandDao commandDao = DAOFactory.getDao(CommandDao.class);
+	private final CurrencyDao currencyDao = DAOFactory.getDao(CurrencyDao.class);
+	
 	private final WindowAdapter windowAdapter = new WindowAdapter() {
 		
 		@Override
@@ -59,6 +71,11 @@ public class CommandDialog extends JDialog {
 			doCancel();
 		}
 	};
+	
+	private final DAOListenerAdapter<Product> productListenerAdapter = new  DAOListenerAdapter<Product>() {};
+	private final DAOListenerAdapter<Currency> currecyListenerAdapter = new DAOListenerAdapter<Currency>() {};
+	private final DAOListenerAdapter<MeasureUnit> measureUnitListenerAdapter = new DAOListenerAdapter<MeasureUnit>();
+	private final DAOListenerAdapter<Command> commandListenerAdapter = new DAOListenerAdapter<Command>() {};
 	
 	/**
 	 * default construct
@@ -71,6 +88,13 @@ public class CommandDialog extends JDialog {
 		btnCancel.addActionListener(event -> doCancel());
 		btnPrint.addActionListener(event ->  doPrintInvoice());
 		btnValidate.addActionListener(event -> doValidate());
+		
+		//listening DAOs events
+		measureUnitDao.addBaseListener(measureUnitListenerAdapter);
+		productDao.addBaseListener(productListenerAdapter);
+		commandDao.addBaseListener(commandListenerAdapter);
+		currencyDao.addBaseListener(currecyListenerAdapter);
+		//==
 		
 		initViews();
 	}

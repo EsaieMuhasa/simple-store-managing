@@ -3,13 +3,13 @@
  */
 package com.spiral.simple.store.dao;
 
-import com.spiral.simple.store.beans.DestributionConfigItem;
+import com.spiral.simple.store.beans.DistributionConfigItem;
 
 /**
  * @author Esaie MUHASA
  *
  */
-public interface DestributionConfigItemDao extends DAOInterface<DestributionConfigItem> {
+public interface DistributionConfigItemDao extends DAOInterface<DistributionConfigItem> {
 	
 	/**
 	 * check unique key exist
@@ -27,7 +27,7 @@ public interface DestributionConfigItemDao extends DAOInterface<DestributionConf
 	 * @return
 	 * @throws DAOException
 	 */
-	DestributionConfigItem findByKey (String configId, String rubricId) throws DAOException;
+	DistributionConfigItem findByKey (String configId, String rubricId) throws DAOException;
 	
 	/**
 	 * check if configuration has repartition parameters 
@@ -43,5 +43,5 @@ public interface DestributionConfigItemDao extends DAOInterface<DestributionConf
 	 * @return
 	 * @throws DAOException
 	 */
-	DestributionConfigItem[] findByConfig (String configKey) throws DAOException;
+	DistributionConfigItem[] findByConfig (String configKey) throws DAOException;
 }

@@ -43,6 +43,7 @@ public abstract class DBEntityTableModel <T extends DBEntity> extends AbstractTa
 		limit = 50;
 		this.daoInterface = daoInterface;
 		daoInterface.addBaseListener(this);
+		reload();
 	}
 	
 	public DBEntityTableModel() {

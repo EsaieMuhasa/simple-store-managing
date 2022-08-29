@@ -3,6 +3,9 @@
  */
 package com.spiral.simple.store.dao;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 import com.spiral.simple.store.beans.BudgetRubric;
 
 /**
@@ -46,6 +49,14 @@ public class BudgetRubricDaoSQL extends UtilSQL<BudgetRubric> implements BudgetR
 				entity.getRecordingDate().getTime(),
 				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null
 		};
+	}
+	
+	@Override
+	protected BudgetRubric mapping(ResultSet result) throws SQLException {
+		BudgetRubric b = super.mapping(result);
+		b.setDescription(result.getString("description"));
+		b.setLabel(result.getString("label"));
+		return b;
 	}
 
 	@Override

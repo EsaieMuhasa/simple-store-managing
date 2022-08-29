@@ -7,7 +7,7 @@ package com.spiral.simple.store.beans;
  * @author Esaie MUHASA
  *
  */
-public class DestributionConfigItem extends DBEntity {
+public class DistributionConfigItem extends DBEntity {
 
 	private static final long serialVersionUID = 8204066369745995477L;
 	
@@ -18,7 +18,7 @@ public class DestributionConfigItem extends DBEntity {
 	/**
 	 * 
 	 */
-	public DestributionConfigItem() {
+	public DistributionConfigItem() {
 		super();
 	}
 

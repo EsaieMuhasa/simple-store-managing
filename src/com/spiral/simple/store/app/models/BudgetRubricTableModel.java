@@ -4,6 +4,8 @@
 package com.spiral.simple.store.app.models;
 
 import com.spiral.simple.store.beans.BudgetRubric;
+import com.spiral.simple.store.dao.BudgetRubricDao;
+import com.spiral.simple.store.dao.DAOFactory;
 
 /**
  * @author Esaie MUHASA
@@ -13,6 +15,10 @@ public class BudgetRubricTableModel extends DBEntityTableModel<BudgetRubric> {
 	private static final long serialVersionUID = 5215896242712435577L;
 	
 	private static final String [] TITLES = {"N°", "Labele", "Description", "Date d'enregistrement"}; 
+	
+	public BudgetRubricTableModel() {
+		super(DAOFactory.getDao(BudgetRubricDao.class));
+	}
 
 	@Override
 	public int getColumnCount() {

@@ -5,6 +5,7 @@ package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
@@ -18,6 +19,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -31,7 +33,9 @@ import com.spiral.simple.store.app.form.DistributionConfigForm;
 import com.spiral.simple.store.app.models.BudgetRubricTableModel;
 import com.spiral.simple.store.beans.DistributionConfig;
 import com.spiral.simple.store.beans.Product;
+import com.spiral.simple.store.dao.DAOException;
 import com.spiral.simple.store.dao.DAOFactory;
+import com.spiral.simple.store.dao.DAOListenerAdapter;
 import com.spiral.simple.store.dao.DistributionConfigDao;
 import com.spiral.simple.store.dao.DistributionConfigItemDao;
 import com.spiral.simple.store.dao.ProductDao;
@@ -46,6 +50,7 @@ import com.spiral.simple.store.tools.UIComponentBuilder;
 public class PanelBudgetConfig extends JPanel {
 	private static final long serialVersionUID = -1539067905599019447L;
 	
+	public static final int TOGGLE_CONFIGURATION_REQUEST_ID = 0xFF00FF;
 	private final JTabbedPane container = new JTabbedPane(JTabbedPane.BOTTOM);
 
 	public PanelBudgetConfig() {
@@ -198,15 +203,47 @@ public class PanelBudgetConfig extends JPanel {
 		private final DistributionConfigDao distributionConfigDao = DAOFactory.getDao(DistributionConfigDao.class);
 		private final DistributionConfigItemDao distributionConfigItemDao = DAOFactory.getDao(DistributionConfigItemDao.class);
 		
-		
 		//listeners to validate/cancel form configuration buttons
-		private final ActionListener validateActionListener = event -> {};
+		private final ActionListener validateActionListener = event -> {
+			if (configForm.allDataIsValid()) {
+				configForm.setEnabled(false);
+				configForm.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+				distributionConfigDao.toggle(TOGGLE_CONFIGURATION_REQUEST_ID, configForm.getConfig());
+			} else {
+				String message = "Les valeurs entrés dans le champs de text doivent être ecrite au format numérique valide."
+						+ "\nS'il s'agit d'une valeur numérique avec virgule, alors utilisez un point (.) à la place.";
+				JOptionPane.showMessageDialog(MainWindow.getLastInstance(), message, "Erreur", JOptionPane.ERROR_MESSAGE);
+			}
+		};
 		private final ActionListener cancelActionListener = event -> {
 			cardLayout.show(workspace, "homePanel");
 			toolContainer.setVisible(true);
 			configForm.setConfig(null);
 		};
 		//==
+		
+		private final DAOListenerAdapter<DistributionConfig> configListenerAdapter = new DAOListenerAdapter<DistributionConfig>() {
+			@Override
+			public void onCreate(DistributionConfig... data) {
+				configForm.setEnabled(true);
+				configForm.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
+				cancelActionListener.actionPerformed(null);
+			}
+
+			@Override
+			public void onUpdate(DistributionConfig newState, DistributionConfig oldState) {
+				onCreate(newState);
+			}
+
+			@Override
+			public void onError(int requestId, DAOException exception) {
+				if (requestId  == TOGGLE_CONFIGURATION_REQUEST_ID) {
+					exception.printStackTrace();
+					JOptionPane.showMessageDialog(MainWindow.getLastInstance(), exception.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+			
+		};
 		
 		public BudgetRepartitionPanel () {
 			super(new BorderLayout());
@@ -216,6 +253,9 @@ public class PanelBudgetConfig extends JPanel {
 			btnAddConfig.addActionListener(event -> onNewConfigListener());
 			workspace.add(chartContainer, "homePanel");
 			load();
+			
+			distributionConfigDao.addBaseListener(configListenerAdapter);
+			distributionConfigDao.addErrorListener(configListenerAdapter);
 		}
 		
 		/**

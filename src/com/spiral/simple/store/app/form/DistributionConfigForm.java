@@ -27,7 +27,6 @@ import com.spiral.simple.store.beans.DistributionConfig;
 import com.spiral.simple.store.beans.DistributionConfigItem;
 import com.spiral.simple.store.dao.BudgetRubricDao;
 import com.spiral.simple.store.dao.DAOFactory;
-import com.spiral.simple.store.dao.DistributionConfigDao;
 import com.spiral.simple.store.dao.DistributionConfigItemDao;
 import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.tools.Config;
@@ -49,7 +48,6 @@ public class DistributionConfigForm extends JPanel{
 	private final JButton btnValidate = new JButton("Valider", new ImageIcon(Config.getIcon("success")));
 	private final JButton btnCancel = new JButton("Annuler", new ImageIcon(Config.getIcon("close")));
 	
-	private final DistributionConfigDao distributionConfigDao = DAOFactory.getDao(DistributionConfigDao.class);
 	private final DistributionConfigItemDao distributionConfigItemDao = DAOFactory.getDao(DistributionConfigItemDao.class);
 	private final BudgetRubricDao budgetRubricDao = DAOFactory.getDao(BudgetRubricDao.class);
 	
@@ -93,6 +91,17 @@ public class DistributionConfigForm extends JPanel{
 		setBorder(BorderFactory.createLineBorder(CustomTable.BKG_COLOR_2));
 	}
 	
+	@Override
+	public void setEnabled(boolean enabled) {
+		super.setEnabled(enabled);
+		
+		for (FieldDistributionConfigItem field : items)
+			field.setEnabled(enabled);
+		
+		btnCancel.setEnabled(enabled);
+		btnValidate.setEnabled(enabled);
+	}
+	
 	/**
 	 * @return the config
 	 */
@@ -119,6 +128,20 @@ public class DistributionConfigForm extends JPanel{
 	}
 	
 	/**
+	 * verification, of all data in text fields.
+	 * true value are returned when all text in text field is wells number format,
+	 * otherwise false
+	 * @return
+	 */
+	public boolean allDataIsValid() {
+		for (FieldDistributionConfigItem field : items) {
+			if(!field.dataIsValid())
+				return false;
+		}
+		return true;
+	}
+	
+	/**
 	 * request to reload data associate to current config
 	 */
 	private void reload() {
@@ -140,6 +163,7 @@ public class DistributionConfigForm extends JPanel{
 			}
 			item.setRubric(rubric);
 			item.setOwner(config);
+			config.addItems(item);
 			
 			FieldDistributionConfigItem field = new FieldDistributionConfigItem();
 			field.setItem(item);
@@ -178,6 +202,12 @@ public class DistributionConfigForm extends JPanel{
 			super(new BorderLayout());
 			buildUI();
 			field.addCaretListener(this);
+		}
+		
+		@Override
+		public void setEnabled(boolean enabled) {
+			super.setEnabled(enabled);
+			field.setEnabled(enabled);
 		}
 		
 		/**

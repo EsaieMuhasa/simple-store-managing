@@ -53,7 +53,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			) {
 			return result.next();
 		} catch (SQLException e) {
-			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee\n"+e.getMessage(), e);
 		}
 	}
 	
@@ -502,9 +502,12 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	 */
 	synchronized void create (Connection connection, int requestId, T... t) throws DAOException, SQLException  {
 		String [] labels = getTableFields();
-		String sql = "INSERT INTO "+getTableName()+" ( "+String.join(", ", labels)+" ) VALUES";
-		Object [] values = new Object[labels.length * t.length]; 
+		String sql = "INSERT INTO "+getTableName()+" ( "+String.join(", ", labels)+" ) VALUES (";
 		Date now = new Date();
+		
+		for (int j = 0; j < labels.length; j++)
+			sql += " ?,";
+		sql = sql.substring(0, sql.length() - 1)+")";
 		
 		for (int i = 0; i < t.length; i++) {
 			if(t[i].getId() == null || t[i].getId().trim().isEmpty() || checkById(connection, t[i].getId()))
@@ -513,24 +516,13 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			if(t[i].getRecordingDate() == null)
 				t[i].setRecordingDate(now);
 			
-			Object [] subValues = getOccurrenceValues(t[i]);
-			
-			String sub = "";
-			for (int j = 0; j < subValues.length; j++) {
-				sub += " ?,";
-				values[ (i*labels.length) + j] = subValues[j];
+			Object [] values = getOccurrenceValues(t[i]);			
+			try (PreparedStatement statement = prepare(sql, connection, false, values)) {
+				int status = statement.executeUpdate();
+				if(status == 0)
+					throw new DAOException("Auncun enregistrement n'a ete prise en compte", ErrorType.ON_CREATE);
 			}
-			sub = sub.substring(0, sub.length() - 1);
-			sql += " ("+sub+"),";
 			fireOnProgress(requestId, i+1, t[i]);
-		}
-		
-		sql = sql.substring(0, sql.length() -1);
-		
-		try (PreparedStatement statement = prepare(sql, connection, false, values)) {
-			int status = statement.executeUpdate();
-			if(status == 0)
-				throw new DAOException("Auncun enregistrement n'a ete prise en compte", ErrorType.ON_CREATE);
 		}
 		
 	}
@@ -557,6 +549,13 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 		}
 	}
 	
+	/**
+	 * deletion of all occurrences owner of any keys
+	 * @param connection
+	 * @param keys
+	 * @throws DAOException
+	 * @throws SQLException
+	 */
 	void delete (Connection connection, String... keys) throws DAOException, SQLException {
 		String where = "";
 		for (int i = 0; i < keys.length; i++) 
@@ -570,7 +569,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			
 			int status  = statement.executeUpdate();
 			if (status == 0)
-				throw new DAOException("Aucune suppression n'a ete fait dans la base de donnee");
+				throw new DAOException("Aucune suppression n'a été fait dans la base de donnée");
 		}
 	}
 	
@@ -673,7 +672,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			ls.onFinish(requestId, data);
 		
 		for (DAOBaseListener<T> ls : baseListeners)
-			ls.onUpdate(old, data);
+			ls.onUpdate(data, old);
 	}
 	
 	/**
@@ -687,7 +686,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			ls.onFinish(requestId, data);
 		
 		for (DAOBaseListener<T> ls : baseListeners)
-			ls.onUpdate(old, data);
+			ls.onUpdate(data, old);
 	}
 	
 	/**

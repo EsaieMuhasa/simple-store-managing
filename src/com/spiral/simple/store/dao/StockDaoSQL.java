@@ -23,6 +23,11 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 	public StockDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
 	}
+	
+	@Override
+	protected boolean hasView() {
+		return true;
+	}
 
 	@Override
 	public boolean checkByProduct(String key) throws DAOException {
@@ -31,8 +36,12 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 
 	@Override
 	public boolean checkAvailableByProduct(String key) throws DAOException {
-		// TODO Auto-generated method stub
-		return false;
+		return checkData("SELECT * FROM "+getViewName()+" WHERE product = ? AND (quantity > used OR used IS NULL) LIMIT 1 OFFSET 0", key);
+	}
+	
+	@Override
+	public Stock findLatestByProduct (String key) throws DAOException {
+		return readData("SELECT * FROM "+getViewName()+" WHERE product = ? ORDER BY recordingDate DESC LIMIT 1 OFFSET 0", key)[0];
 	}
 
 	@Override
@@ -51,9 +60,8 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 	}
 
 	@Override
-	public Stock[] findAvailableByProduct(String key) throws DAOException {
-		// TODO Auto-generated method stub
-		return null;
+	public Stock[] findAvailableByProduct (String key) throws DAOException {
+		return readData("SELECT * FROM "+getViewName()+" WHERE product = ? AND (quantity > used OR used IS NULL) LIMIT 1 OFFSET 0", key);
 	}
 
 	@Override
@@ -77,7 +85,7 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 				entity.getSalesCurrency().getId(),
 				entity.getBuyingPrice(),
 				entity.getBuyingCurrency().getId(),
-				entity.getManufacturingDate() != null? entity.getManufacturingDate().getTime() : null,
+				entity.getManifacturingDate() != null? entity.getManifacturingDate().getTime() : null,
 				entity.getExpiryDate() != null? entity.getExpiryDate().getTime() : null,
 				entity.getProduct().getId(),
 				entity.getDate().getTime(),

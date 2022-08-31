@@ -20,7 +20,7 @@ import com.spiral.simple.store.beans.Product;
  *
  */
 class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
-	private static final String FIELDS_LABELS [] = {"id", "recordingDate", "lastUpdateDate", "command", "product", "config", "quantity"};
+	private static final String FIELDS_LABELS [] = {"id", "recordingDate", "lastUpdateDate", "command", "product", "config", "quantity", "unitPrice", "currency"};
 	
 	public CommandItemDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
@@ -65,7 +65,9 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 				entity.getCommand().getId(),
 				entity.getProduct().getId(),
 				entity.getConfig().getId(),
-				entity.getQuantity()
+				entity.getQuantity(),
+				entity.getUnitPrice(),
+				entity.getCurrency().getId()
 		};
 	}
 	
@@ -79,6 +81,8 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 		i.getConfig().setId(result.getString("config"));
 		i.setProduct(new Product());
 		i.getProduct().setId(result.getString("product"));
+		i.setUnitPrice(result.getDouble("unitPrice"));
+		i.setCurrency(daoFactory.get(CurrencyDao.class).findById(result.getString("currency")));
 		return i;
 	}
 	

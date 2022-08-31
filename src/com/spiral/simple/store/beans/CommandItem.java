@@ -16,6 +16,8 @@ public class CommandItem extends DBEntity {
 	private Command command;
 	private Product product;
 	private double quantity;
+	private double unitPrice;
+	private Currency currency;
 	private DistributionConfig config;
 	
 	private final List<AffectedStock> stocks = new ArrayList<>();
@@ -109,6 +111,14 @@ public class CommandItem extends DBEntity {
 	}
 	
 	/**
+	 * count all stock affected by command item
+	 * @return
+	 */
+	public int countStock() {
+		return stocks.size();
+	}
+	
+	/**
 	 * remove affected stock
 	 * @param stock
 	 */
@@ -129,6 +139,42 @@ public class CommandItem extends DBEntity {
 	 */
 	public void removeStocks () {
 		stocks.clear();
+	}
+
+	/**
+	 * @return the unitPrice
+	 */
+	public double getUnitPrice() {
+		return unitPrice;
+	}
+	
+	/**
+	 * return total price for command item
+	 * @return
+	 */
+	public double getTotalPrice () {
+		return quantity * unitPrice;
+	}
+
+	/**
+	 * @param unitPrice the unitPrice to set
+	 */
+	public void setUnitPrice(double unitPrice) {
+		this.unitPrice = unitPrice;
+	}
+
+	/**
+	 * @return the currency
+	 */
+	public Currency getCurrency() {
+		return currency;
+	}
+
+	/**
+	 * @param currency the currency to set
+	 */
+	public void setCurrency(Currency currency) {
+		this.currency = currency;
 	}
 
 }

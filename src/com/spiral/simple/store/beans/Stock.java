@@ -21,7 +21,7 @@ public class Stock extends DBEntity {
 	private Currency salesCurrency;
 	private double defaultUnitPrice;//default unit price when selling
 	private Date date;
-	private Date manufacturingDate;
+	private Date manifacturingDate;
 	private Date expiryDate;
 	private String description;
 
@@ -135,21 +135,21 @@ public class Stock extends DBEntity {
 	}
 
 	/**
-	 * @return the manufacturingDate
+	 * @return the manifacturingDate
 	 */
-	public Date getManufacturingDate() {
-		return manufacturingDate;
+	public Date getManifacturingDate() {
+		return manifacturingDate;
 	}
 	
 	public void initManufacturingDate (long date) {
-		manufacturingDate = buildDate(date);
+		manifacturingDate = buildDate(date);
 	}
 
 	/**
-	 * @param manufacturingDate the manufacturingDate to set
+	 * @param manifacturingDate the manifacturingDate to set
 	 */
-	public void setManufacturingDate(Date manufacturingDate) {
-		this.manufacturingDate = manufacturingDate;
+	public void setManifacturingDate(Date manufacturingDate) {
+		this.manifacturingDate = manufacturingDate;
 	}
 
 	/**
@@ -202,8 +202,8 @@ public class Stock extends DBEntity {
 	public String toString() {
 		return "Stock [product=" + product + ", quantity=" + quantity + ", measureUnit=" + measureUnit
 				+ ", buyingPrice=" + buyingPrice + ", buyingCurrency=" + buyingCurrency + ", salesCurrency="
-				+ salesCurrency + ", defaultUnitPrice=" + defaultUnitPrice + ", date=" + date + ", manufacturingDate="
-				+ manufacturingDate + ", expiryDate=" + expiryDate + ", description=" + description + "]";
+				+ salesCurrency + ", defaultUnitPrice=" + defaultUnitPrice + ", date=" + date + ", manifacturingDate="
+				+ manifacturingDate + ", expiryDate=" + expiryDate + ", description=" + description + "]";
 	}
 
 }

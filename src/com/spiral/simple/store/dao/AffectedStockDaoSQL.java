@@ -16,7 +16,7 @@ import com.spiral.simple.store.beans.Stock;
  */
 class AffectedStockDaoSQL extends UtilSQL<AffectedStock> implements AffectedStockDao {
 
-	private static final String[] FIELD_LABELS = {"id", "recordingDate", "lastUpdateDate", "item", "stock", "quantity", "unitPrice"};
+	private static final String[] FIELD_LABELS = {"id", "recordingDate", "lastUpdateDate", "item", "stock", "quantity"};
 
 	public AffectedStockDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
@@ -70,8 +70,7 @@ class AffectedStockDaoSQL extends UtilSQL<AffectedStock> implements AffectedStoc
 				entity.getLastUpdateDate() != null?  entity.getLastUpdateDate().getTime() : null,
 				entity.getItem().getId(),
 				entity.getStock().getId(),
-				entity.getQuantity(),
-				entity.getUnitPrice()
+				entity.getQuantity()
 		};
 	}
 	
@@ -79,7 +78,6 @@ class AffectedStockDaoSQL extends UtilSQL<AffectedStock> implements AffectedStoc
 	protected AffectedStock mapping(ResultSet result) throws SQLException {
 		AffectedStock a= super.mapping(result);
 		a.setQuantity(result.getDouble("quantity"));
-		a.setUnitPrice(result.getDouble("unitPrice"));
 		a.setStock(new Stock());
 		a.getStock().setId(result.getString("stock"));
 		a.setItem(new CommandItem());

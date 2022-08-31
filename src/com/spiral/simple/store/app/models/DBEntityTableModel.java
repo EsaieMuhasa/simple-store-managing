@@ -23,6 +23,9 @@ import com.spiral.simple.store.dao.DAOInterface;
 public abstract class DBEntityTableModel <T extends DBEntity> extends AbstractTableModel implements DAOBaseListener<T> {
 	private static final long serialVersionUID = 6162491854899469995L;
 	
+	public static final int RPERSIST_EQUEST_ID = 0x77AA77;
+	public static final int DELETE_REQUEST_ID = 0x77AA78;
+	
 	public static final DateFormat DEFAULT_DATE_FORMAT = new SimpleDateFormat("dd/MM/yyyy");
 	public static final DateFormat DEFAULT_DATE_TIME_FORMAT = new SimpleDateFormat("dd/MM/yyyy 'à' hh:mm:ss");
 
@@ -63,6 +66,55 @@ public abstract class DBEntityTableModel <T extends DBEntity> extends AbstractTa
 				data.add(t);
 		}
 		fireTableDataChanged();
+	}
+	
+	/**
+	 * Utility method to execute create/updating method for all data in table model,
+	 * and persist data in DAO
+	 */
+	@SuppressWarnings("unchecked")
+	public synchronized void persist() {
+		List<T> dataToCreate = new ArrayList<>(),
+				dataToUpdate = new ArrayList<>();
+		
+		for (T t : data) {
+			if (t.getId() == null || t.getId().trim().isEmpty())
+				dataToCreate.add(t);
+			else
+				dataToUpdate.add(t);
+		}
+		
+		if (!dataToCreate.isEmpty()){
+			if(dataToCreate.size() == 1)
+				daoInterface.create(DELETE_REQUEST_ID, dataToCreate.get(0));
+			else 
+				daoInterface.create(RPERSIST_EQUEST_ID, dataToCreate.toArray(createArray(dataToCreate.size())));
+		}
+		
+		if (!dataToUpdate.isEmpty()){
+			if(dataToUpdate.size() == 1)
+				daoInterface.update(DELETE_REQUEST_ID, dataToUpdate.get(0));
+			else 
+				daoInterface.update(RPERSIST_EQUEST_ID, dataToUpdate.toArray(createArray(dataToUpdate.size())));
+		}
+	}
+	
+	/**
+	 * send request to delete data at index in this table model,
+	 * in database
+	 * @param index
+	 */
+	public void deleteAt (int index) {
+		daoInterface.delete(DELETE_REQUEST_ID, data.get(index).getId());
+	}
+	
+	/**
+	 * utility to create a empty array
+	 * @param size
+	 * @return
+	 */
+	protected T [] createArray (int size) {
+		throw new RuntimeException("Veillez re-definir la method create array");
 	}
 	
 	/**

@@ -11,6 +11,7 @@ import javax.swing.JPanel;
 
 import com.spiral.simple.store.app.components.SellerSidebar;
 import com.spiral.simple.store.app.components.SellerSidebar.SellerSidebarListener;
+import com.spiral.simple.store.beans.Command;
 
 /**
  * @author Esaie Muhasa
@@ -50,7 +51,8 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 		commandDialog = new CommandDialog();
 		commandDialog.load();
 		commandDialog.pack();
-		commandDialog.setSize(commandDialog.getWidth(), 600);
+		commandDialog.setSize(commandDialog.getWidth() + 50, 470);
+		commandDialog.setResizable(false);
 		sidebar.setEnabledAddCommand(true);
 	}
 	
@@ -60,6 +62,7 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 	private void showNewCommandDialog() {
 		if (commandDialog != null){
 			commandDialog.setLocationRelativeTo(MainWindow.getLastInstance());
+			commandDialog.setCommand(new Command());
 			commandDialog.setVisible(true);
 			return;
 		}
@@ -67,6 +70,7 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 		EventQueue.invokeLater(() -> {
 			buildCommandDialog();
 			commandDialog.setLocationRelativeTo(MainWindow.getLastInstance());
+			commandDialog.setCommand(new Command());
 			commandDialog.setVisible(true);
 		});
 

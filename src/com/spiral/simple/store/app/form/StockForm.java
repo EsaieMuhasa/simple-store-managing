@@ -156,7 +156,7 @@ public class StockForm extends AbstractForm<Stock> {
 		s.setSalesCurrency(salesComboModel.getElementAt(fieldSalesCurrency.getField().getSelectedIndex()));
 		s.setMeasureUnit(measurUnitComboModel.getElementAt(fieldQuantityUnit.getField().getSelectedIndex()));
 		
-		s.setManufacturingDate(fieldManufacturingDate.getField().getDate());
+		s.setManifacturingDate(fieldManufacturingDate.getField().getDate());
 		s.setExpiryDate(fieldExpiryDate.getField().getDate());
 		s.setDefaultUnitPrice(Double.parseDouble(fieldDefaultUnitPrice.getField().getText()));
 		s.setBuyingPrice(Double.parseDouble(fieldBuyingPrice.getField().getText()));

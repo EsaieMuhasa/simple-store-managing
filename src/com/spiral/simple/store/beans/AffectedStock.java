@@ -13,7 +13,6 @@ public class AffectedStock extends DBEntity {
 	private CommandItem item;
 	private Stock stock;
 	private double quantity;
-	private double unitPrice;
 
 	/**
 	 * 
@@ -34,20 +33,6 @@ public class AffectedStock extends DBEntity {
 	 */
 	public void setQuantity(double quantity) {
 		this.quantity = quantity;
-	}
-
-	/**
-	 * @return the unitPrice
-	 */
-	public double getUnitPrice() {
-		return unitPrice;
-	}
-
-	/**
-	 * @param unitPrice the unitPrice to set
-	 */
-	public void setUnitPrice(double unitPrice) {
-		this.unitPrice = unitPrice;
 	}
 
 	/**

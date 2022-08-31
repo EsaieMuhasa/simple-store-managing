@@ -26,6 +26,12 @@ public class SimpleComboBox <T> extends AbstractFormField {
 		field = new JComboBox<>(model);
 		init();
 	}
+	
+	@Override
+	public void setEnabled(boolean enabled) {
+		super.setEnabled(enabled);
+		field.setEnabled(enabled);
+	}
 
 	/**
 	 * @return the field

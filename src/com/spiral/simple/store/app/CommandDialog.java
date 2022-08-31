@@ -5,6 +5,8 @@ package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -21,8 +23,12 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 
+import com.spiral.simple.store.app.models.InvoiceTableModel;
+import com.spiral.simple.store.beans.AffectedStock;
 import com.spiral.simple.store.beans.Command;
+import com.spiral.simple.store.beans.CommandItem;
 import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.beans.MeasureUnit;
 import com.spiral.simple.store.beans.Product;
@@ -56,8 +62,13 @@ public class CommandDialog extends JDialog {
 	private final JButton btnCancel = new JButton("Annuler la commande", new ImageIcon(Config.getIcon("close")));
 	private final JButton btnPrint = new JButton("Imprimer la facture", new ImageIcon(Config.getIcon("print")));
 	
+	private final DefaultComboBoxModel<Product> productModel = new DefaultComboBoxModel<>(); 
+	private final DefaultComboBoxModel<MeasureUnit> measureUnitModel = new DefaultComboBoxModel<>();
+	private final DefaultComboBoxModel<Currency> currencyModel = new DefaultComboBoxModel<>();
+	private final InvoiceTableModel tableModel = new InvoiceTableModel();
+	
 	private final PanelFieldsCommand fieldsCommand = new PanelFieldsCommand();
-	private final CustomTable itemTable = new CustomTable();
+	private final CustomTable itemTable = new CustomTable(tableModel);
 	
 	private final MeasureUnitDao measureUnitDao = DAOFactory.getDao(MeasureUnitDao.class);
 	private final ProductDao productDao = DAOFactory.getDao(ProductDao.class);
@@ -65,10 +76,43 @@ public class CommandDialog extends JDialog {
 	private final CurrencyDao currencyDao = DAOFactory.getDao(CurrencyDao.class);
 	
 	private final WindowAdapter windowAdapter = new WindowAdapter() {
-		
 		@Override
 		public void windowClosing(WindowEvent e) {
 			doCancel();
+		}
+	};
+	
+	private final MouseAdapter listProductMouseAdapter = new MouseAdapter() {
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			System.out.println(getHeight());
+			if(e.getClickCount() == 2) {
+				Product product = listModelProduct.getElementAt(listProdut.getSelectedIndex());
+				CommandItem item = null;
+				if(productModel.getIndexOf(product) == -1){
+					productModel.addElement(product);
+					item = tableModel.createByProduct(product);
+					if (item.getCurrency() == null)
+						item.setCurrency(currencyModel.getElementAt(fieldsCommand.fieldCurrency.getField().getSelectedIndex()));
+				} else 
+					item = tableModel.findByProduct(product);
+				
+				if(item.countStock() != 0) {
+					AffectedStock a = item.getStockAt(0);
+					for (int j = 0; j < measureUnitModel.getSize(); j++) {
+						if (measureUnitModel.getElementAt(j).getId().equals(a.getStock().getMeasureUnit().getId())) {
+							fieldsCommand.fieldQuantityUnit.getField().setSelectedIndex(j);
+							break;
+						}
+					}
+				}
+				
+				fieldsCommand.fieldQuantityUnit.setEnabled(false);
+				fieldsCommand.fieldItemQuantity.getField().setText(item.getQuantity()+"");
+				fieldsCommand.fieldItemUnitPrice.getField().setText(item.getUnitPrice()+"");
+				fieldsCommand.fieldCurrency.getField().setSelectedItem(item.getCurrency());
+				fieldsCommand.fieldItemProduct.getField().setSelectedItem(product);
+			}
 		}
 	};
 	
@@ -97,6 +141,17 @@ public class CommandDialog extends JDialog {
 		//==
 		
 		initViews();
+		
+		listProdut.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		listProdut.addMouseListener(listProductMouseAdapter);
+	}
+	
+	/**
+	 * mutation of command, in command models
+	 * @param command
+	 */
+	public void setCommand (Command command) {
+		tableModel.setCommand(command);
 	}
 	
 	/**
@@ -118,9 +173,18 @@ public class CommandDialog extends JDialog {
 			scrollList = new JScrollPane(listProdut),
 			scrollTable = new JScrollPane(itemTable);
 		
-		centerPanel.add(fieldsCommand, BorderLayout.NORTH);
-		centerPanel.add(scrollTable, BorderLayout.CENTER);
-		centerPanel.add(btnPrint, BorderLayout.SOUTH);
+		final JPanel 
+			panelTable = new JPanel(new BorderLayout()),
+			panelFields = new JPanel(new BorderLayout());
+		
+		centerPanel.add(panelFields, BorderLayout.WEST);
+		centerPanel.add(panelTable, BorderLayout.CENTER);
+		
+		panelFields.add(fieldsCommand, BorderLayout.NORTH);
+		panelFields.setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
+		panelTable.setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
+		panelTable.add(scrollTable, BorderLayout.CENTER);
+		panelTable.add(btnPrint, BorderLayout.SOUTH);
 		
 		scrollList.setBorder(null);
 		scrollTable.setBorder(null);
@@ -177,9 +241,30 @@ public class CommandDialog extends JDialog {
 		
 	}
 
+	/**
+	 * loading data
+	 */
 	public void load() {
-		// TODO Auto-generated method stub
+		if(measureUnitDao.countAll() != 0) {
+			measureUnitModel.removeAllElements();
+			MeasureUnit [] units = measureUnitDao.findAll();
+			for (MeasureUnit unit : units)
+				measureUnitModel.addElement(unit);
+		}
 		
+		if(productDao.countAll() != 0) {
+			listModelProduct.removeAllElements();
+			Product [] products = productDao.findAll();
+			for (Product product : products)
+				listModelProduct.addElement(product);
+		}
+		
+		if(currencyDao.countAll() != 0) {
+			currencyModel.removeAllElements();
+			Currency [] currencies = currencyDao.findAll();
+			for (Currency currency : currencies) 
+				currencyModel.addElement(currency);
+		}
 	}
 	
 	
@@ -187,13 +272,9 @@ public class CommandDialog extends JDialog {
 	 * @author Esaie Muhasa
 	 * container of all text field in command form
 	 */
-	private static class PanelFieldsCommand extends JPanel {
+	private class PanelFieldsCommand extends JPanel {
 		private static final long serialVersionUID = -6841650272514637580L;
-		
-		private final DefaultComboBoxModel<Product> productModel = new DefaultComboBoxModel<>(); 
-		private final DefaultComboBoxModel<MeasureUnit> measureUnitModel = new DefaultComboBoxModel<>();
-		private final DefaultComboBoxModel<Currency> currencyModel = new DefaultComboBoxModel<>();
-		
+
 		private final JButton btnValidate = new JButton("Valider", new ImageIcon(Config.getIcon("success")));
 		private final SimpleDateField fieldCommandDate = new SimpleDateField("");
 		
@@ -250,9 +331,9 @@ public class CommandDialog extends JDialog {
 			
 			box.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
 			add(box, BorderLayout.CENTER);
-			setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
 			
 		}
+
 		
 	}
 

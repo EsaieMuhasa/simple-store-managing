@@ -44,6 +44,14 @@ public interface StockDao extends DAOInterface<Stock> {
 	Stock [] findByProduct (String key) throws DAOException;
 	
 	/**
+	 * return the latest stock saved, referenced product key
+	 * @param key
+	 * @return
+	 * @throws DAOException
+	 */
+	Stock findLatestByProduct (String key) throws DAOException;
+	
+	/**
 	 * return interval of stocks data reference on product
 	 * @param key
 	 * @param limit

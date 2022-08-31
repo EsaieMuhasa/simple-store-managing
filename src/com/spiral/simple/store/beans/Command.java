@@ -117,5 +117,13 @@ public class Command extends DBEntity {
 		
 		return items.toArray(new CommandItem[items.size()]);
 	}
+	
+	/**
+	 * count item of client command
+	 * @return
+	 */
+	public int countItems () {
+		return items.size();
+	}
 
 }

@@ -4,6 +4,7 @@
 package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
@@ -32,10 +33,14 @@ import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.CaretListener;
 
+import com.spiral.simple.store.app.form.AbstractForm;
+import com.spiral.simple.store.app.form.CommandPaymentForm;
+import com.spiral.simple.store.app.form.FormListener;
 import com.spiral.simple.store.app.models.InvoiceTableModel;
 import com.spiral.simple.store.beans.AffectedStock;
 import com.spiral.simple.store.beans.Command;
 import com.spiral.simple.store.beans.CommandItem;
+import com.spiral.simple.store.beans.CommandPayment;
 import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.beans.DBEntity;
 import com.spiral.simple.store.beans.MeasureUnit;
@@ -304,7 +309,7 @@ public class CommandDialog extends JDialog {
 	 * @author Esaie Muhasa
 	 * container of all text field in command form
 	 */
-	private class PanelFieldsCommand extends JPanel {
+	private class PanelFieldsCommand extends JPanel implements FormListener{
 		private static final long serialVersionUID = -6841650272514637580L;
 
 		private final SimpleDateField fieldCommandDate = new SimpleDateField("");
@@ -318,10 +323,19 @@ public class CommandDialog extends JDialog {
 		private final SimpleTextField fieldItemQuantity =  new SimpleTextField(" Quantité");
 		private final SimpleTextField fieldItemUnitPrice = new SimpleTextField(" Prix unitaire");
 		
+		private final DefaultListModel<CommandPayment> listPaymentModel = new DefaultListModel<>();
 		private final JTabbedPane tabbedPane = new JTabbedPane();
+		private final CommandPaymentForm paymentForm = new CommandPaymentForm();
+		private final JList<CommandPayment> listPayment = new JList<>(listPaymentModel);
 		
 		private final ItemListener productItemListener =  event -> onProductSelectionChange(event);
 		private final ItemListener currencyItemListener = event -> onCurrencySelectionChange(event);
+		
+		//payment panel
+		private final CardLayout paymentLayout = new CardLayout();
+		private final JPanel paymentPanel = new JPanel(paymentLayout);
+		private final JButton btnNewPayment = new JButton("Nouveau payement", new ImageIcon(Config.getIcon("new")));
+		//==
 		
 		private final CaretListener caretQuantityListener = event -> {
 			if(productModel.getSize() == 0)
@@ -366,10 +380,13 @@ public class CommandDialog extends JDialog {
 		public PanelFieldsCommand() {
 			super(new BorderLayout());
 			init();
+			initPaymentPanel();
 			
 			fieldItemProduct.getField().addItemListener(productItemListener);
 			fieldItemQuantity.getField().addCaretListener(caretQuantityListener);
 			fieldItemUnitPrice.getField().addCaretListener(caretUnitPriceListener);
+			paymentForm.addFormListener(this);
+			paymentForm.doReload();
 		}
 		
 		@Override
@@ -479,10 +496,7 @@ public class CommandDialog extends JDialog {
 		 * building UI components
 		 */
 		private void init() {
-			
-			final JPanel 
-				panelCommand = new JPanel(new BorderLayout()),
-				panelMoney = new JPanel(new BorderLayout());
+			final JPanel panelCommand = new JPanel(new BorderLayout());
 			
 			final Box 
 				box = Box.createVerticalBox(),
@@ -512,15 +526,59 @@ public class CommandDialog extends JDialog {
 			box.add(Box.createVerticalStrut(5));
 			
 			box.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
-			
 			panelCommand.add(item, BorderLayout.NORTH);
 			
 			tabbedPane.addTab("Commande", panelCommand);
-			tabbedPane.addTab("Payement", panelMoney);
+			tabbedPane.addTab("Payement", paymentPanel);
 			
 			add(box, BorderLayout.NORTH);
 			add(tabbedPane, BorderLayout.CENTER);
+		}
+		
+		/**
+		 * initialization of UI component of payment panel
+		 */
+		private void initPaymentPanel() {
+			JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT)),
+					description = new JPanel(new BorderLayout());
 			
+			final JScrollPane scroll = new JScrollPane(listPayment);
+			scroll.setBorder(null);
+			
+			top.add(btnNewPayment);
+			description.add(top, BorderLayout.NORTH);
+			description.add(scroll, BorderLayout.CENTER);
+			description.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
+			paymentPanel.add(description, "description");
+			paymentPanel.add(paymentForm, "form");
+			
+			paymentLayout.addLayoutComponent(description, "description");
+			paymentLayout.addLayoutComponent(paymentForm, "form");
+			
+			btnNewPayment.addActionListener(event -> {
+				paymentLayout.show(paymentPanel, "form");
+			});
+			
+			paymentForm.setFieldDateVisible(false);
+		}
+
+		@Override
+		public void onValidate(AbstractForm<?> form) {}
+
+		@Override
+		public void onAcceptData(AbstractForm<?> form) {
+			paymentLayout.show(paymentPanel, "description");
+			
+		}
+
+		@Override
+		public void onRejetData(AbstractForm<?> form, String... causes) {
+			//JOptionPane.showMessageDialog(CommandDialog.this, causes[0], "Erreur du montant", JOptionPane.ERROR_MESSAGE);
+		}
+
+		@Override
+		public void onCancel(AbstractForm<?> form) {
+			paymentLayout.show(paymentPanel, "description");
 		}
 	}
 

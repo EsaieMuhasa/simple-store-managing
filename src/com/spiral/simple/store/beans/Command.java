@@ -23,6 +23,7 @@ public class Command extends DBEntity {
 	 * all item associate with this client command
 	 */
 	private final List<CommandItem> items = new ArrayList<>();
+	private final List<CommandPayment> payments = new ArrayList<>();
 
 	/**
 	 * 
@@ -124,6 +125,10 @@ public class Command extends DBEntity {
 	 */
 	public int countItems () {
 		return items.size();
+	}
+	
+	public void removePaymentAt(int index) {
+		
 	}
 
 }

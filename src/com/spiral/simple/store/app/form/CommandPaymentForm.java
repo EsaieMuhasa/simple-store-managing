@@ -10,6 +10,7 @@ import java.awt.event.ItemListener;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import javax.swing.Box;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -23,6 +24,7 @@ import com.spiral.simple.store.dao.DAOException;
 import com.spiral.simple.store.dao.DAOFactory;
 import com.spiral.simple.store.dao.ExchangeRateDao;
 import com.spiral.simple.store.swing.SimpleComboBox;
+import com.spiral.simple.store.swing.SimpleDateField;
 import com.spiral.simple.store.swing.SimpleTextField;
 
 /**
@@ -35,6 +37,7 @@ public class CommandPaymentForm extends AbstractForm<CommandPayment> {
 	private final DefaultComboBoxModel<Currency> currencyModel = new DefaultComboBoxModel<>();
 	private final SimpleTextField fieldAmount = new SimpleTextField(" Montant");
 	private final SimpleComboBox<Currency> fieldCurrency = new SimpleComboBox<>("Devise", currencyModel);
+	private final SimpleDateField fieldDate = new SimpleDateField("Date du payement");
 	
 	private final ItemListener currencyItemListener = event -> onCurrencyChange(event);
 	private final ExchangeRateDao exchangeRateDao = DAOFactory.getDao(ExchangeRateDao.class);
@@ -47,11 +50,27 @@ public class CommandPaymentForm extends AbstractForm<CommandPayment> {
 		super(DAOFactory.getDao(CommandPaymentDao.class));
 		
 		setTitle("Payment de la commande");
-		final JPanel fields = new JPanel(new GridLayout(1, 2));
-		fields.add(fieldAmount);
-		fields.add(fieldCurrency);
+		final Box fields = Box.createVerticalBox();
+		final JPanel row = new JPanel(new GridLayout(1, 2));
+		row.add(fieldAmount);
+		row.add(fieldCurrency);
+		
+		fields.add(fieldDate);
+		fields.add(Box.createVerticalStrut(10));
+		fields.add(row);
+		fields.add(Box.createVerticalGlue());
+		
 		getBody().add(fields, BorderLayout.CENTER);
 		fieldCurrency.getField().addItemListener(currencyItemListener);
+		setVisibilityButtonCancellation(true);
+	}
+	
+	/**
+	 * change visibility of date field
+	 * @param visible
+	 */
+	public void setFieldDateVisible (boolean visible) {
+		fieldDate.setVisible(visible);
 	}
 	
 	@Override
@@ -140,11 +159,13 @@ public class CommandPaymentForm extends AbstractForm<CommandPayment> {
 	protected void doValidate() {
 		if (payment == null)
 			payment = new CommandPayment();
-		
+		cause = null;
 		payment.setCurrency(currencyModel.getElementAt(fieldCurrency.getField().getSelectedIndex()));
 		try {
 			double amount = Double.parseDouble(fieldAmount.getField().getText());
 			payment.setAmount(amount);
+			if(amount <= 0.0)
+				cause = new String[]{"Le montant doit être une valeur numérique valide suppérieur à zéro"};
 		} catch (NumberFormatException e) {
 			cause = new String[]{"Le montant doit être une valeur numérique valide"};
 		}
@@ -154,8 +175,9 @@ public class CommandPaymentForm extends AbstractForm<CommandPayment> {
 	protected boolean isAccept() {
 		if(!fieldAmount.getField().getText().trim().isEmpty() && currencyModel.getSize() != 0) {
 			try{
-				Double.parseDouble(fieldAmount.getField().getText());
-				return true;
+				double amount = Double.parseDouble(fieldAmount.getField().getText());
+				System.out.println(amount);
+				return amount > 0.0;
 			} catch (NumberFormatException e) {}
 		}
 		return false;

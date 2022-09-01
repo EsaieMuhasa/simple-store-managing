@@ -51,7 +51,7 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 		commandDialog = new CommandDialog();
 		commandDialog.load();
 		commandDialog.pack();
-		commandDialog.setSize(commandDialog.getWidth() + 100, 440);
+		commandDialog.setSize(commandDialog.getWidth() + 100, 475);
 //		commandDialog.setResizable(false);
 		sidebar.setEnabledAddCommand(true);
 	}

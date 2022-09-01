@@ -125,6 +125,11 @@ public abstract class AbstractForm <H extends DBEntity> extends JPanel{
 	 */
 	public void doReload () {}
 	
+	/**
+	 * persist data
+	 */
+	public void persist () {}
+	
 	@Override
 	public void setEnabled (boolean enabled) {
 		super.setEnabled(enabled);

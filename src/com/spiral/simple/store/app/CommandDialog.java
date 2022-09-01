@@ -464,7 +464,7 @@ public class CommandDialog extends JDialog {
 				if(status == JOptionPane.YES_OPTION){
 					unitPrice = exchangeRateDao.convert(unitPrice, currency, currency2);
 					BigDecimal decimal = new BigDecimal(unitPrice).setScale(2, RoundingMode.HALF_UP);
-					fieldItemUnitPrice.getField().setText(decimal+"");
+					fieldItemUnitPrice.getField().setText(decimal.doubleValue()+"");
 				}
 				
 				Product product = productModel.getElementAt(fieldItemProduct.getField().getSelectedIndex()); 

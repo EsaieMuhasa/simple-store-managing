@@ -28,25 +28,24 @@ class ExchangeRateDaoSQL extends UtilSQL<ExchangeRate> implements ExchangeRateDa
 
 	@Override
 	public boolean checkByCurrencies(String currency1, String currency2) throws DAOException {
-		// TODO Auto-generated method stub
-		return false;
+		return checkData("SELECT * FROM "+getViewName()+" WHERE ((currency1 = ? AND currency2 = ?) OR (currency1 = ? AND currency2 = ?)) AND endTime IS NULL LIMIT 1", 
+				 currency1, currency2, currency2, currency1);
 	}
 
 	@Override
 	public ExchangeRate[] findAvailableByCurrency(String currency) throws DAOException {
-		return readData("SELECT * FROM "+getViewName()+" WHERE currency1 = ? OR currency2 = ?", currency, currency);
+		return readData("SELECT DISTINCT * FROM "+getViewName()+" WHERE (currency1 = ? OR currency2 = ?) AND endTime IS NULL", currency, currency);
 	}
 
 	@Override
 	public ExchangeRate[] findAvailable() throws DAOException {
-		// TODO Auto-generated method stub
-		return null;
+		return readData("SELECT * FROM "+getViewName()+" WHERE endTime IS NULL");
 	}
 
 	@Override
 	public ExchangeRate findAvailableByCurrencies(String currency1, String currency2) throws DAOException {
-		// TODO Auto-generated method stub
-		return null;
+		String sql = "SELECT * FROM "+getViewName()+" WHERE ((currency1 = ? AND currency2 = ?) OR (currency1 = ? AND currency2 = ?)) AND endTime IS NULL LIMIT 1";
+		return readData(sql, currency1, currency2, currency2, currency1)[0];
 	}
 
 	@Override
@@ -89,7 +88,7 @@ class ExchangeRateDaoSQL extends UtilSQL<ExchangeRate> implements ExchangeRateDa
 		rate.setCurrency1(new Currency());
 		rate.setCurrency2(new Currency());
 		rate.setRate(result.getDouble("rate"));
-		rate.initEndTime(result.getLong("endDate"));
+		rate.initEndTime(result.getLong("endTime"));
 		rate.initSartTime(result.getLong("startTime"));
 		rate.getCurrency1().setId(result.getString("currency1"));
 		rate.getCurrency2().setId(result.getString("currency2"));

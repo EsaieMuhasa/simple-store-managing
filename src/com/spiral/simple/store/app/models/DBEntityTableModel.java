@@ -291,6 +291,18 @@ public abstract class DBEntityTableModel <T extends DBEntity> extends AbstractTa
 	}
 	
 	/**
+	 * force l'intervace graphique de redessiner la linge qui represente cette objet
+	 * @param t
+	 */
+	public void repaintRow (T t) {
+		for (int i = 0, count = getRowCount(); i < count; i++) 
+			if(data.get(i).getId() == t.getId()) {
+				fireTableRowsUpdated(i, i);
+				return;
+			}
+	}
+	
+	/**
 	 * Supression de tout les donnees dans le model
 	 */
 	public void clear () {

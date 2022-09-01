@@ -66,5 +66,19 @@ public class Currency extends DBEntity {
 	public String toString() {
 		return String.format("%s (%s)", shortName, fullName);
 	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == this)
+			return true;
+		
+		if (obj != null && obj instanceof Currency) {
+			Currency c = (Currency) obj;
+			if(c.id == null || c.id.trim().isEmpty() || id == null || id.trim().isEmpty())
+				return false;
+			return c.getId().equals(id);
+		}
+		return super.equals(obj);
+	}
 
 }

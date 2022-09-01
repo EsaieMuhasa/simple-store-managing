@@ -395,7 +395,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			) {
 			return readData(result);
 		} catch (SQLException e) {
-			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee.\n"+e.getMessage(), e);
 		}
 	}
 	

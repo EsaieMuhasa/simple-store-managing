@@ -4,11 +4,16 @@
 package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -22,20 +27,24 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.CaretListener;
 
 import com.spiral.simple.store.app.models.InvoiceTableModel;
 import com.spiral.simple.store.beans.AffectedStock;
 import com.spiral.simple.store.beans.Command;
 import com.spiral.simple.store.beans.CommandItem;
 import com.spiral.simple.store.beans.Currency;
+import com.spiral.simple.store.beans.DBEntity;
 import com.spiral.simple.store.beans.MeasureUnit;
 import com.spiral.simple.store.beans.Product;
 import com.spiral.simple.store.dao.CommandDao;
 import com.spiral.simple.store.dao.CurrencyDao;
 import com.spiral.simple.store.dao.DAOFactory;
 import com.spiral.simple.store.dao.DAOListenerAdapter;
+import com.spiral.simple.store.dao.ExchangeRateDao;
 import com.spiral.simple.store.dao.MeasureUnitDao;
 import com.spiral.simple.store.dao.ProductDao;
 import com.spiral.simple.store.swing.CaptionnablePanel;
@@ -74,6 +83,7 @@ public class CommandDialog extends JDialog {
 	private final ProductDao productDao = DAOFactory.getDao(ProductDao.class);
 	private final CommandDao commandDao = DAOFactory.getDao(CommandDao.class);
 	private final CurrencyDao currencyDao = DAOFactory.getDao(CurrencyDao.class);
+	private final ExchangeRateDao exchangeRateDao = DAOFactory.getDao(ExchangeRateDao.class);
 	
 	private final WindowAdapter windowAdapter = new WindowAdapter() {
 		@Override
@@ -85,15 +95,28 @@ public class CommandDialog extends JDialog {
 	private final MouseAdapter listProductMouseAdapter = new MouseAdapter() {
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			System.out.println(getHeight());
+			
 			if(e.getClickCount() == 2) {
 				Product product = listModelProduct.getElementAt(listProdut.getSelectedIndex());
+				fieldsCommand.fieldItemProduct.getField().removeItemListener(fieldsCommand.productItemListener);
+				fieldsCommand.fieldCurrency.getField().removeItemListener(fieldsCommand.currencyItemListener);
 				CommandItem item = null;
 				if(productModel.getIndexOf(product) == -1){
 					productModel.addElement(product);
 					item = tableModel.createByProduct(product);
 					if (item.getCurrency() == null)
 						item.setCurrency(currencyModel.getElementAt(fieldsCommand.fieldCurrency.getField().getSelectedIndex()));
+					else {
+						/* pour le currency dans le command item pointe vers la meme reference
+						 * que ceux du model du combo box des occurences
+						 */
+						for (int j = 0; j < currencyModel.getSize(); j++) {
+							if(item.getCurrency().equals(currencyModel.getElementAt(j))) {
+								item.setCurrency(currencyModel.getElementAt(j));
+								break;
+							}
+						}
+					}
 				} else 
 					item = tableModel.findByProduct(product);
 				
@@ -108,10 +131,12 @@ public class CommandDialog extends JDialog {
 				}
 				
 				fieldsCommand.fieldQuantityUnit.setEnabled(false);
+				fieldsCommand.fieldItemProduct.getField().setSelectedItem(product);
 				fieldsCommand.fieldItemQuantity.getField().setText(item.getQuantity()+"");
 				fieldsCommand.fieldItemUnitPrice.getField().setText(item.getUnitPrice()+"");
 				fieldsCommand.fieldCurrency.getField().setSelectedItem(item.getCurrency());
-				fieldsCommand.fieldItemProduct.getField().setSelectedItem(product);
+				fieldsCommand.fieldItemProduct.getField().addItemListener(fieldsCommand.productItemListener);
+				fieldsCommand.fieldCurrency.getField().addItemListener(fieldsCommand.currencyItemListener);
 			}
 		}
 	};
@@ -168,6 +193,7 @@ public class CommandDialog extends JDialog {
 		bottomPanel.add(btnCancel);
 		bottomPanel.add(btnValidate);
 		bottomPanel.setBackground(itemTable.getGridColor());
+		itemTable.setShowVerticalLines(false);
 		
 		JScrollPane 
 			scrollList = new JScrollPane(listProdut),
@@ -175,7 +201,8 @@ public class CommandDialog extends JDialog {
 		
 		final JPanel 
 			panelTable = new JPanel(new BorderLayout()),
-			panelFields = new JPanel(new BorderLayout());
+			panelFields = new JPanel(new BorderLayout()),
+			tableBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 		
 		centerPanel.add(panelFields, BorderLayout.WEST);
 		centerPanel.add(panelTable, BorderLayout.CENTER);
@@ -184,7 +211,8 @@ public class CommandDialog extends JDialog {
 		panelFields.setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
 		panelTable.setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
 		panelTable.add(scrollTable, BorderLayout.CENTER);
-		panelTable.add(btnPrint, BorderLayout.SOUTH);
+		panelTable.add(tableBottom, BorderLayout.SOUTH);
+		tableBottom.add(btnPrint);
 		
 		scrollList.setBorder(null);
 		scrollTable.setBorder(null);
@@ -216,12 +244,16 @@ public class CommandDialog extends JDialog {
 	 * canceling operation
 	 */
 	private void doCancel() {
-		int status = JOptionPane.showConfirmDialog(this, "Voulez-vous vraiment annuler la commande?", "Annullation de la commande", JOptionPane.YES_NO_OPTION);
-		if(status != JOptionPane.OK_OPTION)
-			return;
-		
-		
+		if(tableModel.getRowCount() != 0) {
+			int status = JOptionPane.showConfirmDialog(this, "Voulez-vous vraiment annuler la commande?", "Annullation de la commande", JOptionPane.YES_NO_OPTION);
+			if(status != JOptionPane.OK_OPTION)
+				return;
+		}
+		fieldsCommand.setEnabled(false);
+		tableModel.setCommand(null);
 		setVisible(false);
+		fieldsCommand.dispose();
+		fieldsCommand.setEnabled(true);
 		dispose();
 	}
 	
@@ -275,7 +307,6 @@ public class CommandDialog extends JDialog {
 	private class PanelFieldsCommand extends JPanel {
 		private static final long serialVersionUID = -6841650272514637580L;
 
-		private final JButton btnValidate = new JButton("Valider", new ImageIcon(Config.getIcon("success")));
 		private final SimpleDateField fieldCommandDate = new SimpleDateField("");
 		
 		private final SimpleTextField fieldClientName = new SimpleTextField(" Noms");
@@ -287,22 +318,178 @@ public class CommandDialog extends JDialog {
 		private final SimpleTextField fieldItemQuantity =  new SimpleTextField(" Quantité");
 		private final SimpleTextField fieldItemUnitPrice = new SimpleTextField(" Prix unitaire");
 		
+		private final JTabbedPane tabbedPane = new JTabbedPane();
+		
+		private final ItemListener productItemListener =  event -> onProductSelectionChange(event);
+		private final ItemListener currencyItemListener = event -> onCurrencySelectionChange(event);
+		
+		private final CaretListener caretQuantityListener = event -> {
+			if(productModel.getSize() == 0)
+				return;
+			
+			Product product = productModel.getElementAt(fieldItemProduct.getField().getSelectedIndex());
+			if(!tableModel.checkByProduct(product))
+				return;
+			
+			CommandItem item = tableModel.findByProduct(product);
+			if(!fieldItemQuantity.getField().getText().trim().isEmpty()) {
+				try {
+					double quantity = Double.parseDouble(fieldItemQuantity.getField().getText());					
+					item.setQuantity(quantity);
+					tableModel.repaintRow(item);
+				} catch (NumberFormatException e) {
+					JOptionPane.showMessageDialog(CommandDialog.this, "La quantité doit être une valeur numérique valide.", "Erreur: valeur numérique invalide", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		};
+		
+		private final CaretListener caretUnitPriceListener = event -> {
+			if(productModel.getSize() == 0)
+				return;
+			
+			Product product = productModel.getElementAt(fieldItemProduct.getField().getSelectedIndex());
+			if(!tableModel.checkByProduct(product))
+				return;
+			
+			CommandItem item = tableModel.findByProduct(product);
+			if(!fieldItemUnitPrice.getField().getText().trim().isEmpty()) {
+				try {
+					double unitPrice = Double.parseDouble(fieldItemUnitPrice.getField().getText());					
+					item.setUnitPrice(unitPrice);
+					tableModel.repaintRow(item);
+				} catch (NumberFormatException e) {
+					JOptionPane.showMessageDialog(CommandDialog.this, "La prix unitaire doit être une valeur numérique valide.", "Erreur: valeur numérique invalide", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		};
+		
 		public PanelFieldsCommand() {
 			super(new BorderLayout());
 			init();
+			
+			fieldItemProduct.getField().addItemListener(productItemListener);
+			fieldItemQuantity.getField().addCaretListener(caretQuantityListener);
+			fieldItemUnitPrice.getField().addCaretListener(caretUnitPriceListener);
+		}
+		
+		@Override
+		public void setEnabled(boolean enabled) {
+			super.setEnabled(enabled);
+			fieldClientName.setEnabled(enabled);
+			fieldClientTelephone.setEnabled(enabled);
+			fieldItemProduct.setEnabled(enabled);
+			fieldItemUnitPrice.setEnabled(enabled);
+			fieldItemQuantity.setEnabled(enabled);
+		}
+
+		/**
+		 * clear all text fields and disposable combo box
+		 */
+		private void dispose() {
+			fieldClientName.getField().setText("");;
+			fieldClientTelephone.getField().setText("");
+			fieldItemUnitPrice.getField().setText("");
+			fieldItemQuantity.getField().setText("");
+			fieldsCommand.fieldItemProduct.getField().removeItemListener(fieldsCommand.productItemListener);
+			productModel.removeAllElements();
+			fieldsCommand.fieldItemProduct.getField().addItemListener(fieldsCommand.productItemListener);
+		}
+		
+		/**
+		 * validate product after update command item
+		 * @param product
+		 */
+		private void validateItem (Product product) {
+
+			try {
+				if(product == null)
+					return;
+				CommandItem item = tableModel.findByProduct(product);
+				if(!fieldItemQuantity.getField().getText().trim().isEmpty()) {
+					double quantity = Double.parseDouble(fieldItemQuantity.getField().getText());					
+					item.setQuantity(quantity);
+				}
+				double unitPrice = Double.parseDouble(fieldItemUnitPrice.getField().getText());
+				Currency currency = currencyModel.getElementAt(fieldCurrency.getField().getSelectedIndex());
+				
+				item.setUnitPrice(unitPrice);
+				item.setCurrency(currency);
+				
+				tableModel.repaintRow(item);
+			} catch (NumberFormatException e) {
+				JOptionPane.showMessageDialog(CommandDialog.this, e.getMessage(), "Erreur: valeur numérique invalide", JOptionPane.ERROR_MESSAGE);
+			} catch (RuntimeException e) {
+				System.out.println(e.getStackTrace()[0]+": "+e.getMessage());
+			}
+		}
+		
+		/**
+		 * listening of selection item product change, in product combo box
+		 * @param event
+		 */
+		private void onProductSelectionChange (ItemEvent event) {
+			Product product = (Product) event.getItem();
+			if(event.getStateChange() == ItemEvent.DESELECTED){//validation de l'element de- selectionner
+				validateItem(product);
+			} else {
+				//chargement de donnee pour l'element selectionner
+				if(product == null || !tableModel.checkByProduct(product))
+					return;
+				
+				CommandItem item = tableModel.findByProduct(product);
+				fieldItemQuantity.getField().setText(item.getQuantity()+"");
+				fieldItemUnitPrice.getField().setText(item.getUnitPrice()+"");
+				fieldCurrency.getField().setSelectedItem(item.getCurrency());
+			}
+		}
+		
+		/**
+		 * when change currency,
+		 * we ask question, so he is prefer execute trading of currency
+		 * @param event
+		 */
+		private void onCurrencySelectionChange (ItemEvent event) {
+			Currency currency = (Currency) event.getItem();
+			if(currency != null && event.getStateChange() == ItemEvent.DESELECTED) {
+				Currency currency2 = currencyModel.getElementAt(fieldCurrency.getField().getSelectedIndex());
+				if (!exchangeRateDao.checkByCurrencies(currency.getId(), currency2.getId())) 
+					return;
+				
+				double unitPrice = Double.parseDouble(fieldItemUnitPrice.getField().getText());
+				String message = "Voulez-vous faire la conversion du "+DBEntity.DECIMAL_FORMAT.format(unitPrice)+" "+currency.getShortName()+""
+						+ "\n en "+currency2.getShortName()+"? \n",
+						title = "Conversion de "+currency.getShortName()+" en "+currency2.getShortName();
+				int status = JOptionPane.showConfirmDialog(CommandDialog.this, message, title, JOptionPane.YES_NO_OPTION);
+				
+				if(status == JOptionPane.YES_OPTION){
+					unitPrice = exchangeRateDao.convert(unitPrice, currency, currency2);
+					BigDecimal decimal = new BigDecimal(unitPrice).setScale(2, RoundingMode.HALF_UP);
+					fieldItemUnitPrice.getField().setText(decimal+"");
+				}
+				
+				Product product = productModel.getElementAt(fieldItemProduct.getField().getSelectedIndex()); 
+				if(!tableModel.checkByProduct(product))
+					return;
+				CommandItem item = tableModel.findByProduct(product);
+				item.setCurrency(currency2);
+			}
 		}
 		
 		/**
 		 * building UI components
 		 */
 		private void init() {
+			
+			final JPanel 
+				panelCommand = new JPanel(new BorderLayout()),
+				panelMoney = new JPanel(new BorderLayout());
+			
 			final Box 
 				box = Box.createVerticalBox(),
 				client = Box.createVerticalBox(),
 				item = Box.createVerticalBox();
 			
 			final JPanel 
-				bottom = new JPanel(),
 				rowQuantity = new JPanel(new GridLayout(1, 2, 5, 5)),
 				rowUnitPrice = new JPanel(new GridLayout(1, 2, 5, 5));
 			
@@ -319,23 +506,22 @@ public class CommandDialog extends JDialog {
 			item.add(rowQuantity);
 			item.add(rowUnitPrice);
 			
-			bottom.add(btnValidate);
-			
 			box.add(new CaptionnablePanel("Date du jour", fieldCommandDate));
 			box.add(Box.createVerticalStrut(5));
 			box.add(new CaptionnablePanel("Client", client));
 			box.add(Box.createVerticalStrut(5));
-			box.add(new CaptionnablePanel("Elément de la commande", item));
-			box.add(Box.createVerticalStrut(5));
-			box.add(bottom);
 			
 			box.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
-			add(box, BorderLayout.CENTER);
+			
+			panelCommand.add(item, BorderLayout.NORTH);
+			
+			tabbedPane.addTab("Commande", panelCommand);
+			tabbedPane.addTab("Payement", panelMoney);
+			
+			add(box, BorderLayout.NORTH);
+			add(tabbedPane, BorderLayout.CENTER);
 			
 		}
-
-		
 	}
-
 
 }

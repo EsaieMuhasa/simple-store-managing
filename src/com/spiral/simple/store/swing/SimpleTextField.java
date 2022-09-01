@@ -23,6 +23,12 @@ public class SimpleTextField extends AbstractFormField {
 		super(label);
 		init();
 	}
+	
+	@Override
+	public void setEnabled(boolean enabled) {
+		super.setEnabled(enabled);
+		field.setEnabled(enabled);
+	}
 
 	/**
 	 * @return the field

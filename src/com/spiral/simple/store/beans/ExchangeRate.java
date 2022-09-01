@@ -51,14 +51,14 @@ public class ExchangeRate extends DBEntity {
 	 * @throws IllegalArgumentException
 	 */
 	public double convert (double value, Currency currency) throws IllegalArgumentException {
-		if (currency1.getId() != currency.getId() && currency2.getId() != currency.getId())
+		if (!currency1.equals(currency) && !currency2.equals(currency))
 			throw new IllegalArgumentException("Impossible d'effectuer cette operation car "
 					+ "la devise en parametre n'est pas pris en charge");
 		
 		if (value == 0 || rate == 0)
 			return 0;
 		
-		if (currency == currency1 || currency.getId().equals(currency1.getId()))
+		if (currency.equals(currency1))
 			return value * rate;
 		
 		return value / rate;

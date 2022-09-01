@@ -37,6 +37,11 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 	}
 	
 	@Override
+	public void repaintRow(CommandItem t) {
+		fireTableDataChanged();
+	}
+	
+	@Override
 	public synchronized void persist() {
 		if (command == null)
 			return;
@@ -83,16 +88,21 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 		switch (columnIndex) {
 			case 0: return (rowIndex + 1);
 			case 1: return data.get(rowIndex).getProduct().getName();
-			case 2: return data.get(rowIndex).getQuantity();
+			case 2: {
+				String quantity = CommandItem.DECIMAL_FORMAT.format(data.get(rowIndex).getQuantity());
+				if (data.get(rowIndex).countStock() != 0)
+					quantity += " "+data.get(rowIndex).getStockAt(0).getStock().getMeasureUnit().getShortName();
+				return quantity;
+			}
 			case 3: {
 				if (data.get(rowIndex).getCurrency() == null)
 					return "";
-				return data.get(rowIndex).getUnitPrice() +" "+data.get(rowIndex).getCurrency().getShortName();
+				return CommandItem.DECIMAL_FORMAT.format(data.get(rowIndex).getUnitPrice()) +" "+data.get(rowIndex).getCurrency().getShortName();
 			}
 			case 4: {
 				if (data.get(rowIndex).getCurrency() == null)
 					return "";
-				return data.get(rowIndex).getTotalPrice()+" "+data.get(rowIndex).getCurrency().getShortName(); 
+				return CommandItem.DECIMAL_FORMAT.format(data.get(rowIndex).getTotalPrice())+" "+data.get(rowIndex).getCurrency().getShortName(); 
 			}
 		}
 		return "";
@@ -124,6 +134,18 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 		command.addItem(item);
 		reload();
 		return item;
+	}
+	
+	/**
+	 * check command item of product in invoice table model
+	 * @param product
+	 * @return
+	 */
+	public boolean checkByProduct (Product product) {
+		for (int i = 0; i < data.size(); i++) 
+			if (data.get(i).getProduct() == product)
+				return true;
+		return false;
 	}
 	
 	/**
@@ -177,7 +199,7 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 	 * @param product
 	 * @param currency
 	 */
-	public void updateUnitPriceCurrency(Product product, Currency currency) {
+	public double updateUnitPriceCurrency(Product product, Currency currency) {
 		for (int i = 0; i < data.size(); i++) {
 			CommandItem item = data.get(i);
 			if(item.getProduct() != product)
@@ -191,8 +213,9 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 			
 			item.setCurrency(currency);
 			fireTableRowsUpdated(i, i);
-			return;
+			return item.getUnitPrice();
 		}
+		throw new RuntimeException("Impossible d'effectuer le trading de la devise");
 	}
 	
 	/**

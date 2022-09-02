@@ -15,7 +15,7 @@ public interface DistributionConfigDao extends DAOInterface<DistributionConfig> 
 	 * this method plays a versatile role. 
 	 * He can create a new configuration, or modify the existing configuration.
 	 * it takes into account elements of the configuration and it is able to know which element, add / modify or delete
-	 * In run in new thread
+	 * It run in new thread
 	 * @param requestId
 	 * @param config
 	 */

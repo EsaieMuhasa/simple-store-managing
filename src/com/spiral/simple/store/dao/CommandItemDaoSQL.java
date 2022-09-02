@@ -64,7 +64,7 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null,
 				entity.getCommand().getId(),
 				entity.getProduct().getId(),
-				entity.getConfig().getId(),
+				entity.getConfig() != null? entity.getConfig().getId() : null,
 				entity.getQuantity(),
 				entity.getUnitPrice(),
 				entity.getCurrency().getId()
@@ -77,8 +77,10 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 		i.setQuantity(result.getDouble("quantity"));
 		i.setCommand(new Command());
 		i.getCommand().setId(result.getString("command"));
-		i.setConfig(new DistributionConfig());
-		i.getConfig().setId(result.getString("config"));
+		if(result.getString("config") != null) {
+			i.setConfig(new DistributionConfig());
+			i.getConfig().setId(result.getString("config"));
+		}
 		i.setProduct(new Product());
 		i.getProduct().setId(result.getString("product"));
 		i.setUnitPrice(result.getDouble("unitPrice"));
@@ -91,6 +93,10 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 		super.create(connection, requestId, t);
 		List<AffectedStock> stocks = new ArrayList<>();
 		for (CommandItem item : t) {
+			
+			if(item.getConfig() == null && daoFactory.get(DistributionConfigDao.class).checkAvailableByProduct(item.getProduct().getId()))
+				item.setConfig(daoFactory.get(DistributionConfigDao.class).findAvailableByProduct(item.getProduct().getId()));
+			
 			AffectedStock [] st = item.getStocks();
 			if(st == null)
 				continue;

@@ -17,7 +17,7 @@ public interface ClientDao extends DAOInterface<Client> {
 	 * @return
 	 * @throws DAOException
 	 */
-	boolean ckeckByTelephone (String telephone) throws DAOException;
+	boolean checkByTelephone (String telephone) throws DAOException;
 	
 	/**
 	 * return client owner of telephone number

@@ -20,7 +20,7 @@ class ClientDaoSQL extends UtilSQL<Client> implements ClientDao {
 	}
 
 	@Override
-	public boolean ckeckByTelephone(String telephone) throws DAOException {
+	public boolean checkByTelephone(String telephone) throws DAOException {
 		return check("telephone", telephone);
 	}
 

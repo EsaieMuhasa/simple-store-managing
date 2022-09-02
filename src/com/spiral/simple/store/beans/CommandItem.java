@@ -69,6 +69,8 @@ public class CommandItem extends DBEntity {
 	 */
 	public void setQuantity(double quantity) {
 		this.quantity = quantity;
+		if(!stocks.isEmpty())
+			stocks.get(0).setQuantity(quantity);
 	}
 
 	/**

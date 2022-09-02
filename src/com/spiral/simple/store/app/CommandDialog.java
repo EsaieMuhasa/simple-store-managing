@@ -50,6 +50,7 @@ import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.beans.DBEntity;
 import com.spiral.simple.store.beans.MeasureUnit;
 import com.spiral.simple.store.beans.Product;
+import com.spiral.simple.store.dao.ClientDao;
 import com.spiral.simple.store.dao.CommandDao;
 import com.spiral.simple.store.dao.CurrencyDao;
 import com.spiral.simple.store.dao.DAOException;
@@ -101,6 +102,7 @@ public class CommandDialog extends JDialog {
 	private final CommandDao commandDao = DAOFactory.getDao(CommandDao.class);
 	private final CurrencyDao currencyDao = DAOFactory.getDao(CurrencyDao.class);
 	private final ExchangeRateDao exchangeRateDao = DAOFactory.getDao(ExchangeRateDao.class);
+	private final ClientDao clientDao = DAOFactory.getDao(ClientDao.class);
 	
 	private final WindowAdapter windowAdapter = new WindowAdapter() {
 		@Override
@@ -164,6 +166,9 @@ public class CommandDialog extends JDialog {
 	private final DAOListenerAdapter<Command> commandListenerAdapter = new DAOListenerAdapter<Command>() {
 		@Override
 		public void onCreate(Command... data) {
+			cancel();
+			String message = "Enregistrement de la commande fait avec succès";
+			JOptionPane.showMessageDialog(MainWindow.getLastInstance(), message, "Enregistrement de la commande", JOptionPane.INFORMATION_MESSAGE);
 		}
 
 		@Override
@@ -193,6 +198,7 @@ public class CommandDialog extends JDialog {
 		measureUnitDao.addBaseListener(measureUnitListenerAdapter);
 		productDao.addBaseListener(productListenerAdapter);
 		commandDao.addBaseListener(commandListenerAdapter);
+		commandDao.addErrorListener(commandListenerAdapter);
 		currencyDao.addBaseListener(currecyListenerAdapter);
 		//==
 		
@@ -302,6 +308,10 @@ public class CommandDialog extends JDialog {
 			if(status != JOptionPane.OK_OPTION)
 				return;
 		}
+		cancel();
+	}
+	
+	private void cancel() {
 		fieldsCommand.setEnabled(false);
 		tableModel.setCommand(null);
 		setVisible(false);
@@ -327,12 +337,17 @@ public class CommandDialog extends JDialog {
 		Client client = command.getClient();
 		
 		Date date = fieldsCommand.fieldCommandDate.getField().getDate();
-		String names = fieldsCommand.fieldClientName.getField().getText().trim();
 		String telephone = fieldsCommand.fieldClientTelephone.getField().getText().trim();
+		String names = fieldsCommand.fieldClientName.getField().getText().trim();
+		
+		if (telephone != null && clientDao.checkByTelephone(telephone))
+			command.setClient(clientDao.findByTelephone(telephone));
+		else {			
+			client.setNames(names.isEmpty()? null : names);
+			client.setTelephone(telephone.isEmpty()? null : telephone);
+		}
 		
 		command.setDate(date == null? new Date() : date);
-		client.setNames(names.isEmpty()? null : names);
-		client.setTelephone(telephone.isEmpty()? null : telephone);
 		commandDao.create(DAO_REQUEST_ID, command);
 	}
 

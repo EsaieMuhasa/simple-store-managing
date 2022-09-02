@@ -13,7 +13,6 @@ import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
@@ -91,16 +90,10 @@ public class MainWindow extends JFrame {
         	navs[i] = "icon/item"+String.valueOf(i+1)+".png";
         //==
         
-        
-        
-        for(int i = 0; i < 5; i++) {
-        	containers[i] = new JPanel(new BorderLayout());
-        	containers[i].add(new JLabel("Container "+i), BorderLayout.CENTER);
-        	containers[i].setName("container"+i);
-        }
-        
+        containers[0] = new PanelDashboard();
         containers[1] = new SellerWorkspace();
         containers[2] = new WorckspaceProduct();
+        containers[3] = new JPanel();
         containers[4] = new ConfigWorkspace();
         
         navigation.setItems(navs);

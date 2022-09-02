@@ -12,5 +12,6 @@
 	<classpathentry kind="lib" path="lib/jna-5.5.0.jar"/>
 	<classpathentry kind="lib" path="lib/swing-jnafilechooser.jar"/>
 	<classpathentry kind="lib" path="lib/jcalendar-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/jchart-0.5-beta.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

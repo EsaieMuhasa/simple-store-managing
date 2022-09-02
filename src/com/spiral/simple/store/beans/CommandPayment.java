@@ -33,5 +33,10 @@ public class CommandPayment extends CashMoney {
 	public void setCommand(Command command) {
 		this.command = command;
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("%s %s", DECIMAL_FORMAT.format(amount), currency.getShortName());
+	}
 
 }

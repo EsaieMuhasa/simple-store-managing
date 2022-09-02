@@ -4,9 +4,9 @@
 package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
-import java.awt.CardLayout;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
@@ -23,9 +23,12 @@ import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
@@ -74,12 +77,16 @@ public class CommandDialog extends JDialog {
 	
 	private final JButton btnValidate = new JButton("Valider la commande", new ImageIcon(Config.getIcon("success")));
 	private final JButton btnCancel = new JButton("Annuler la commande", new ImageIcon(Config.getIcon("close")));
-	private final JButton btnPrint = new JButton("Imprimer la facture", new ImageIcon(Config.getIcon("print")));
+	private final JButton btnPrintInvoice = new JButton("Facture", new ImageIcon(Config.getIcon("print")));
+	private final JButton btnPrintSlip = new JButton("Réçu", new ImageIcon(Config.getIcon("print")));
 	
 	private final DefaultComboBoxModel<Product> productModel = new DefaultComboBoxModel<>(); 
 	private final DefaultComboBoxModel<MeasureUnit> measureUnitModel = new DefaultComboBoxModel<>();
 	private final DefaultComboBoxModel<Currency> currencyModel = new DefaultComboBoxModel<>();
 	private final InvoiceTableModel tableModel = new InvoiceTableModel();
+	private final JLabel labelPaymentMoney = UIComponentBuilder.createH2("Réçu: ");//le montant total deja recu
+	private final JLabel labelPaymentTotal = UIComponentBuilder.createH2("Total: ");//le montant total qui doit etre payer
+	private final JLabel labelPaymentDebt = UIComponentBuilder.createH2("Reste: ");//le reste pour la command
 	
 	private final PanelFieldsCommand fieldsCommand = new PanelFieldsCommand();
 	private final CustomTable itemTable = new CustomTable(tableModel);
@@ -160,7 +167,7 @@ public class CommandDialog extends JDialog {
 		
 		addWindowListener(windowAdapter);
 		btnCancel.addActionListener(event -> doCancel());
-		btnPrint.addActionListener(event ->  doPrintInvoice());
+		btnPrintInvoice.addActionListener(event ->  doPrintInvoice());
 		btnValidate.addActionListener(event -> doValidate());
 		
 		//listening DAOs events
@@ -206,8 +213,7 @@ public class CommandDialog extends JDialog {
 		
 		final JPanel 
 			panelTable = new JPanel(new BorderLayout()),
-			panelFields = new JPanel(new BorderLayout()),
-			tableBottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+			panelFields = new JPanel(new BorderLayout());
 		
 		centerPanel.add(panelFields, BorderLayout.WEST);
 		centerPanel.add(panelTable, BorderLayout.CENTER);
@@ -216,8 +222,26 @@ public class CommandDialog extends JDialog {
 		panelFields.setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
 		panelTable.setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
 		panelTable.add(scrollTable, BorderLayout.CENTER);
+		
+		//the panel below table view of invoice
+		final Box tableBottom = Box.createVerticalBox();
+		final Box box = Box.createHorizontalBox();//pour les boutons
+		final JPanel rows = new JPanel(new GridLayout(3, 1, 5, 5));
+		
+		rows.add(labelPaymentTotal);
+		rows.add(labelPaymentMoney);
+		rows.add(labelPaymentDebt);
+		rows.setBackground(itemTable.getGridColor());
+		
+		box.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+		box.add(Box.createHorizontalGlue());
+		box.add(btnPrintInvoice);
+		box.add(Box.createHorizontalStrut(5));
+		box.add(btnPrintSlip);
+		tableBottom.add(rows, BorderLayout.EAST);
+		tableBottom.add(box, BorderLayout.CENTER);
 		panelTable.add(tableBottom, BorderLayout.SOUTH);
-		tableBottom.add(btnPrint);
+		//==
 		
 		scrollList.setBorder(null);
 		scrollTable.setBorder(null);
@@ -332,10 +356,17 @@ public class CommandDialog extends JDialog {
 		private final ItemListener currencyItemListener = event -> onCurrencySelectionChange(event);
 		
 		//payment panel
-		private final CardLayout paymentLayout = new CardLayout();
-		private final JPanel paymentPanel = new JPanel(paymentLayout);
+		private final JPanel paymentPanel = new JPanel(new BorderLayout());
+		private final JPanel paymentDescription = new JPanel(new BorderLayout());
 		private final JButton btnNewPayment = new JButton("Nouveau payement", new ImageIcon(Config.getIcon("new")));
 		//==
+		
+		//items by pop up menu options by listPayment
+		private final JMenuItem [] itemOptionsListPayment = {
+				new JMenuItem("Supprimer"),
+				new JMenuItem("Modifier")
+		};
+		private final JPopupMenu listPaymentPopupMenu = new JPopupMenu();
 		
 		private final CaretListener caretQuantityListener = event -> {
 			if(productModel.getSize() == 0)
@@ -351,6 +382,7 @@ public class CommandDialog extends JDialog {
 					double quantity = Double.parseDouble(fieldItemQuantity.getField().getText());					
 					item.setQuantity(quantity);
 					tableModel.repaintRow(item);
+					updateLabelTotalAmount();
 				} catch (NumberFormatException e) {
 					JOptionPane.showMessageDialog(CommandDialog.this, "La quantité doit être une valeur numérique valide.", "Erreur: valeur numérique invalide", JOptionPane.ERROR_MESSAGE);
 				}
@@ -371,9 +403,34 @@ public class CommandDialog extends JDialog {
 					double unitPrice = Double.parseDouble(fieldItemUnitPrice.getField().getText());					
 					item.setUnitPrice(unitPrice);
 					tableModel.repaintRow(item);
+					updateLabelTotalAmount();
 				} catch (NumberFormatException e) {
 					JOptionPane.showMessageDialog(CommandDialog.this, "La prix unitaire doit être une valeur numérique valide.", "Erreur: valeur numérique invalide", JOptionPane.ERROR_MESSAGE);
 				}
+			}
+		};
+		
+		private final MouseAdapter listPaymentMouseAdapter = new MouseAdapter() {//listening mouse on JList payment to show pop up menu options
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if(e.isPopupTrigger() && listPaymentModel.getSize() != 0 && listPayment.getSelectedIndex() != -1) {
+					listPaymentPopupMenu.show(listPayment, e.getX(), e.getY());
+				}
+			}
+		};
+		
+		private final ActionListener itemPopupActionListener = event -> {//listening action on any item by JList of payment pop pup menu
+			CommandPayment p = listPaymentModel.getElementAt(listPayment.getSelectedIndex());
+			if(event.getSource() == itemOptionsListPayment[0]) {//suppression
+				String message = "Es-tu sûr de vouloir supprimer ce payement??\n-> "+p.toString();
+				int status = JOptionPane.showConfirmDialog(CommandDialog.this, message, "Suppression du payement", JOptionPane.YES_NO_OPTION);
+				if(status == JOptionPane.YES_OPTION) {
+					tableModel.getCommand().removePayment(p);
+					listPaymentModel.removeElement(p);
+				}
+			} else if(event.getSource() == itemOptionsListPayment[1]) {// modification
+				paymentForm.setPayment(p);
+				showPaymentForm();
 			}
 		};
 		
@@ -385,6 +442,7 @@ public class CommandDialog extends JDialog {
 			fieldItemProduct.getField().addItemListener(productItemListener);
 			fieldItemQuantity.getField().addCaretListener(caretQuantityListener);
 			fieldItemUnitPrice.getField().addCaretListener(caretUnitPriceListener);
+			listPayment.addMouseListener(listPaymentMouseAdapter);
 			paymentForm.addFormListener(this);
 			paymentForm.doReload();
 		}
@@ -397,6 +455,10 @@ public class CommandDialog extends JDialog {
 			fieldItemProduct.setEnabled(enabled);
 			fieldItemUnitPrice.setEnabled(enabled);
 			fieldItemQuantity.setEnabled(enabled);
+		}
+		
+		private void updateLabelTotalAmount () {
+			labelPaymentTotal.setText("Total: "+tableModel.getCommand().getTotalToString());
 		}
 
 		/**
@@ -458,6 +520,27 @@ public class CommandDialog extends JDialog {
 				fieldItemUnitPrice.getField().setText(item.getUnitPrice()+"");
 				fieldCurrency.getField().setSelectedItem(item.getCurrency());
 			}
+			updateLabelTotalAmount();
+		}
+		
+		/**
+		 * utility method to show payment formulaire
+		 */
+		private void showPaymentForm () {
+			paymentPanel.removeAll();
+			paymentPanel.add(paymentForm, BorderLayout.CENTER);
+			paymentPanel.revalidate();
+			paymentPanel.repaint();
+		}
+		
+		/**
+		 * utility method to showing payments descriptions by current command
+		 */
+		private void showPaymentDescription() {
+			paymentPanel.removeAll();
+			paymentPanel.add(paymentDescription, BorderLayout.CENTER);
+			paymentPanel.revalidate();
+			paymentPanel.repaint();
 		}
 		
 		/**
@@ -489,6 +572,7 @@ public class CommandDialog extends JDialog {
 					return;
 				CommandItem item = tableModel.findByProduct(product);
 				item.setCurrency(currency2);
+				updateLabelTotalAmount();
 			}
 		}
 		
@@ -539,27 +623,28 @@ public class CommandDialog extends JDialog {
 		 * initialization of UI component of payment panel
 		 */
 		private void initPaymentPanel() {
-			JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT)),
-					description = new JPanel(new BorderLayout());
+			JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 			
 			final JScrollPane scroll = new JScrollPane(listPayment);
 			scroll.setBorder(null);
 			
 			top.add(btnNewPayment);
-			description.add(top, BorderLayout.NORTH);
-			description.add(scroll, BorderLayout.CENTER);
-			description.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
-			paymentPanel.add(description, "description");
-			paymentPanel.add(paymentForm, "form");
 			
-			paymentLayout.addLayoutComponent(description, "description");
-			paymentLayout.addLayoutComponent(paymentForm, "form");
+			paymentDescription.add(top, BorderLayout.NORTH);
+			paymentDescription.add(scroll, BorderLayout.CENTER);
+			paymentDescription.setBorder(BorderFactory.createEmptyBorder(0, 5, 5, 5));
+			paymentPanel.add(paymentDescription, BorderLayout.CENTER);
 			
 			btnNewPayment.addActionListener(event -> {
-				paymentLayout.show(paymentPanel, "form");
+				showPaymentForm();
 			});
 			
 			paymentForm.setFieldDateVisible(false);
+			
+			for (JMenuItem item : itemOptionsListPayment) {
+				listPaymentPopupMenu.add(item);
+				item.addActionListener(itemPopupActionListener);
+			}
 		}
 
 		@Override
@@ -567,8 +652,21 @@ public class CommandDialog extends JDialog {
 
 		@Override
 		public void onAcceptData(AbstractForm<?> form) {
-			paymentLayout.show(paymentPanel, "description");
 			
+			final CommandPayment payment = paymentForm.getPayment(), newPay = new CommandPayment();
+			tableModel.getCommand().addPayments(payment);
+			tableModel.getCommand().creditsToPayments();
+			
+			listPaymentModel.removeAllElements();
+			newPay.setAmount(0);
+			paymentForm.setPayment(newPay);
+			showPaymentDescription();
+			
+			CommandPayment [] payments = tableModel.getCommand().getPayments();
+			for (CommandPayment p : payments)
+				listPaymentModel.addElement(p);
+			
+			labelPaymentMoney.setText("Réçu: "+tableModel.getCommand().getCreditToString());
 		}
 
 		@Override
@@ -578,7 +676,7 @@ public class CommandDialog extends JDialog {
 
 		@Override
 		public void onCancel(AbstractForm<?> form) {
-			paymentLayout.show(paymentPanel, "description");
+			showPaymentDescription();
 		}
 	}
 

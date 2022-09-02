@@ -68,5 +68,28 @@ public abstract class CashMoney extends DBEntity {
 	public void initDate(long date) {
 		this.date = buildDate(date);
 	}
+	
+	
+	/**
+	 * utility method to execute addition operation
+	 * @param payment
+	 */
+	public void sum (CashMoney money) {
+		if(!currency.equals(money.getCurrency()))
+			throw new RuntimeException("Impossible de d'effectuer cette operation car les devises sont differente");
+		
+		amount += money.amount;
+	}
+	
+	/**
+	 * utility method to execute substraction
+	 * @param money
+	 */
+	public void substract (CashMoney money) {
+		if(!currency.equals(money.getCurrency()))
+			throw new RuntimeException("Impossible de d'effectuer cette operation car les devises sont differente");
+		
+		amount -= money.amount;
+	}
 
 }

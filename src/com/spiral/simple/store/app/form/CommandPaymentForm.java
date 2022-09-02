@@ -176,7 +176,6 @@ public class CommandPaymentForm extends AbstractForm<CommandPayment> {
 		if(!fieldAmount.getField().getText().trim().isEmpty() && currencyModel.getSize() != 0) {
 			try{
 				double amount = Double.parseDouble(fieldAmount.getField().getText());
-				System.out.println(amount);
 				return amount > 0.0;
 			} catch (NumberFormatException e) {}
 		}

@@ -3,13 +3,18 @@
  */
 package com.spiral.simple.store.dao;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+import com.spiral.simple.store.beans.Command;
 import com.spiral.simple.store.beans.CommandPayment;
 
 /**
  * @author Esaie Muhasa
  *
  */
-public class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> implements CommandPaymentDao {
+class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> implements CommandPaymentDao {
+	private static final String FEILDS_TITLES [] = {"id", "recordingDate", "lastUpdateDate", "command", "amount", "currency", "date"};
 
 	public CommandPaymentDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
@@ -17,20 +22,12 @@ public class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> im
 
 	@Override
 	public boolean checkByCommand(String commandId) throws DAOException {
-		// TODO Auto-generated method stub
-		return false;
+		return checkData("SELECT * FROM "+getViewName()+" WHERE command = ? LIMIT 1", commandId);
 	}
 
 	@Override
 	public CommandPayment[] findByCommand(String commandId) throws DAOException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public double getSoldByCommand(String commandId) throws DAOException {
-		// TODO Auto-generated method stub
-		return 0;
+		return readData("SELECT * FROM "+getViewName()+" WHERE command = ?", commandId);
 	}
 
 	@Override
@@ -40,14 +37,28 @@ public class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> im
 
 	@Override
 	String[] getTableFields() {
-		// TODO Auto-generated method stub
-		return null;
+		return FEILDS_TITLES;
 	}
 
 	@Override
 	Object[] getOccurrenceValues(CommandPayment entity) {
-		// TODO Auto-generated method stub
-		return null;
+		return new Object[] {
+				entity.getId(),
+				entity.getRecordingDate().getTime(),
+				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null,
+				entity.getCommand().getId(),
+				entity.getAmount(),
+				entity.getCurrency().getId(),
+				entity.getDate().getTime()
+		};
+	}
+	
+	@Override
+	protected CommandPayment mapping(ResultSet result) throws SQLException {
+		CommandPayment payment = super.mapping(result);
+		payment.setCommand(new Command());
+		payment.getCommand().setId(result.getString("command"));
+		return payment;
 	}
 
 	@Override

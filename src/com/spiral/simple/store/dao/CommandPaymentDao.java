@@ -26,12 +26,4 @@ public interface CommandPaymentDao extends CashMoneyDao<CommandPayment> {
 	 * @throws DAOException
 	 */
 	CommandPayment[] findByCommand (String commandId) throws DAOException;
-	
-	/**
-	 * return sum of amounts paid for client command
-	 * @param commandId
-	 * @return
-	 * @throws DAOException
-	 */
-	double getSoldByCommand (String commandId) throws DAOException;
 }

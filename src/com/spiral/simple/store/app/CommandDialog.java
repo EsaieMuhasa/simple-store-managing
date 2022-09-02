@@ -15,6 +15,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Date;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -41,6 +42,7 @@ import com.spiral.simple.store.app.form.CommandPaymentForm;
 import com.spiral.simple.store.app.form.FormListener;
 import com.spiral.simple.store.app.models.InvoiceTableModel;
 import com.spiral.simple.store.beans.AffectedStock;
+import com.spiral.simple.store.beans.Client;
 import com.spiral.simple.store.beans.Command;
 import com.spiral.simple.store.beans.CommandItem;
 import com.spiral.simple.store.beans.CommandPayment;
@@ -50,6 +52,7 @@ import com.spiral.simple.store.beans.MeasureUnit;
 import com.spiral.simple.store.beans.Product;
 import com.spiral.simple.store.dao.CommandDao;
 import com.spiral.simple.store.dao.CurrencyDao;
+import com.spiral.simple.store.dao.DAOException;
 import com.spiral.simple.store.dao.DAOFactory;
 import com.spiral.simple.store.dao.DAOListenerAdapter;
 import com.spiral.simple.store.dao.ExchangeRateDao;
@@ -70,6 +73,8 @@ import com.spiral.simple.store.tools.UIComponentBuilder;
  */
 public class CommandDialog extends JDialog {
 	private static final long serialVersionUID = 7993991908409205256L;
+	
+	public static final int DAO_REQUEST_ID = 0x007700;
 	
 	private final DefaultListModel<Product> listModelProduct=  new DefaultListModel<>();
 	private final JList<Product> listProdut = new JList<>(listModelProduct);
@@ -156,7 +161,21 @@ public class CommandDialog extends JDialog {
 	private final DAOListenerAdapter<Product> productListenerAdapter = new  DAOListenerAdapter<Product>() {};
 	private final DAOListenerAdapter<Currency> currecyListenerAdapter = new DAOListenerAdapter<Currency>() {};
 	private final DAOListenerAdapter<MeasureUnit> measureUnitListenerAdapter = new DAOListenerAdapter<MeasureUnit>();
-	private final DAOListenerAdapter<Command> commandListenerAdapter = new DAOListenerAdapter<Command>() {};
+	private final DAOListenerAdapter<Command> commandListenerAdapter = new DAOListenerAdapter<Command>() {
+		@Override
+		public void onCreate(Command... data) {
+		}
+
+		@Override
+		public void onUpdate(Command newState, Command oldState) {
+		}
+
+		@Override
+		public void onError(int requestId, DAOException exception) {
+			exception.printStackTrace();
+		}
+		
+	};
 	
 	/**
 	 * default construct
@@ -189,6 +208,11 @@ public class CommandDialog extends JDialog {
 	 */
 	public void setCommand (Command command) {
 		tableModel.setCommand(command);
+		if(command.getClient() == null) 
+			command.setClient(new Client());
+		
+		if(command.getDate() == null)
+			command.setDate(new Date());
 	}
 	
 	/**
@@ -299,7 +323,17 @@ public class CommandDialog extends JDialog {
 	 * -second we validate command payment
 	 */
 	private void doValidate () {
+		Command command = tableModel.getCommand();
+		Client client = command.getClient();
 		
+		Date date = fieldsCommand.fieldCommandDate.getField().getDate();
+		String names = fieldsCommand.fieldClientName.getField().getText().trim();
+		String telephone = fieldsCommand.fieldClientTelephone.getField().getText().trim();
+		
+		command.setDate(date == null? new Date() : date);
+		client.setNames(names.isEmpty()? null : names);
+		client.setTelephone(telephone.isEmpty()? null : telephone);
+		commandDao.create(DAO_REQUEST_ID, command);
 	}
 
 	/**

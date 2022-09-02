@@ -155,9 +155,14 @@ public class Command extends DBEntity {
 	 * @param payments
 	 */
 	public void addPayments(CommandPayment ...payments) {
-		for (CommandPayment payment : payments)
-			if(!this.payments.contains(payment)) this.payments.add(payment);
-		
+		for (CommandPayment payment : payments) {
+			if(!this.payments.contains(payment)) {
+				this.payments.add(payment);
+				payment.setCommand(this);
+				if(payment.getId() == null)
+					payment.setDate(date);
+			}
+		}
 		sortCredits();
 	}
 	
@@ -214,7 +219,6 @@ public class Command extends DBEntity {
 	public void creditsToPayments () {
 		payments.clear();
 		payments.addAll(credits);
-		credits.clear();
 	}
 	
 	/**

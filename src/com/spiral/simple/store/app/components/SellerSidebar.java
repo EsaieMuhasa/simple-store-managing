@@ -5,6 +5,7 @@ package com.spiral.simple.store.app.components;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -31,7 +32,7 @@ import com.toedter.calendar.JCalendar;
 public class SellerSidebar extends JPanel {
 	private static final long serialVersionUID = -8618632784321077214L;
 	
-	private final JButton btnAddCommand =new JButton("Ajouter une commande", new ImageIcon(Config.getIcon("new")));
+	private final JButton btnAddCommand =new JButton("Nouvele commande", new ImageIcon(Config.getIcon("new")));
 	private final JCalendar calendar = new JCalendar();
 	
 	private final DefaultCardModel<Double> cardModelInput = new DefaultCardModel<>(CustomTable.GRID_COLOR, Color.BLACK, Config.getIcon("btn-add"), "$");
@@ -39,8 +40,10 @@ public class SellerSidebar extends JPanel {
 	private final DefaultCardModel<Double> cardModelAvailable = new DefaultCardModel<>(CustomTable.GRID_COLOR, Color.BLACK, Config.getIcon("caisse"), "$");
 	
 	private final List<SellerSidebarListener> listeners = new ArrayList<>();
+	private final PropertyChangeListener calendarListener = event -> onSelectedDateChange();
 	
 	{
+		calendar.addPropertyChangeListener("calendar", calendarListener);
 		btnAddCommand.addActionListener(event -> {
 			for (SellerSidebarListener ls : listeners)
 				ls.onNewCommand();
@@ -113,6 +116,14 @@ public class SellerSidebar extends JPanel {
 		panel.add(box, BorderLayout.CENTER);
 		panel.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
 		return panel;
+	}
+	
+	/**
+	 * when selected date change
+	 */
+	private void onSelectedDateChange () {
+		for (SellerSidebarListener ls : listeners)
+			ls.onDateChange(calendar.getDate());
 	}
 	
 	/**

@@ -21,6 +21,7 @@ public class Command extends DBEntity {
 	private Date date;
 	private boolean delivered;
 	private Client client;
+	private int number;//the slip number
 	
 	/**
 	 * all item associate with this client command
@@ -45,6 +46,20 @@ public class Command extends DBEntity {
 	 */
 	public Command() {
 		super();
+	}
+
+	/**
+	 * @return the number
+	 */
+	public int getNumber() {
+		return number;
+	}
+
+	/**
+	 * @param number the number to set
+	 */
+	public void setNumber(int number) {
+		this.number = number;
 	}
 
 	/**

@@ -70,6 +70,23 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 		
 		fireTableDataChanged();
 	}
+	
+	/**
+	 * reload data by current command in DAO
+	 */
+	public synchronized void daoReload () {
+		if(command == null || command.getId() == null || command.getId().trim().isEmpty())
+			return;
+		data.clear();
+		if(commandItemDao.checkByCommand(command.getId())) {
+			CommandItem [] items = commandItemDao.findByCommand(command.getId());
+			command.addItem(items);
+			for (int i = 0; i < items.length; i++)
+				data.add(items[i]);
+			
+		}
+		fireTableDataChanged();
+	}
 
 	@Override
 	public int getColumnCount() {

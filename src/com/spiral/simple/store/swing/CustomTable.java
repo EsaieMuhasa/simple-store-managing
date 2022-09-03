@@ -48,7 +48,7 @@ public class CustomTable extends JTable {
 	}
 	
 	private EmptyBorder padding = new EmptyBorder(5, 5, 5, 5);
-	private final CustomTableHeader header = new CustomTableHeader();
+	//private final CustomTableHeader header = new CustomTableHeader();
     private final CustomTableCellRender cell = new CustomTableCellRender();
 
 	public CustomTable() {
@@ -77,7 +77,7 @@ public class CustomTable extends JTable {
 	 */
 	private void init() {
 		
-		getTableHeader().setDefaultRenderer(header);
+//		getTableHeader().setDefaultRenderer(header);
 		getTableHeader().setReorderingAllowed(false);
 		
 		setShowHorizontalLines(true);
@@ -121,7 +121,7 @@ public class CustomTable extends JTable {
 		
 	}
 	
-    private class CustomTableHeader extends DefaultTableCellRenderer {
+    protected class CustomTableHeader extends DefaultTableCellRenderer {
 		private static final long serialVersionUID = -2540200968584306187L;
 
 		@Override
@@ -143,7 +143,7 @@ public class CustomTable extends JTable {
 		@Override
 		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
 			super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-			image = value.getClass() == ImageIcon.class? ((ImageIcon)value).getImage() : null;
+			image = value != null && value.getClass() == ImageIcon.class? ((ImageIcon)value).getImage() : null;
 			if (isCellSelected(row, column)) {
 				setBackground(ACTIVE_COLOR);
 			} else {

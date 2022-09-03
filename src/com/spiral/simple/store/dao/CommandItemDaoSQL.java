@@ -81,8 +81,7 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 			i.setConfig(new DistributionConfig());
 			i.getConfig().setId(result.getString("config"));
 		}
-		i.setProduct(new Product());
-		i.getProduct().setId(result.getString("product"));
+		i.setProduct(daoFactory.get(ProductDao.class).findById(result.getString("product")));
 		i.setUnitPrice(result.getDouble("unitPrice"));
 		i.setCurrency(daoFactory.get(CurrencyDao.class).findById(result.getString("currency")));
 		return i;

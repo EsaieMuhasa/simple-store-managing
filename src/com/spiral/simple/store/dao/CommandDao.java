@@ -22,6 +22,13 @@ public interface CommandDao extends DAOInterface<Command> {
 	Command [] findByClient (String key) throws DAOException;
 	
 	/**
+	 * return the slip number of  last command
+	 * @return
+	 * @throws DAOException
+	 */
+	int getLastCommandNumber () throws DAOException;
+	
+	/**
 	 * check if client has performed commands
 	 * @param key
 	 * @return

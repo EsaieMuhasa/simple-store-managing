@@ -245,6 +245,13 @@ public class Command extends DBEntity {
 	}
 	
 	/**
+	 * remove all payment associate with this client command
+	 */
+	public void removePayments () {
+		payments.clear();
+	}
+	
+	/**
 	 * return command payment list
 	 * @return
 	 */
@@ -275,6 +282,15 @@ public class Command extends DBEntity {
 		c = c.trim();
 		c = c.substring(0, c.length()-2);
 		return c;
+	}
+	
+	/**
+	 * return sold by command to string
+	 * @return
+	 */
+	public String getSoldToString() {
+		String s = "0 USD";
+		return s;
 	}
 	
 	/**

@@ -34,7 +34,7 @@ public abstract class DBEntityTableModel <T extends DBEntity> extends AbstractTa
 	protected int offset;
 	protected String title;
 	
-	protected DAOInterface<T> daoInterface;
+	protected transient DAOInterface<T> daoInterface;
 
 	/**
 	 * construct for initialization of DAT interface

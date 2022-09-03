@@ -13,7 +13,6 @@ import com.spiral.simple.store.beans.AffectedStock;
 import com.spiral.simple.store.beans.Command;
 import com.spiral.simple.store.beans.CommandItem;
 import com.spiral.simple.store.beans.DistributionConfig;
-import com.spiral.simple.store.beans.Product;
 
 /**
  * @author Esaie Muhasa

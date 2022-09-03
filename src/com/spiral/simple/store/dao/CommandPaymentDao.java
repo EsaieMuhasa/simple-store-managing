@@ -10,6 +10,13 @@ import com.spiral.simple.store.beans.CommandPayment;
  *
  */
 public interface CommandPaymentDao extends CashMoneyDao<CommandPayment> {
+	
+	/**
+	 * return the last payment number
+	 * @return
+	 * @throws DAOException
+	 */
+	int getLastPaymentNumber () throws DAOException;
 
 	/**
 	 * check if command is already paid at least once

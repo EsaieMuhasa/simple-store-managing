@@ -12,6 +12,7 @@ public class CommandPayment extends CashMoney {
 	private static final long serialVersionUID = 1340171519317359710L;
 	
 	private Command command;
+	private int number;//payment number
 
 	/**
 	 * 
@@ -37,6 +38,20 @@ public class CommandPayment extends CashMoney {
 	@Override
 	public String toString() {
 		return String.format("%s %s", DECIMAL_FORMAT.format(amount), currency.getShortName());
+	}
+
+	/**
+	 * @return the number
+	 */
+	public int getNumber() {
+		return number;
+	}
+
+	/**
+	 * @param number the number to set
+	 */
+	public void setNumber(int number) {
+		this.number = number;
 	}
 
 }

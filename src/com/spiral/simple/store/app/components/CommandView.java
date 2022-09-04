@@ -71,7 +71,6 @@ public class CommandView extends JComponent {
 	};
 	
 	private final ActionListener pupupOptionListener = event -> onItemOption(event);
-	
 	private Command command;
 
 	/**
@@ -95,29 +94,55 @@ public class CommandView extends JComponent {
 		}
 		//==
 	}
+	
+	/**
+	 * dispose all resource used by command view.
+	 * Disconnect command view on DAOs interfaces, and clear command view listeners
+	 * and disconnection on base swing listener
+	 */
+	public void dispose () {
+		invoiceTable.removeMouseListener(mouseAdapter);
+		tabbedPane.removeMouseListener(mouseAdapter);
+		
+		for (int i = 0; i < popupOptions.length; i++) 
+			popupOptions[i].removeActionListener(pupupOptionListener);
+	}
 
 	/**
 	 * on item of pop up menu selected
 	 * @param event
 	 */
 	private void onItemOption(ActionEvent event) {
+		if(listeners.size() == 0)
+			return;
+		
 		JMenuItem item = (JMenuItem) event.getSource();
 		int index = Integer.parseInt(item.getName());
+		
 		switch (index) {
-			case 1:
+			case 1://deliver command
+				for (CommandViewListener ls : listeners)
+					ls.onDeliveryRequest(command);
 				break;
-			case 2://update command
 				
+			case 2://update command
+				for (CommandViewListener ls : listeners)
+					ls.onUpdateRequest(command);
 				break;
 				
 			case 3://delete command
-				
+				for (CommandViewListener ls : listeners)
+					ls.onDeletionRequest(command);
 				break;
 				
 			case 4://command payment
+				for (CommandViewListener ls : listeners)
+					ls.onPaymentRequest(command);
 				break;
 				
 			case 5://update client name and telephone number
+				for (CommandViewListener ls : listeners)
+					ls.onClientUpdateRequest(command.getClient());
 				break;
 				
 			default:

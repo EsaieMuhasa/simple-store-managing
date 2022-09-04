@@ -49,7 +49,7 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 		if(command.getId() == null || command.getId().trim().isEmpty())
 			commandDao.create(RPERSIST_EQUEST_ID, command);
 		else
-			super.persist();		
+			super.persist();
 	}
 	
 	@Override
@@ -64,7 +64,10 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 		if(command == null || command.countItems() == 0)
 			return;
 		
-		CommandItem [] items = command.getItems();
+		CommandItem[] items = command.getId() == null || !commandItemDao.checkByCommand(command.getId())
+				? command.getItems()
+				: commandItemDao.findByCommand(command.getId());
+		
 		for (int i = 0; i < items.length; i++)
 			data.add(items[i]);
 		
@@ -78,6 +81,7 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 		if(command == null || command.getId() == null || command.getId().trim().isEmpty())
 			return;
 		data.clear();
+		command.removeItems();
 		if(commandItemDao.checkByCommand(command.getId())) {
 			CommandItem [] items = commandItemDao.findByCommand(command.getId());
 			command.addItem(items);

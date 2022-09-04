@@ -10,7 +10,7 @@ import com.spiral.simple.store.beans.DBEntity;
  *
  */
 @SuppressWarnings(value = "unchecked")
-public class DAOListenerAdapter<T extends DBEntity>
+public abstract class DAOListenerAdapter<T extends DBEntity>
 		implements DAOBaseListener<T>, DAOProgressListener<T>, DAOErrorListener {
 
 	@Override

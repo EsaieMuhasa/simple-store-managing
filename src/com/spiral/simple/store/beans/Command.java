@@ -40,6 +40,14 @@ public class Command extends DBEntity {
 	 */
 	private final List<CommandPayment> credits = new ArrayList<>();
 	
+	/**
+	 * suppresion temporaire des elements d'une commande.
+	 * ce champs est utiliser lors dela modification d'une commande, car si l'utilisateur demande la
+	 * supression d'un element de la commande, celle-ci n'est pas fait imediatement.
+	 * Les element de cette liste serons definitivement supprimer lors de la sauvegarde definitive des modifications
+	 */
+	private transient final List<CommandItem> tmpDeletion = new ArrayList<>();
+	
 
 	/**
 	 * 
@@ -109,7 +117,7 @@ public class Command extends DBEntity {
 	 * @param items
 	 */
 	public void addItem (CommandItem...items) {
-		for (CommandItem item : items){
+		for (CommandItem item : items) {
 			this.items.add(item);
 			item.setCommand(this);
 		}
@@ -121,6 +129,8 @@ public class Command extends DBEntity {
 	 */
 	public void removeItem (CommandItem item) {
 		items.remove(item);
+		if(item.getId() != null)
+			tmpDeletion.add(item);
 	}
 	
 	/**
@@ -128,7 +138,9 @@ public class Command extends DBEntity {
 	 * @param index
 	 */
 	public void removeItemAt (int index) {
-		items.remove(index);
+		CommandItem item  =  items.remove(index);
+		if(item.getId() != null)
+			tmpDeletion.add(item);
 	}
 	
 	/**
@@ -155,6 +167,22 @@ public class Command extends DBEntity {
 	 */
 	public int countItems () {
 		return items.size();
+	}
+	
+	/**
+	 * count in tmp deletion list
+	 * @return
+	 */
+	public int countTmpDeletion () {
+		return tmpDeletion.size();
+	}
+	
+	/**
+	 * return command item in tmp deletion list
+	 * @return
+	 */
+	public CommandItem [] getTmpDeletion () {
+		return tmpDeletion.toArray(new CommandItem[tmpDeletion.size()]);
 	}
 	
 	/**

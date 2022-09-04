@@ -38,6 +38,12 @@ class CommandDaoSQL extends UtilSQL<Command> implements CommandDao {
 	}
 	
 	@Override
+	public void deliverCommand(String key, boolean delivered) throws DAOException {
+		// TODO Auto-generated method stub
+		
+	}
+	
+	@Override
 	synchronized void create(Connection connection, int requestId, Command... t) throws DAOException, SQLException {
 		int number = getLastCommandNumber();
 		for (Command c : t) {
@@ -49,6 +55,15 @@ class CommandDaoSQL extends UtilSQL<Command> implements CommandDao {
 		for (Command c : t) {			
 			((CommandItemDaoSQL)daoFactory.get(CommandItemDao.class)).create(connection, requestId, c.getItems());
 			((CommandPaymentDaoSQL)daoFactory.get(CommandPaymentDao.class)).create(connection, requestId, c.getPayments());
+		}
+	}
+	
+	@Override
+	synchronized void update(Connection connection, int requestId, Command... t) throws DAOException, SQLException {
+		Date now = new Date();
+		for (Command c : t) {
+			c.setLastUpdateDate(now);
+			updateInTable(connection, new String[] {"lastUpdateDate"}, new Object[] {now.getTime()}, c.getId());
 		}
 	}
 
@@ -70,7 +85,7 @@ class CommandDaoSQL extends UtilSQL<Command> implements CommandDao {
 
 	@Override
 	public Command[] findByDate(Date min, Date max, int limit, int offset) throws DAOException {
-		return readData("SELECT * FROM "+getTableName()+" WHERE date BETWEEN ? AND ? ORDER BY date DESC LIMIT ? OFFSET ?",
+		return readData("SELECT * FROM "+getTableName()+" WHERE date BETWEEN ? AND ? ORDER BY number DESC LIMIT ? OFFSET ?",
 				toMinTimestampOfDay(min).getTime(), toMaxTimestampOfDay(max).getTime(), limit, offset);
 	}
 

@@ -81,8 +81,8 @@ public class CommandDialog extends JDialog {
 	private final JList<Product> listProdut = new JList<>(listModelProduct);
 	private final JTextField fieldSearchProdut = new  JTextField();
 	
-	private final JButton btnValidate = new JButton("Valider la commande", new ImageIcon(Config.getIcon("success")));
-	private final JButton btnCancel = new JButton("Annuler la commande", new ImageIcon(Config.getIcon("close")));
+	private final JButton btnValidate = new JButton("Valider", new ImageIcon(Config.getIcon("success")));
+	private final JButton btnCancel = new JButton("Annuler", new ImageIcon(Config.getIcon("close")));
 	private final JButton btnPrintInvoice = new JButton("Facture", new ImageIcon(Config.getIcon("print")));
 	private final JButton btnPrintSlip = new JButton("Réçu", new ImageIcon(Config.getIcon("print")));
 	
@@ -96,6 +96,12 @@ public class CommandDialog extends JDialog {
 	
 	private final PanelFieldsCommand fieldsCommand = new PanelFieldsCommand();
 	private final CustomTable itemTable = new CustomTable(tableModel);
+	
+	private final JPopupMenu popupMenu = new JPopupMenu();
+	private final JMenuItem [] itemOptions = {
+			new JMenuItem("Modiffier", new ImageIcon(Config.getIcon("edit"))),
+			new JMenuItem("Supprimer", new ImageIcon(Config.getIcon("close")))
+	}; 
 	
 	private final MeasureUnitDao measureUnitDao = DAOFactory.getDao(MeasureUnitDao.class);
 	private final ProductDao productDao = DAOFactory.getDao(ProductDao.class);
@@ -160,9 +166,118 @@ public class CommandDialog extends JDialog {
 		}
 	};
 	
-	private final DAOListenerAdapter<Product> productListenerAdapter = new  DAOListenerAdapter<Product>() {};
-	private final DAOListenerAdapter<Currency> currecyListenerAdapter = new DAOListenerAdapter<Currency>() {};
-	private final DAOListenerAdapter<MeasureUnit> measureUnitListenerAdapter = new DAOListenerAdapter<MeasureUnit>();
+	private final MouseAdapter invoiceTableMouseAdapter = new MouseAdapter() {//trigger pop up to show option of command item table
+		@Override
+		public void mouseReleased(MouseEvent e) {
+			if(!e.isPopupTrigger() || itemTable.getSelectedRow() == -1)
+				return;
+			
+			popupMenu.show(itemTable, e.getX(), e.getY());
+		}
+	};//==
+	
+	private final ActionListener itemInvoiceOptionActionListener = event -> {//listening item menu by pop up menu
+		Command  command = tableModel.getCommand();
+		CommandItem item = tableModel.getRow(itemTable.getSelectedRow());
+		Product product = item.getProduct();
+
+		if(event.getSource() == itemOptions[0]) {//update command item
+			fieldsCommand.fieldItemProduct.getField().setSelectedItem(product);
+		} else {//remove command item				
+			String message = "Voulez-vous vraiment retirer "
+					+ "\n"+product+" de la commande?";
+			int status = JOptionPane.showConfirmDialog(CommandDialog.this, message, "Sppression de l'item", JOptionPane.YES_NO_OPTION);
+			if (status == JOptionPane.YES_OPTION) {
+				command.removeItem(item);
+				tableModel.reload();
+				fieldsCommand.fieldItemProduct.getField().removeItem(product);
+			}
+		}
+	};//===
+	
+	private final DAOListenerAdapter<Product> productListenerAdapter = new  DAOListenerAdapter<Product>() {
+		@Override
+		public void onCreate(Product... data) {
+			for (Product product : data)
+				listModelProduct.addElement(product);
+		}
+
+		@Override
+		public void onUpdate(Product newState, Product oldState) {
+			for (int i = 0; i < listModelProduct.getSize(); i++)
+				if(listModelProduct.getElementAt(i).getId().equals(newState.getId())){
+					listModelProduct.setElementAt(newState, i);
+					return;
+				}
+		}
+
+		@Override
+		public void onDelete(Product... data) {
+			for (Product product : data) 
+				for (int i = 0; i < listModelProduct.getSize(); i++) 
+					if(listModelProduct.getElementAt(i).getId().equals(product.getId())){
+						listModelProduct.removeElementAt(i);
+						break;
+					}
+		}
+	};
+	
+	private final DAOListenerAdapter<Currency> currecyListenerAdapter = new DAOListenerAdapter<Currency>() {
+		@Override
+		public void onCreate(Currency... data) {
+			for (Currency currency : data) 
+				currencyModel.addElement(currency);
+		}
+
+		@Override
+		public void onUpdate(Currency newState, Currency oldState) {
+			for (int i = 0; i < currencyModel.getSize(); i++)
+				if(currencyModel.getElementAt(i).equals(newState)) {
+					currencyModel.removeElementAt(i);
+					currencyModel.insertElementAt(newState, i);
+					return;
+				}
+		}
+
+		@Override
+		public void onDelete(Currency... data) {
+			for (Currency currency : data)
+				for (int i = 0; i < currencyModel.getSize(); i++) 
+					if(currencyModel.getElementAt(i).equals(currency)) {
+						currencyModel.removeElementAt(i);
+						break;
+					}
+		}
+	};
+	
+	private final DAOListenerAdapter<MeasureUnit> measureUnitListenerAdapter = new DAOListenerAdapter<MeasureUnit>() {
+		@Override
+		public void onCreate(MeasureUnit... data) {
+			for (MeasureUnit m : data)
+				measureUnitModel.addElement(m);
+		}
+
+		@Override
+		public void onUpdate(MeasureUnit newState, MeasureUnit oldState) {
+			for (int i = 0; i < measureUnitModel.getSize(); i++)
+				if(measureUnitModel.getElementAt(i).equals(newState)) {
+					measureUnitModel.removeElementAt(i);
+					measureUnitModel.insertElementAt(newState, i);
+					return;
+				}
+		}
+
+		@Override
+		public void onDelete(MeasureUnit... data) {
+			for (MeasureUnit m : data)
+				for (int i = 0; i < measureUnitModel.getSize(); i++) 
+					if(measureUnitModel.getElementAt(i).equals(m)) {
+						measureUnitModel.removeElementAt(i);
+						break;
+					}
+		}
+	};
+	
 	private final DAOListenerAdapter<Command> commandListenerAdapter = new DAOListenerAdapter<Command>() {
 		@Override
 		public void onCreate(Command... data) {
@@ -173,6 +288,9 @@ public class CommandDialog extends JDialog {
 
 		@Override
 		public void onUpdate(Command newState, Command oldState) {
+			cancel();
+			String message = "Enregistrement des modifications\n de la commande fait avec succès";
+			JOptionPane.showMessageDialog(MainWindow.getLastInstance(), message, "Enregistrement des modifications", JOptionPane.INFORMATION_MESSAGE);
 		}
 
 		@Override
@@ -206,6 +324,12 @@ public class CommandDialog extends JDialog {
 		
 		listProdut.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		listProdut.addMouseListener(listProductMouseAdapter);
+		itemTable.addMouseListener(invoiceTableMouseAdapter);
+		
+		for (JMenuItem item : itemOptions) {
+			popupMenu.add(item);
+			item.addActionListener(itemInvoiceOptionActionListener);
+		}
 	}
 	
 	/**
@@ -348,7 +472,10 @@ public class CommandDialog extends JDialog {
 		}
 		
 		command.setDate(date == null? new Date() : date);
-		commandDao.create(DAO_REQUEST_ID, command);
+		if(command.getId() == null)
+			commandDao.create(DAO_REQUEST_ID, command);
+		else 
+			commandDao.update(DAO_REQUEST_ID, command);
 	}
 
 	/**

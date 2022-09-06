@@ -97,6 +97,17 @@ public class Product extends DBEntity {
 	}
 	
 	@Override
+	public boolean equals(Object obj) {
+		if(obj == this)
+			return true;
+		if(obj instanceof Product) {
+			Product p = (Product) obj;
+			return p.getId().equals(id);
+		}
+		return super.equals(obj);
+	}
+	
+	@Override
 	public String toString() {
 		return name;
 	}

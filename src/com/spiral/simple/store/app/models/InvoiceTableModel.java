@@ -64,9 +64,7 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 		if(command == null || command.countItems() == 0)
 			return;
 		
-		CommandItem[] items = command.getId() == null || !commandItemDao.checkByCommand(command.getId())
-				? command.getItems()
-				: commandItemDao.findByCommand(command.getId());
+		CommandItem[] items =  command.getItems();
 		
 		for (int i = 0; i < items.length; i++)
 			data.add(items[i]);
@@ -151,6 +149,7 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 			item.setUnitPrice(stock.getDefaultUnitPrice());
 			item.setCurrency(stock.getSalesCurrency());
 		}
+		
 		command.addItem(item);
 		reload();
 		return item;
@@ -163,7 +162,7 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 	 */
 	public boolean checkByProduct (Product product) {
 		for (int i = 0; i < data.size(); i++) 
-			if (data.get(i).getProduct() == product)
+			if (data.get(i).getProduct().equals(product))
 				return true;
 		return false;
 	}
@@ -175,7 +174,7 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 	 */
 	public CommandItem findByProduct (Product product) {
 		for (int i = 0; i < data.size(); i++) 
-			if (data.get(i).getProduct() == product)
+			if (data.get(i).getProduct().equals(product))
 				return data.get(i);
 		throw new RuntimeException("Produit non disponible sur la commande");
 	}
@@ -188,7 +187,7 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 	public void updateQuantity (Product product, double quantity) {
 		for (int i = 0; i < data.size(); i++) {
 			CommandItem item = data.get(i);
-			if(item.getProduct() != product)
+			if(!item.getProduct().equals(product))
 				continue;
 			
 			item.setQuantity(quantity);
@@ -264,6 +263,8 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 	}
 
 	/**
+	 * lors la mutation dela commande, si celle-ci existe dans le bdd,
+	 * alors on verifie directement les items qui font reference a ladite commande et on charge ceux-ci directement
 	 * @param command the command to set
 	 */
 	public void setCommand(Command command) {

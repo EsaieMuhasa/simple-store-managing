@@ -29,7 +29,6 @@ import com.spiral.simple.store.beans.Client;
 import com.spiral.simple.store.beans.Command;
 import com.spiral.simple.store.dao.ClientDao;
 import com.spiral.simple.store.dao.CommandDao;
-import com.spiral.simple.store.dao.CommandItemDao;
 import com.spiral.simple.store.dao.CommandPaymentDao;
 import com.spiral.simple.store.dao.DAOException;
 import com.spiral.simple.store.dao.DAOFactory;
@@ -50,7 +49,6 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 	private final JLabel labelCount = UIComponentBuilder.createH1("0 commande");
 	
 	private final CommandDao commandDao = DAOFactory.getDao(CommandDao.class);
-	private final CommandItemDao commandItemDao = DAOFactory.getDao(CommandItemDao.class);
 	private final CommandPaymentDao commandPaymentDao = DAOFactory.getDao(CommandPaymentDao.class);
 	
 	private final GridCommand commands = new  GridCommand();
@@ -105,7 +103,6 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 		Command com = null;
 		if(command.getId() != null) {
 			com = commandDao.findById(command.getId());
-			com.addItem(commandItemDao.findByCommand(command.getId()));
 			if(commandPaymentDao.checkByCommand(command.getId()))
 				com.addPayments(commandPaymentDao.findByCommand(command.getId()));
 		} else 

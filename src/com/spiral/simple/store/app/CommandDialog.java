@@ -127,18 +127,31 @@ public class CommandDialog extends JDialog {
 				fieldsCommand.fieldCurrency.getField().removeItemListener(fieldsCommand.currencyItemListener);
 				CommandItem item = null;
 				if(productModel.getIndexOf(product) == -1){
-					productModel.addElement(product);
-					item = tableModel.createByProduct(product);
-					if (item.getCurrency() == null)
-						item.setCurrency(currencyModel.getElementAt(fieldsCommand.fieldCurrency.getField().getSelectedIndex()));
-					else {
-						/* pour le currency dans le command item pointe vers la meme reference
-						 * que ceux du model du combo box des occurences
-						 */
-						for (int j = 0; j < currencyModel.getSize(); j++) {
-							if(item.getCurrency().equals(currencyModel.getElementAt(j))) {
-								item.setCurrency(currencyModel.getElementAt(j));
-								break;
+					/*
+					 * pour satisfaire les histoires de reference lors dela modification d'une commande
+					 * nous devons verifier si le produit existe dans le model du combo box
+					 */
+					for(int i = 0; i < productModel.getSize(); i++) {
+						if(product.equals(productModel.getElementAt(i))) {
+							item = tableModel.findByProduct(productModel.getElementAt(i));
+							break;
+						}
+					}
+					
+					if(item == null) {						
+						productModel.addElement(product);
+						item = tableModel.createByProduct(product);
+						if (item.getCurrency() == null)
+							item.setCurrency(currencyModel.getElementAt(fieldsCommand.fieldCurrency.getField().getSelectedIndex()));
+						else {
+							/* pour le currency dans le command item pointe vers la meme reference
+							 * que ceux du model du combo box des occurences
+							 */
+							for (int j = 0; j < currencyModel.getSize(); j++) {
+								if(item.getCurrency().equals(currencyModel.getElementAt(j))) {
+									item.setCurrency(currencyModel.getElementAt(j));
+									break;
+								}
 							}
 						}
 					}
@@ -343,6 +356,8 @@ public class CommandDialog extends JDialog {
 		
 		if(command.getDate() == null)
 			command.setDate(new Date());
+		
+		fieldsCommand.initFields(command);
 	}
 	
 	/**
@@ -647,6 +662,34 @@ public class CommandDialog extends JDialog {
 			fieldsCommand.fieldItemProduct.getField().removeItemListener(fieldsCommand.productItemListener);
 			productModel.removeAllElements();
 			fieldsCommand.fieldItemProduct.getField().addItemListener(fieldsCommand.productItemListener);
+			listPaymentModel.removeAllElements();
+		}
+		
+		/**
+		 * permet de charge les information contenue la commande dans les composants graphiques
+		 * @param command
+		 */
+		public void initFields (Command command) {
+			productModel.removeAllElements();
+			
+			if(command != null) {
+				CommandPayment [] payments = command.getPayments();
+				if(payments != null) {
+					for (CommandPayment payment : payments) {
+						listPaymentModel.addElement(payment);
+					}
+				}
+				
+				Client client = command.getClient();
+				fieldClientName.getField().setText(client.getNames());
+				fieldClientTelephone.getField().setText(client.getTelephone());
+				
+				for (int i = 0; i < tableModel.getRowCount(); i++) {
+					CommandItem item = command.getItemAt(i);
+					productModel.addElement(item.getProduct());
+				}
+				labelPaymentMoney.setText("Réçu: "+tableModel.getCommand().getCreditToString());
+			}
 		}
 		
 		/**

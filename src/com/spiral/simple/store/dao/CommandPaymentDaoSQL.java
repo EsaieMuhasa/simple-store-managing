@@ -16,7 +16,9 @@ import com.spiral.simple.store.beans.CommandPayment;
  *
  */
 class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> implements CommandPaymentDao {
-	private static final String FEILDS_TITLES [] = {"id", "recordingDate", "lastUpdateDate", "command", "amount", "currency", "date", "number"};
+	private static final String [] 
+			FEILDS_TITLES = {"id", "recordingDate", "lastUpdateDate", "command", "amount", "currency", "date", "number"},
+			UPDATEBLE_FEILDS_TITLES = {"lastUpdateDate", "amount", "currency", "date", "number"};
 
 	public CommandPaymentDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
@@ -63,6 +65,11 @@ class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> implement
 	String[] getTableFields() {
 		return FEILDS_TITLES;
 	}
+	
+	@Override
+	String[] getUpdatebleFields() {
+		return UPDATEBLE_FEILDS_TITLES;
+	}
 
 	@Override
 	Object[] getOccurrenceValues(CommandPayment entity) {
@@ -71,6 +78,17 @@ class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> implement
 				entity.getRecordingDate().getTime(),
 				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null,
 				entity.getCommand().getId(),
+				entity.getAmount(),
+				entity.getCurrency().getId(),
+				entity.getDate().getTime(),
+				entity.getNumber()
+		};
+	}
+	
+	@Override
+	Object[] getUpdatebleOccurrenceValues(CommandPayment entity) {
+		return new Object[] {
+				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null,
 				entity.getAmount(),
 				entity.getCurrency().getId(),
 				entity.getDate().getTime(),

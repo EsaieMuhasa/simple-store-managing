@@ -181,6 +181,15 @@ public class Command extends DBEntity {
 	}
 	
 	/**
+	 * recuperation de l'item a l'index en parametre
+	 * @param index
+	 * @return
+	 */
+	public CommandItem getItemAt (int index) {
+		return items.get(index);
+	}
+	
+	/**
 	 * count item of client command
 	 * @return
 	 */
@@ -306,6 +315,15 @@ public class Command extends DBEntity {
 		if(payments.size() == 0)
 			return null;
 		return payments.toArray(new CommandPayment[payments.size()]);
+	}
+	
+	/**
+	 * renvoie le payement a l'index
+	 * @param index
+	 * @return
+	 */
+	public CommandPayment getPaymentAt(int index) {
+		return payments.get(index);
 	}
 	
 	/**

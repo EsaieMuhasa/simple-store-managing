@@ -123,7 +123,7 @@ class DistributionConfigDaoSQL extends UtilSQL<DistributionConfig> implements Di
 					for(int i = 0; i < itemToDelete.size(); i++)
 						keys[i] = itemToDelete.get(i).getId();
 						
-					((DistributionConfigItemDaoSQL) daoFactory.get(DistributionConfigItemDao.class)).delete(connection, keys);
+					((DistributionConfigItemDaoSQL) daoFactory.get(DistributionConfigItemDao.class)).delete(connection, requestId, keys);
 				}
 				
 				fireOnUpdate(requestId, null, config);

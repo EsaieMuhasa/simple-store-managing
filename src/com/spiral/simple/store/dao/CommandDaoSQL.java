@@ -10,6 +10,8 @@ import java.sql.Statement;
 import java.util.Date;
 
 import com.spiral.simple.store.beans.Command;
+import com.spiral.simple.store.beans.CommandItem;
+import com.spiral.simple.store.beans.CommandPayment;
 
 /**
  * @author Esaie Muhasa
@@ -64,6 +66,32 @@ class CommandDaoSQL extends UtilSQL<Command> implements CommandDao {
 		for (Command c : t) {
 			c.setLastUpdateDate(now);
 			updateInTable(connection, new String[] {"lastUpdateDate"}, new Object[] {now.getTime()}, c.getId());
+			for (int i = 0; i < c.countItems(); i++) {//update items
+				CommandItem item = c.getItemAt(i);
+				if(item.getId() == null)
+					((CommandItemDaoSQL)daoFactory.get(CommandItemDao.class)).create(connection, requestId, item);
+				else
+					((CommandItemDaoSQL)daoFactory.get(CommandItemDao.class)).update(connection, requestId, item);
+			}
+			
+			if(c.countTmpDeletion() != 0) {//item a supprimer
+				CommandItem [] items = c.getTmpDeletion();
+				for (int i = 0; i < items.length; i++) {
+					((CommandItemDaoSQL)daoFactory.get(CommandItemDao.class)).delete(connection, requestId, items[i].getId());
+				}
+			}
+			
+			//payement
+			for (int i = 0; i < c.countPayements(); i++) {
+				CommandPayment payment = c.getPaymentAt(i);
+				if(payment.getId() != null) {
+					if (payment.getAmount() == 0)
+						((CommandPaymentDaoSQL)daoFactory.get(CommandPaymentDao.class)).delete(connection, requestId, payment.getId());
+					else
+						((CommandPaymentDaoSQL)daoFactory.get(CommandPaymentDao.class)).update(connection, requestId, payment);
+				} else
+					((CommandPaymentDaoSQL)daoFactory.get(CommandPaymentDao.class)).create(connection, requestId, payment);
+			}
 		}
 	}
 	

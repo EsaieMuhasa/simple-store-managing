@@ -161,7 +161,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 				data[i] = find(connection, "id", keys[i]);
 				fireOnProgress(requestId, i+1, data[i]);
 			}
-			delete(connection, keys);
+			delete(connection, requestId, keys);
 			connection.commit();
 			fireOnDelete(requestId, data);
 		} catch (SQLException e) {
@@ -534,7 +534,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	
 	private String updateSqlQuery = null;
 	synchronized void update (Connection connection, int requestId, T... t) throws DAOException, SQLException {
-		
+		Date now = new Date();
 		if(updateSqlQuery == null) {			
 			String [] labels = getUpdatebleFields();
 			updateSqlQuery = "UPDATE "+getTableName()+" SET ";
@@ -547,6 +547,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 		
 		Object [] params = new Object[getUpdatebleFields().length+1];
 		for (int i = 0; i < t.length; i++) {
+			t[i].setLastUpdateDate(now);
 			Object [] values = getUpdatebleOccurrenceValues(t[i]);
 			for (int j = 0; j < values.length; j++)
 				params[j] = values[j];
@@ -563,11 +564,12 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	/**
 	 * deletion of all occurrences owner of any keys
 	 * @param connection
+	 * @param requestId
 	 * @param keys
 	 * @throws DAOException
 	 * @throws SQLException
 	 */
-	void delete (Connection connection, String... keys) throws DAOException, SQLException {
+	void delete (Connection connection, int requestId, String... keys) throws DAOException, SQLException {
 		String where = "";
 		for (int i = 0; i < keys.length; i++) 
 			where += " ?,";

@@ -16,6 +16,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import com.spiral.simple.store.app.components.CommandView;
 import com.spiral.simple.store.app.components.CommandView.CommandViewListener;
@@ -141,6 +142,8 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 	protected class GridCommand extends JPanel implements CommandViewListener{
 		private static final long serialVersionUID = -5526962605839654031L;
 		
+		private final GridLayout gridLayout = new GridLayout(2, 2, 10, 10);
+		private final JPanel content = new JPanel(gridLayout);
 		private List<CommandView> commandViews = new ArrayList<>();
 		private Date selectedDate;
 		private int limit;
@@ -152,7 +155,6 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 		private FormListener formListener;
 		private final ClientDao clientDao = DAOFactory.getDao(ClientDao.class);
 		private final DAOListenerAdapter<Client> clientListenerAdapter = new DAOListenerAdapter<Client>() {
-
 			@Override
 			public void onError(int requestId, DAOException exception) {
 				if(requestId  != ClientForm.DEFAULT_ON_PERSIST_REQUEST_ID)
@@ -167,12 +169,73 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 			}
 		};
 		
+		private final DAOListenerAdapter<Command> commandListenerAdapter = new DAOListenerAdapter<Command>() {
+			@Override
+			public void onCreate(Command... data) {
+				for (Command command : data) {
+					addCommandAt(command, 0);
+					revalidate();
+					repaint();
+				}
+			}
+
+			@Override
+			public void onDelete(Command... data) {
+				for (Command command : data) {
+					for (int i=0, count = commandViews.size(); i < count; i++) {
+						CommandView view = commandViews.get(i);
+						if(view.getCommand().getId().equals(command.getId())) {
+							content.remove(view);
+							content.revalidate();
+							content.repaint();
+							view.dispose();
+							return;
+						}
+					}
+				}
+			}
+		};
 		
 		public GridCommand() {
-			super(new GridLayout(2, 2, 10, 10));
+			super(new BorderLayout());
 			setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 			clientDao.addBaseListener(clientListenerAdapter);
 			clientDao.addErrorListener(clientListenerAdapter);
+			commandDao.addBaseListener(commandListenerAdapter);
+			
+			content.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
+			
+			JScrollPane scroll = new JScrollPane(content, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+			scroll.setBorder(null);
+			add(scroll, BorderLayout.CENTER);
+		}
+		
+		@Override
+		public void doLayout() {
+			int width =  getWidth();
+			int rows = gridLayout.getRows(), cols = gridLayout.getColumns();
+			
+			if(width <= 400) {
+				rows = commandViews.size();
+				cols = 1;
+			} else if (width >= 700 && width <= 900) {
+				rows = (commandViews.size() / 2) + (commandViews.size() % 2);
+				cols = 2;
+			} else if (width > 900) {
+				rows = (commandViews.size() / 3) + (commandViews.size() % 3 != 0? 1 : 0);
+				cols = 3;
+			}
+			
+//				int size = width / cols;
+//				Dimension dim = new Dimension(size, size);
+//				for (CommandView view : commandViews){
+//					view.setPreferredSize(dim);
+//					view.setMaximumSize(dim);
+//				}
+			
+			gridLayout.setRows(rows);
+			gridLayout.setColumns(cols);
+			super.doLayout();
 		}
 		
 		/**
@@ -194,19 +257,40 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 				view.dispose();
 			
 			commandViews.clear();
-			removeAll();
+			content.removeAll();
 			if(commandDao.checkByDate(selectedDate)) {
 				Command [] commands = commandDao.findByDate(selectedDate, limit, offset);
-				for (Command command : commands) {
-					CommandView view = new CommandView();
-					view.setCommand(command);
-					view.addCommandViewListener(this);
-					add(view);
-					commandViews.add(view);
-				}
+				for (Command command : commands)
+					addCommand(command);
 			}
-			revalidate();
-			repaint();
+			content.revalidate();
+			content.repaint();
+		}
+		
+		/**
+		 * ajout d'une command sur le panel.
+		 * creation dela view
+		 * @param command
+		 */
+		private void addCommand (Command command) {
+			CommandView view = new CommandView();
+			view.setCommand(command);
+			view.addCommandViewListener(this);
+			content.add(view);
+			commandViews.add(view);			
+		}
+		
+		/**
+		 * insersion d'une command a l'index
+		 * @param command
+		 * @param index
+		 */
+		private void addCommandAt (Command command, int index) {
+			CommandView view = new CommandView();
+			view.setCommand(command);
+			view.addCommandViewListener(this);
+			content.add(view, index);
+			commandViews.add(index, view);
 		}
 		
 		/**

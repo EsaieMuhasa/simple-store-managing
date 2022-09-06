@@ -464,12 +464,11 @@ public class CommandDialog extends JDialog {
 		String telephone = fieldsCommand.fieldClientTelephone.getField().getText().trim();
 		String names = fieldsCommand.fieldClientName.getField().getText().trim();
 		
-		if (telephone != null && clientDao.checkByTelephone(telephone))
-			command.setClient(clientDao.findByTelephone(telephone));
-		else {			
-			client.setNames(names.isEmpty()? null : names);
-			client.setTelephone(telephone.isEmpty()? null : telephone);
-		}
+		client.setTelephone(telephone.isEmpty()? null : telephone);
+		client.setNames(names.isEmpty()? null : names);
+		
+		if (telephone != null && client.getId() == null && clientDao.checkByTelephone(client.getTelephone()))
+			command.setClient(clientDao.findByTelephone(client.getTelephone()));
 		
 		command.setDate(date == null? new Date() : date);
 		if(command.getId() == null)

@@ -5,6 +5,7 @@ package com.spiral.simple.store.app.components;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -114,6 +115,12 @@ public class CommandView extends JComponent {
 				popupMenu.addSeparator();
 		}
 		//==
+		
+		Dimension min = new Dimension(300, 150);
+		Dimension max = new Dimension(300, 300);
+		setPreferredSize(max);
+		setMinimumSize(min);
+		setMaximumSize(max);
 	}
 	
 	/**

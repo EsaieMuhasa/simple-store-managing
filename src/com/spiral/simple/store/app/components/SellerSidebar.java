@@ -139,8 +139,10 @@ public class SellerSidebar extends JPanel {
 	 * @param listener
 	 */
 	public void addSidebarListener (SellerSidebarListener listener) {
-		if(!listeners.contains(listener))
+		if(!listeners.contains(listener)){
 			listeners.add(listener);
+			listener.onDateChange(calendar.getDate());
+		}
 	}
 	
 	/**

@@ -125,4 +125,11 @@ public interface CommandDao extends DAOInterface<Command> {
 		return findByDate(date, date, limit, offset);
 	}
 	
+	/**
+	 * move command to trash
+	 * @param id
+	 * @throws DAOException
+	 */
+	void moveToTrash (String id) throws DAOException;
+	
 }

@@ -115,7 +115,7 @@ public class ProductForm extends AbstractForm<Product> {
 
 		accept = rejectCause == null;
 		if (accept)
-			productDao.create(DEFAULT_ON_CREATE_REQUEST_ID, p);
+			productDao.create(DEFAULT_ON_PERSIST_REQUEST_ID, p);
 	}
 
 	@Override

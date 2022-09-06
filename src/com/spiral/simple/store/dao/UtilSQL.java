@@ -135,7 +135,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			else
 				fireOnUpdate(requestId, olds, t);
 		} catch (SQLException e) {
-			DAOException ex= new DAOException("Une erreur est survenue lors de la mis en jours", e, ErrorType.ON_UPDATE);
+			DAOException ex= new DAOException("Une erreur est survenue lors de la mis en jours\n"+e.getMessage(), e, ErrorType.ON_UPDATE);
 			fireOnError(requestId, ex);
 		} catch (DAOException e) {
 			fireOnError(requestId, e);
@@ -160,7 +160,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			connection.commit();
 			fireOnDelete(requestId, data);
 		} catch (SQLException e) {
-			DAOException err = new DAOException("Une erreur est survenue lors de la suppression des donnees dans la base de donnees", e, ErrorType.ON_DELETE);
+			DAOException err = new DAOException("Une erreur est survenue lors de la suppression des donnees dans la base de donnees\n"+e.getMessage(), e, ErrorType.ON_DELETE);
 			fireOnError(requestId, err);
 		} catch (DAOException e) {
 			fireOnError(requestId, e);
@@ -196,7 +196,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			return readData(result, "Aucunne donnee cartographiable pour l'intervale choisie");
 		} catch (SQLException e) {
 			e.printStackTrace();
-			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee\n"+e.getMessage(), e);
 		}
 	}
 
@@ -213,12 +213,12 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 		String sql =String.format("SELECT * FROM %s WHERE id IN (%s)", getViewName(), in);
 		try (
 				Connection connection = daoFactory.getConnection();
-				PreparedStatement statement = prepareReadOnly(sql, connection, params);
+				PreparedStatement statement = prepare(sql, connection, false, params);
 				ResultSet result = statement.executeQuery()
 			) {
 			return readData(result, "Aucunne donnee cartographiable pour le tableau des ID proposer");
 		} catch (SQLException e) {
-			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee\n"+e.getMessage(), e);
 		}
 	}
 
@@ -245,7 +245,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			if(result.next())
 				count = result.getInt("nombre");
 		} catch (SQLException e) {
-			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee\n"+e.getMessage(), e);
 		}
 		return count;
 	}
@@ -259,7 +259,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			) {
 			return (result.next());
 		} catch (SQLException e) {
-			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee\n"+e.getMessage(), e);
 		}
 	}
 
@@ -395,7 +395,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			) {
 			return readData(result);
 		} catch (SQLException e) {
-			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee.\n"+e.getMessage(), e);
+			throw new DAOException("Une erreur est survenue lors de la lecture des donnees dans la base de donnee.\n"+e.getMessage(), e);
 		}
 	}
 	
@@ -414,7 +414,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			if(result.next())
 				return result.getInt(1);
 		} catch (SQLException e) {
-			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee\n"+e.getMessage(), e);
 		}
 		return 0;
 	}
@@ -433,7 +433,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			) {
 			return (result.next());
 		} catch (SQLException e) {
-			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee\n"+e.getMessage(), e);
 		}
 	}
 
@@ -445,7 +445,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			) {
 			return result.next();
 		} catch (SQLException e) {
-			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee", e);
+			throw new DAOException("Une erreur est survenue lors de la verification de l'existance des donnees dans la base de donnee\n"+e.getMessage(), e);
 		}
 	}
 	
@@ -531,20 +531,26 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	synchronized void update (Connection connection, int requestId, T... t) throws DAOException, SQLException {
 		
 		if(updateSqlQuery == null) {			
-			String [] labels = getTableFields();
-			updateSqlQuery = "UPDATE "+getTableName()+" SET ( ";
+			String [] labels = getUpdatebleFields();
+			updateSqlQuery = "UPDATE "+getTableName()+" SET ";
 			for (int i = 0; i < labels.length; i++)
-				updateSqlQuery += labels[i] +"= ?,";
+				updateSqlQuery += labels[i] +"=?, ";
 			
-			updateSqlQuery = updateSqlQuery.substring(0, updateSqlQuery.length() - 1)+" ) WHERE id = ?";
+			updateSqlQuery = updateSqlQuery.trim();
+			updateSqlQuery = updateSqlQuery.substring(0, updateSqlQuery.length() - 1)+" WHERE id = ?";
 		}
 		
+		Object [] params = new Object[getUpdatebleFields().length+1];
 		for (int i = 0; i < t.length; i++) {
-			Object [] values = getOccurrenceValues(t[i]);
-			try (PreparedStatement statement = prepare(updateSqlQuery, connection, false, values)) {
+			Object [] values = getUpdatebleOccurrenceValues(t[i]);
+			for (int j = 0; j < values.length; j++)
+				params[j] = values[j];
+			
+			params[params.length-1] = t[i].getId();
+			try (PreparedStatement statement = prepare(updateSqlQuery, connection, false, params)) {
 				int status = statement.executeUpdate();
 				if(status == 0)
-					throw new DAOException("Auncun enregistrement n'a ete prise en compte pour pour l'id "+t[i].getId(), ErrorType.ON_CREATE);
+					throw new DAOException("Auncune modification n'a été prise en compte pour pour l'ID: "+t[i].getId(), ErrorType.ON_CREATE);
 			}
 		}
 	}
@@ -587,12 +593,29 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	abstract String [] getTableFields ();
 	
 	/**
+	 * return the updateble field by table name
+	 * @return
+	 */
+	String [] getUpdatebleFields () {
+		return getTableFields();
+	}
+	
+	/**
 	 * return value of any column of table, order of value must check
 	 * order returned by getTableFields() method 
 	 * @param entity
 	 * @return
 	 */
 	abstract Object [] getOccurrenceValues (T entity);
+	
+	/**
+	 * return the updateble occurrence values
+	 * @param entity
+	 * @return
+	 */
+	Object [] getUpdatebleOccurrenceValues (T entity) {
+		return getOccurrenceValues(entity);
+	}
 	
 	/**
 	 * map entity in result set

@@ -23,7 +23,7 @@ import com.spiral.simple.store.dao.StockDao;
 public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 	private static final long serialVersionUID = -1601268679481550985L;
 
-	private static final String [] TITLES = {"N°", "Produit", "Quantité", "P.U", "Total"};
+	private static final String [] TITLES = {"Desingation", "Quantité", "P.U", "P.T"};
 	
 	private final CommandItemDao commandItemDao = DAOFactory.getDao(CommandItemDao.class);
 	private final CommandDao commandDao = DAOFactory.getDao(CommandDao.class);
@@ -107,20 +107,19 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 	@Override
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		switch (columnIndex) {
-			case 0: return (rowIndex + 1);
-			case 1: return data.get(rowIndex).getProduct().getName();
-			case 2: {
+			case 0: return data.get(rowIndex).getProduct().getName();
+			case 1: {
 				String quantity = CommandItem.DECIMAL_FORMAT.format(data.get(rowIndex).getQuantity());
 				if (data.get(rowIndex).countStock() != 0)
 					quantity += " "+data.get(rowIndex).getStockAt(0).getStock().getMeasureUnit().getShortName();
 				return quantity;
 			}
-			case 3: {
+			case 2: {
 				if (data.get(rowIndex).getCurrency() == null)
 					return "";
 				return CommandItem.DECIMAL_FORMAT.format(data.get(rowIndex).getUnitPrice()) +" "+data.get(rowIndex).getCurrency().getShortName();
 			}
-			case 4: {
+			case 3: {
 				if (data.get(rowIndex).getCurrency() == null)
 					return "";
 				return CommandItem.DECIMAL_FORMAT.format(data.get(rowIndex).getTotalPrice())+" "+data.get(rowIndex).getCurrency().getShortName(); 

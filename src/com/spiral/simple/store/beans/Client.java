@@ -45,6 +45,9 @@ public class Client extends DBEntity {
 	 * @param telephone the telephone to set
 	 */
 	public void setTelephone(String telephone) {
+		if(telephone != null && telephone.matches("^0[98]([0-9]{8})$")) {
+			telephone = "+243"+telephone.substring(1, telephone.length());
+		}
 		this.telephone = telephone;
 	}
 	

@@ -67,7 +67,7 @@ public class BudgetRubricForm extends AbstractForm<BudgetRubric> {
 
 		accept = rejectCause == null;
 		if (accept)
-			budgetRubricDao.create(DEFAULT_ON_CREATE_REQUEST_ID, b);
+			budgetRubricDao.create(DEFAULT_ON_PERSIST_REQUEST_ID, b);
 	}
 
 	@Override

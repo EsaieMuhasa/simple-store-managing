@@ -5,11 +5,14 @@ package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -18,12 +21,18 @@ import com.spiral.simple.store.app.components.CommandView;
 import com.spiral.simple.store.app.components.CommandView.CommandViewListener;
 import com.spiral.simple.store.app.components.SellerSidebar;
 import com.spiral.simple.store.app.components.SellerSidebar.SellerSidebarListener;
+import com.spiral.simple.store.app.form.AbstractForm;
+import com.spiral.simple.store.app.form.ClientForm;
+import com.spiral.simple.store.app.form.FormListener;
 import com.spiral.simple.store.beans.Client;
 import com.spiral.simple.store.beans.Command;
+import com.spiral.simple.store.dao.ClientDao;
 import com.spiral.simple.store.dao.CommandDao;
 import com.spiral.simple.store.dao.CommandItemDao;
 import com.spiral.simple.store.dao.CommandPaymentDao;
+import com.spiral.simple.store.dao.DAOException;
 import com.spiral.simple.store.dao.DAOFactory;
+import com.spiral.simple.store.dao.DAOListenerAdapter;
 import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.tools.UIComponentBuilder;
 
@@ -137,9 +146,33 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 		private int limit;
 		private int offset;
 		
+		private ClientForm form;
+		private JDialog formDialog;
+		private WindowAdapter formDialogWindowAdapter;
+		private FormListener formListener;
+		private final ClientDao clientDao = DAOFactory.getDao(ClientDao.class);
+		private final DAOListenerAdapter<Client> clientListenerAdapter = new DAOListenerAdapter<Client>() {
+
+			@Override
+			public void onError(int requestId, DAOException exception) {
+				if(requestId  != ClientForm.DEFAULT_ON_PERSIST_REQUEST_ID)
+					return;
+				
+				//JOptionPane.showMessageDialog(MainWindow.getLastInstance(), exception.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+			}
+
+			@Override
+			public void onUpdate(Client newState, Client oldState) {				
+				JOptionPane.showMessageDialog(MainWindow.getLastInstance(), "Seccess d'enregistrement des modifications\n"+newState.toString(), "Information", JOptionPane.INFORMATION_MESSAGE);
+			}
+		};
+		
+		
 		public GridCommand() {
 			super(new GridLayout(2, 2, 10, 10));
 			setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+			clientDao.addBaseListener(clientListenerAdapter);
+			clientDao.addErrorListener(clientListenerAdapter);
 		}
 		
 		/**
@@ -176,6 +209,16 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 			repaint();
 		}
 		
+		/**
+		 * disposing client form,
+		 * and closing/hiding formDialog
+		 */
+		private void disposeClientForm() {
+			formDialog.setVisible(false);
+			form.setClient(null);
+			formDialog.dispose();
+		}
+		
 		//==============================================
 		//override by command view listener interface
 		//===============================================
@@ -193,14 +236,67 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 			
 			int status = JOptionPane.showConfirmDialog(MainWindow.getLastInstance(), message, "Suppresion d'une command", JOptionPane.YES_NO_OPTION);
 			if(status == JOptionPane.YES_OPTION) {
-				
+				try {
+					commandDao.moveToTrash(command.getId());
+					JOptionPane.showMessageDialog(MainWindow.getLastInstance(), "Success de suppression de la commande", "Information", JOptionPane.INFORMATION_MESSAGE);
+				} catch (DAOException e) {
+					JOptionPane.showMessageDialog(MainWindow.getLastInstance(), e.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+				}
 			}
 		}
 
 		@Override
 		public void onClientUpdateRequest(Client client) {
-			// TODO Auto-generated method stub
+			if (form == null) {
+				form = new ClientForm(clientDao);
+				formDialog = new JDialog(MainWindow.getLastInstance(), "Modification de l'identite d'un client", true);
+				
+				formDialogWindowAdapter = new WindowAdapter() {
+					@Override
+					public void windowClosing(WindowEvent e) {
+						disposeClientForm();
+					}
+				};
+				
+				formListener = new FormListener() {
+					
+					@Override
+					public void onValidate(AbstractForm<?> form) {}
+					
+					@Override
+					public void onRejetData(AbstractForm<?> form, String... causes) {}
+					
+					@Override
+					public void onCancel(AbstractForm<?> form) {
+						System.out.println("cancel");
+						disposeClientForm();
+					}
+					
+					@Override
+					public void onAcceptData(AbstractForm<?> form) {
+						form.persist();
+						disposeClientForm();
+					}
+				};
+				
+				form.addFormListener(formListener);
+				
+				JPanel content = (JPanel) formDialog.getContentPane();
+				content.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+				content.add(form, BorderLayout.CENTER);
+				formDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+				formDialog.addWindowListener(formDialogWindowAdapter);
+				formDialog.pack();
+				formDialog.setSize(400, formDialog.getHeight());
+				formDialog.setResizable(false);
+			}
 			
+			Client copy = clientDao.findById(client.getId());
+			form.setClient(copy);
+			formDialog.setTitle("Client: "+copy.toString());
+			
+			formDialog.setLocationRelativeTo(MainWindow.getLastInstance());
+			formDialog.setVisible(true);
 		}
 
 		@Override

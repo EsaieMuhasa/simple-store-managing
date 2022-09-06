@@ -13,7 +13,9 @@ import com.spiral.simple.store.beans.Client;
  *
  */
 class ClientDaoSQL extends UtilSQL<Client> implements ClientDao {
-	private static final String [] FIELDS_LABELS = {"id", "recordingDate", "lastUpdateDate", "names", "telephone"};
+	private static final String [] 
+			FIELDS_LABELS = {"id", "recordingDate", "lastUpdateDate", "names", "telephone"},
+			UPDATEBLE_FIELDS = {"lastUpdateDate", "names", "telephone"};
 
 	public ClientDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
@@ -38,12 +40,26 @@ class ClientDaoSQL extends UtilSQL<Client> implements ClientDao {
 	String[] getTableFields() {
 		return FIELDS_LABELS;
 	}
+	
+	@Override
+	String[] getUpdatebleFields() {
+		return UPDATEBLE_FIELDS;
+	}
 
 	@Override
 	Object[] getOccurrenceValues(Client entity) {
 		return new Object[] {
 				entity.getId(),
 				entity.getRecordingDate().getTime(),
+				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null,
+				entity.getNames(),
+				entity.getTelephone()
+		};
+	}
+	
+	@Override
+	Object[] getUpdatebleOccurrenceValues(Client entity) {
+		return new Object[] {
 				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null,
 				entity.getNames(),
 				entity.getTelephone()

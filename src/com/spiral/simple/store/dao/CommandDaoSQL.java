@@ -66,6 +66,10 @@ class CommandDaoSQL extends UtilSQL<Command> implements CommandDao {
 			updateInTable(connection, new String[] {"lastUpdateDate"}, new Object[] {now.getTime()}, c.getId());
 		}
 	}
+	
+	@Override
+	public void moveToTrash(String id) throws DAOException {
+	}
 
 	@Override
 	public Command[] findByClient(String key) throws DAOException {

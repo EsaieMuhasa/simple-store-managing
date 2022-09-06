@@ -168,7 +168,7 @@ public class StockForm extends AbstractForm<Stock> {
 		
 		accept = rejectCause == null;
 		if(accept)
-			stockDao.create(DEFAULT_ON_CREATE_REQUEST_ID, s);
+			stockDao.create(DEFAULT_ON_PERSIST_REQUEST_ID, s);
 	}
 
 	@Override

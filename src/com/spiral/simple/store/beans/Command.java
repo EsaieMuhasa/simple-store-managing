@@ -22,6 +22,7 @@ public class Command extends DBEntity {
 	private boolean delivered;
 	private Client client;
 	private int number;//the slip number
+	private boolean deleted;//when command is temporary delete
 	
 	/**
 	 * all item associate with this client command
@@ -343,6 +344,20 @@ public class Command extends DBEntity {
 		if(c.length() > 3)
 			c = c.substring(0, c.length() - 3);
 		return c;
+	}
+
+	/**
+	 * @return the deleted
+	 */
+	public boolean isDeleted() {
+		return deleted;
+	}
+
+	/**
+	 * @param deleted the deleted to set
+	 */
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
 	}
 	
 }

@@ -72,7 +72,7 @@ public class MeasureUnitForm extends AbstractForm<MeasureUnit> {
 		accept = rejectCause == null;
 		
 		if (accept)
-			measureUnitDao.create(DEFAULT_ON_CREATE_REQUEST_ID, m);
+			measureUnitDao.create(DEFAULT_ON_PERSIST_REQUEST_ID, m);
 	}
 
 	@Override

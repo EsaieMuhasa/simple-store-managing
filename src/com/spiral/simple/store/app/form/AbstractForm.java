@@ -33,7 +33,7 @@ import com.spiral.simple.store.tools.UIComponentBuilder;
 public abstract class AbstractForm <H extends DBEntity> extends JPanel{
 	private static final long serialVersionUID = -2251665578617321837L;
 	
-	public static final int DEFAULT_ON_CREATE_REQUEST_ID = 0xFF0000;
+	public static final int DEFAULT_ON_PERSIST_REQUEST_ID = 0xFF0000;
 	
 	private final JLabel title = UIComponentBuilder.createH1("Formulaire");
 	private final JButton btnValidate = new JButton("Valider", UIComponentBuilder.loadIcon("success"));
@@ -86,7 +86,7 @@ public abstract class AbstractForm <H extends DBEntity> extends JPanel{
 
 		@Override
 		public void onError(int requestId, DAOException exception) {
-			if(requestId == DEFAULT_ON_CREATE_REQUEST_ID ||
+			if(requestId == DEFAULT_ON_PERSIST_REQUEST_ID ||
 					(exception.getType() == ErrorType.ON_CREATE || exception.getType() == ErrorType.ON_UPDATE) )
 				JOptionPane.showMessageDialog(AbstractForm.this, exception.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
 		}
@@ -200,8 +200,8 @@ public abstract class AbstractForm <H extends DBEntity> extends JPanel{
 	private final void onValidate (ActionEvent event) {
 		setEnabled(false);
 		EventQueue.invokeLater(()->{
-			fireOnValidationEvent();
 			doValidate();
+			fireOnValidationEvent();
 			if(isAccept())
 				fireOnAcceptDataEvent();
 			else {

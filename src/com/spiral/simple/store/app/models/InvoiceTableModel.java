@@ -110,8 +110,8 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 			case 0: return data.get(rowIndex).getProduct().getName();
 			case 1: {
 				String quantity = CommandItem.DECIMAL_FORMAT.format(data.get(rowIndex).getQuantity());
-				if (data.get(rowIndex).countStock() != 0)
-					quantity += " "+data.get(rowIndex).getStockAt(0).getStock().getMeasureUnit().getShortName();
+				if (data.get(rowIndex).getMeasureUnit() != null)
+					quantity += " "+data.get(rowIndex).getMeasureUnit().getShortName();
 				return quantity;
 			}
 			case 2: {

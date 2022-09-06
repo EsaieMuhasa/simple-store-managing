@@ -20,4 +20,21 @@ CREATE VIEW V_Stock AS
 				FROM AffectedStock WHERE AffectedStock.stock = Stock.id
 		) AS used
 	FROM Stock;
+
+DROP VIEW IF EXISTS V_CommandItem;
+CREATE VIEW V_CommandItem AS 
+	SELECT 
+		CommandItem.id AS id,
+		CommandItem.recordingDate AS recordingDate,
+		CommandItem.lastUpdateDate AS lastUpdateDate,
+		CommandItem.quantity AS quantity,
+		CommandItem.command AS command,
+		CommandItem.product AS product,
+		CommandItem.config AS config,
+		CommandItem.unitPrice AS unitPrice,
+		CommandItem.currency AS currency,
+		(SELECT 
+			Stock.measureUnit FROM Stock WHERE Stock.product = CommandItem.product
+		) AS measureUnit
+	FROM CommandItem;
 		

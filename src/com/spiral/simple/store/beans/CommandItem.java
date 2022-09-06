@@ -19,6 +19,7 @@ public class CommandItem extends DBEntity {
 	private double unitPrice;
 	private Currency currency;
 	private DistributionConfig config;
+	private MeasureUnit measureUnit;//confert les stock d'un produit => uniquement dans la vue V_CommandItem
 	
 	private final List<AffectedStock> stocks = new ArrayList<>();
 
@@ -177,6 +178,20 @@ public class CommandItem extends DBEntity {
 	 */
 	public void setCurrency(Currency currency) {
 		this.currency = currency;
+	}
+
+	/**
+	 * @return the measureUnit
+	 */
+	public MeasureUnit getMeasureUnit() {
+		return measureUnit;
+	}
+
+	/**
+	 * @param measureUnit the measureUnit to set
+	 */
+	public void setMeasureUnit(MeasureUnit measureUnit) {
+		this.measureUnit = measureUnit;
 	}
 
 }

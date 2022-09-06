@@ -19,10 +19,17 @@ import com.spiral.simple.store.beans.DistributionConfig;
  *
  */
 class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
-	private static final String FIELDS_LABELS [] = {"id", "recordingDate", "lastUpdateDate", "command", "product", "config", "quantity", "unitPrice", "currency"};
+	private static final String [] 
+			FIELDS_LABELS = {"id", "recordingDate", "lastUpdateDate", "command", "product", "config", "quantity", "unitPrice", "currency"},
+			UPDATEBLE_FIELDS_LABELS = {"lastUpdateDate", "quantity", "unitPrice", "currency"};
 	
 	public CommandItemDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
+	}
+	
+	@Override
+	protected boolean hasView() {
+		return true;
 	}
 
 	@Override
@@ -32,7 +39,7 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 
 	@Override
 	public CommandItem findByKey(String commandId, String productId) throws DAOException {
-		return readData("SELECT * FROM "+getTableName()+" WHERE command = ? AND product = ?", commandId, productId)[0];
+		return readData("SELECT * FROM "+getViewName()+" WHERE command = ? AND product = ?", commandId, productId)[0];
 	}
 
 	@Override
@@ -42,7 +49,7 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 
 	@Override
 	public CommandItem[] findByCommand(String commandId) throws DAOException {
-		return readData("SELECT * FROM "+getTableName()+" WHERE command = ?", commandId);
+		return readData("SELECT * FROM "+getViewName()+" WHERE command = ?", commandId);
 	}
 
 	@Override
@@ -53,6 +60,11 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 	@Override
 	String[] getTableFields() {
 		return FIELDS_LABELS;
+	}
+	
+	@Override
+	String[] getUpdatebleFields() {
+		return UPDATEBLE_FIELDS_LABELS;
 	}
 
 	@Override
@@ -71,6 +83,16 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 	}
 	
 	@Override
+	Object[] getUpdatebleOccurrenceValues(CommandItem entity) {
+		return new Object [] {
+				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null,
+				entity.getQuantity(),
+				entity.getUnitPrice(),
+				entity.getCurrency().getId()
+		};
+	}
+	
+	@Override
 	protected CommandItem mapping(ResultSet result) throws SQLException {
 		CommandItem i = super.mapping(result);
 		i.setQuantity(result.getDouble("quantity"));
@@ -80,6 +102,10 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 			i.setConfig(new DistributionConfig());
 			i.getConfig().setId(result.getString("config"));
 		}
+		
+		if(result.getString("measureUnit") != null)
+			i.setMeasureUnit(daoFactory.get(MeasureUnitDao.class).findById(result.getString("measureUnit")));
+		
 		i.setProduct(daoFactory.get(ProductDao.class).findById(result.getString("product")));
 		i.setUnitPrice(result.getDouble("unitPrice"));
 		i.setCurrency(daoFactory.get(CurrencyDao.class).findById(result.getString("currency")));

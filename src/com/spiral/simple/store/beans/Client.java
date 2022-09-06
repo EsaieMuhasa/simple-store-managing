@@ -52,6 +52,19 @@ public class Client extends DBEntity {
 	}
 	
 	@Override
+	public boolean equals(Object obj) {
+		if(obj == this)
+			return true;
+		
+		if(obj instanceof Client && obj != null) {
+			Client c = (Client) obj;
+			return c.getId().equals(id);
+		}
+			
+		return super.equals(obj);
+	}
+	
+	@Override
 	public String toString() {
 		return names;
 	}

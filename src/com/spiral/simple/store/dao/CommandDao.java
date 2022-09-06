@@ -22,6 +22,27 @@ public interface CommandDao extends DAOInterface<Command> {
 	Command [] findByClient (String key) throws DAOException;
 	
 	/**
+	 * loading data by command
+	 * @param command
+	 * @return
+	 */
+	default Command load (Command command) {
+		CommandPaymentDao paymentDao = getFactory().get(CommandPaymentDao.class);
+		CommandItemDao itemDao = getFactory().get(CommandItemDao.class);
+		
+		command.removeItems();
+		command.removePayments();
+		
+		if(paymentDao.checkByCommand(command.getId()))
+			command.addPayments(paymentDao.findByCommand(command.getId()));
+		
+		if(itemDao.checkByCommand(command.getId()))
+			command.addItem(itemDao.findByCommand(command.getId()));
+		
+		return command;
+	}
+	
+	/**
 	 * change delivered state by command
 	 * @param key
 	 * @param delivered

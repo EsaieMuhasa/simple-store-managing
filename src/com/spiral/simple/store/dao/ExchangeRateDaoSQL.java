@@ -5,6 +5,7 @@ package com.spiral.simple.store.dao;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 
 import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.beans.ExchangeRate;
@@ -22,12 +23,26 @@ class ExchangeRateDaoSQL extends UtilSQL<ExchangeRate> implements ExchangeRateDa
 	}
 
 	@Override
+	public ExchangeRate findByCurrencies(String currency1, String currency2, Date time) throws DAOException {
+		if(currency1.equals(currency2))
+			throw new DAOException(String.format("les devises doivent etre differente: ID1: '%s' && ID2: '%s'", currency1, currency2));
+		
+		String sql  = "SELECT * FROM "+getTableName()+" WHERE ((currency1 = ? AND currency2 = ?) OR (currency1 = ? AND currency2 = ?)) "
+				+ "AND ((startTime <= ? AND endTime >= ?) OR (startTime <= ? AND endTime IS NULL))";
+		long date = time.getTime();
+		return readData(sql, currency1, currency2, currency2, currency1, date, date, date)[0];
+	}
+
+	@Override
 	public boolean checkByCurrency(String currency) throws DAOException {
 		return checkData("SELECT id FROM "+getViewName()+" WHERE currency1 = ? OR currency2 = ? LIMIT 1 OFFSET 0", currency, currency);
 	}
 
 	@Override
 	public boolean checkByCurrencies(String currency1, String currency2) throws DAOException {
+		if(currency1.equals(currency2))
+			throw new DAOException(String.format("le devise doivent etre difference: ID1: '%s' && ID2: '%s'", currency1, currency2));
+		
 		return checkData("SELECT * FROM "+getViewName()+" WHERE ((currency1 = ? AND currency2 = ?) OR (currency1 = ? AND currency2 = ?)) AND endTime IS NULL LIMIT 1", 
 				 currency1, currency2, currency2, currency1);
 	}
@@ -44,6 +59,9 @@ class ExchangeRateDaoSQL extends UtilSQL<ExchangeRate> implements ExchangeRateDa
 
 	@Override
 	public ExchangeRate findAvailableByCurrencies(String currency1, String currency2) throws DAOException {
+		if(currency1.equals(currency2))
+			throw new DAOException(String.format("le devise doivent etre difference: ID1: '%s' && ID2: '%s'", currency1, currency2));
+		
 		String sql = "SELECT * FROM "+getViewName()+" WHERE ((currency1 = ? AND currency2 = ?) OR (currency1 = ? AND currency2 = ?)) AND endTime IS NULL LIMIT 1";
 		return readData(sql, currency1, currency2, currency2, currency1)[0];
 	}

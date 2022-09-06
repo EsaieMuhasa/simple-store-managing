@@ -13,6 +13,12 @@ import com.spiral.simple.store.beans.DBEntity;
 public interface DAOInterface <T extends DBEntity> {
 	
 	/**
+	 * return the factory for DAO
+	 * @return
+	 */
+	DAOFactory getFactory ();
+	
+	/**
 	 * Verification of id in database table
 	 * @param id
 	 * @return

@@ -42,6 +42,11 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	}
 	
 	@Override
+	public DAOFactory getFactory() {
+		return daoFactory;
+	}
+	
+	@Override
 	public boolean checkById(String id) throws DAOException {
 		return check("id", id);
 	}
@@ -133,7 +138,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 			if(t.length == 1)
 				fireOnUpdate(requestId, t[0], olds[0]);
 			else
-				fireOnUpdate(requestId, olds, t);
+				fireOnUpdate(requestId, t, olds);
 		} catch (SQLException e) {
 			DAOException ex= new DAOException("Une erreur est survenue lors de la mis en jours\n"+e.getMessage(), e, ErrorType.ON_UPDATE);
 			fireOnError(requestId, ex);
@@ -687,10 +692,10 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	/**
 	 * emit on update single occurrence in database table
 	 * @param requestId
-	 * @param old
 	 * @param data
+	 * @param old
 	 */
-	protected synchronized void fireOnUpdate(int requestId, T old, T data) {
+	protected synchronized void fireOnUpdate(int requestId, T data, T old) {
 		for (DAOProgressListener<T> ls : progressListeners)
 			ls.onFinish(requestId, data);
 		
@@ -701,10 +706,10 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	/**
 	 * emit on update multiple occurrences in database table
 	 * @param requestId
-	 * @param old
 	 * @param data
+	 * @param old
 	 */
-	protected synchronized void fireOnUpdate(int requestId, T [] old, T [] data) {
+	protected synchronized void fireOnUpdate(int requestId, T [] data, T [] old) {
 		for (DAOProgressListener<T> ls : progressListeners)
 			ls.onFinish(requestId, data);
 		

@@ -4,6 +4,7 @@
 package com.spiral.simple.store.app.components;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -26,6 +27,10 @@ import com.spiral.simple.store.app.models.InvoiceTableModel;
 import com.spiral.simple.store.app.models.ReceivedTableModel;
 import com.spiral.simple.store.beans.Client;
 import com.spiral.simple.store.beans.Command;
+import com.spiral.simple.store.dao.ClientDao;
+import com.spiral.simple.store.dao.DAOFactory;
+import com.spiral.simple.store.dao.DAOListenerAdapter;
+import com.spiral.simple.store.dao.ExchangeRateDao;
 import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.tools.Config;
 import com.spiral.simple.store.tools.UIComponentBuilder;
@@ -72,6 +77,21 @@ public class CommandView extends JComponent {
 	
 	private final ActionListener pupupOptionListener = event -> onItemOption(event);
 	private Command command;
+	
+	private final ExchangeRateDao exchangeRateDao = DAOFactory.getDao(ExchangeRateDao.class);
+	private final ClientDao clientDao = DAOFactory.getDao(ClientDao.class);
+	private final DAOListenerAdapter<Client> clientListenerAdapter = new DAOListenerAdapter<Client>() {
+
+		@Override
+		public void onUpdate(Client newState, Client oldState) {
+			System.out.println(newState);
+			System.out.println(oldState);
+			if(command.getClient().equals(newState)){
+				command.setClient(newState);
+				updateClient();
+			}
+		}
+	};
 
 	/**
 	 * 
@@ -83,6 +103,7 @@ public class CommandView extends JComponent {
 		addMouseListener(mouseAdapter);
 		invoiceTable.addMouseListener(mouseAdapter);
 		tabbedPane.addMouseListener(mouseAdapter);
+		clientDao.addBaseListener(clientListenerAdapter);
 		
 		//pup up menu
 		for (int i = 0; i < popupOptions.length; i++) {
@@ -96,6 +117,16 @@ public class CommandView extends JComponent {
 	}
 	
 	/**
+	 * updating client personal informations
+	 */
+	private void updateClient() {
+		if(command == null || command.getClient() == null)
+			return;
+		labelName.setText("Noms: "+command.getClient().getNames());
+		labelTelephone.setText("Téléphone: "+command.getClient().getTelephone());
+	}
+	
+	/**
 	 * dispose all resource used by command view.
 	 * Disconnect command view on DAOs interfaces, and clear command view listeners
 	 * and disconnection on base swing listener
@@ -103,9 +134,19 @@ public class CommandView extends JComponent {
 	public void dispose () {
 		invoiceTable.removeMouseListener(mouseAdapter);
 		tabbedPane.removeMouseListener(mouseAdapter);
+		clientDao.removeBaseListener(clientListenerAdapter);
 		
 		for (int i = 0; i < popupOptions.length; i++) 
 			popupOptions[i].removeActionListener(pupupOptionListener);
+	}
+	
+	/**
+	 * changement de l'etant d'un element du menu
+	 * @param index
+	 * @param enabled
+	 */
+	private void setEnabledItemOption(int index, boolean enabled) {
+		popupOptions[index].setEnabled(enabled);
 	}
 
 	/**
@@ -166,8 +207,9 @@ public class CommandView extends JComponent {
 		receivedTableModel.setCommand(command);
 		receivedTableModel.daoReload();
 		invoiceTableModel.daoReload();
+		updateClient();
 		
-		if(command == null || command.getClient() == null)
+		if(command == null)
 			return;
 		
 		labelPaymentAmount.setText(command.getCreditToString());
@@ -175,8 +217,10 @@ public class CommandView extends JComponent {
 		
 		labelCommandNumber.setText("N° "+command.getNumber());
 		labelCommandAmount.setText(command.getTotalToString());
-		labelName.setText("Noms: "+command.getClient().getNames());
-		labelTelephone.setText("Téléphone: "+command.getClient().getTelephone());
+		exchangeRateDao.processingCommandPayment(command);
+		
+		setEnabledItemOption(3, !command.isSuccessfullyPaid());
+		labelCommandAmount.setForeground(command.isSuccessfullyPaid()? Color.GREEN.darker() : Color.RED.darker());
 	}
 
 	/**
@@ -225,7 +269,7 @@ public class CommandView extends JComponent {
 		panelInvoice.add(invoiceBottom, BorderLayout.SOUTH);
 		
 		//bottom panel to show calculated total amount by command
-		invoiceBottom.add(UIComponentBuilder.createH2("Total: "), BorderLayout.WEST);
+		invoiceBottom.add(UIComponentBuilder.createH2("Total facture: "), BorderLayout.WEST);
 		invoiceBottom.add(labelCommandAmount, BorderLayout.CENTER);
 		invoiceBottom.setBackground(invoiceTable.getGridColor());
 		invoiceBottom.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
@@ -238,7 +282,7 @@ public class CommandView extends JComponent {
 			credits = new JPanel(new BorderLayout());
 		
 		debs.add(UIComponentBuilder.createH2("Dette: "), BorderLayout.WEST);
-		credits.add(UIComponentBuilder.createH2("Réçu: "), BorderLayout.WEST);
+		credits.add(UIComponentBuilder.createH2("Total réçu: "), BorderLayout.WEST);
 		debs.add(labelPaymentDebtAmount, BorderLayout.CENTER);
 		credits.add(labelPaymentAmount, BorderLayout.CENTER);
 		

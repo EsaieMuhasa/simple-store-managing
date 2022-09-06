@@ -22,7 +22,7 @@ class CommandDaoSQL extends UtilSQL<Command> implements CommandDao {
 	public CommandDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
 	}
-	
+
 	@Override
 	public int getLastCommandNumber() throws DAOException {
 		int number = 0;

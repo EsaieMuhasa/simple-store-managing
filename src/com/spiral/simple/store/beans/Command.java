@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.spiral.simple.store.beans.helper.Money;
+
 /**
  * @author Esaie MUHASA
  *
@@ -23,6 +25,7 @@ public class Command extends DBEntity {
 	private Client client;
 	private int number;//the slip number
 	private boolean deleted;//when command is temporary delete
+	private transient boolean successfullyPaid = false;
 	
 	/**
 	 * all item associate with this client command
@@ -39,7 +42,7 @@ public class Command extends DBEntity {
 	 * items in this list are associate on one currency.
 	 * result in command payment item is sum of all payment item, has same currency 
 	 */
-	private final List<CommandPayment> credits = new ArrayList<>();
+	private transient final List<CommandPayment> credits = new ArrayList<>();
 	
 	/**
 	 * suppresion temporaire des elements d'une commande.
@@ -55,6 +58,21 @@ public class Command extends DBEntity {
 	 */
 	public Command() {
 		super();
+		successfullyPaid = false;
+	}
+
+	/**
+	 * @return the successfullyPaid
+	 */
+	public boolean isSuccessfullyPaid() {
+		return successfullyPaid;
+	}
+
+	/**
+	 * @param successfullyPaid the successfullyPaid to set
+	 */
+	public void setSuccessfullyPaid(boolean successfullyPaid) {
+		this.successfullyPaid = successfullyPaid;
 	}
 
 	/**
@@ -344,6 +362,75 @@ public class Command extends DBEntity {
 		if(c.length() > 3)
 			c = c.substring(0, c.length() - 3);
 		return c;
+	}
+	
+	/**
+	 * renvoie la collection des montant totals qui doivent etre payer pour 
+	 * satisfaire la dite command
+	 * @return
+	 */
+	public Money [] getTotalMoney () {
+		Map<String, Money>  amounts = new HashMap<>();
+		for (CommandItem item : items) {
+			Money m = null;
+			if(amounts.containsKey(item.getCurrency().getShortName()))
+				m = amounts.get(item.getCurrency().getShortName());
+			else
+				m = new Money(0, item.getCurrency());
+			
+			double amount = item.getTotalPrice() + m.getAmount();
+			m.setAmount(amount);
+			amounts.put(item.getCurrency().getShortName(), m);
+		}
+		Set<String> keys = amounts.keySet();
+		Money [] moneys = new Money[keys.size()];
+		int index = 0;
+		for (String key : keys)
+			moneys[index++] = amounts.get(key);
+		return moneys;
+	}
+	
+	
+	/**
+	 * renvoie un tableau des montants deja payemer par le client
+	 * @return
+	 */
+	public Money [] getPaidMoney() {
+		if(credits.size() == 0)
+			return null;
+		
+		Money [] moneys = new Money[credits.size()];
+		for (int i = 0; i < moneys.length; i++) {
+			moneys[i] = new Money(credits.get(i).getAmount(), credits.get(i).getCurrency());
+		}
+		return moneys;
+	}
+	
+	
+	/**
+	 * counting of item currencies
+	 * @return
+	 */
+	public int countItemCurrencies () {
+		Map<String, Double>  amounts = new HashMap<>();
+		for (CommandItem item : items) {
+			double amount = 0;
+			if(amounts.containsKey(item.getCurrency().getShortName()))
+				amount = amounts.get(item.getCurrency().getShortName());
+			
+			amount += item.getTotalPrice();
+			amounts.put(item.getCurrency().getShortName(), amount);
+		}
+		return amounts.size();
+	}
+	
+	/**
+	 * count of payments currencies 
+	 * (count of credit currencies)
+	 * @return
+	 */
+	public int countPaymentCurrencies () {
+		return credits.size();
 	}
 
 	/**

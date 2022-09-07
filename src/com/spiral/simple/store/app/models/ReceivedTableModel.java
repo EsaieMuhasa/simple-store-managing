@@ -59,6 +59,27 @@ public class ReceivedTableModel extends DBEntityTableModel<CommandPayment> {
 		}
 		fireTableDataChanged();
 	}
+	
+	@Override
+	public void onCreate(CommandPayment... data) {
+		if(data[0].getCommand().equals(command)) {
+			command.addPayments(data[0]);
+			reload();
+		}
+	}
+	
+	@Override
+	public void onUpdate(CommandPayment newStat, CommandPayment oldStat) {
+		if(newStat.getCommand().equals(command)) {			
+			for (int i = 0, count = command.countPayements(); i < count; i++) {
+				if(command.getPaymentAt(i).equals(newStat)) {
+					command.setPayment(i, newStat);
+					break;
+				}
+			}
+			reload();
+		}
+	}
 
 	/**
 	 * @return the command

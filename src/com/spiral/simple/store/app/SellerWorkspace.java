@@ -24,9 +24,11 @@ import com.spiral.simple.store.app.components.SellerSidebar;
 import com.spiral.simple.store.app.components.SellerSidebar.SellerSidebarListener;
 import com.spiral.simple.store.app.form.AbstractForm;
 import com.spiral.simple.store.app.form.ClientForm;
+import com.spiral.simple.store.app.form.CommandPaymentForm;
 import com.spiral.simple.store.app.form.FormListener;
 import com.spiral.simple.store.beans.Client;
 import com.spiral.simple.store.beans.Command;
+import com.spiral.simple.store.beans.CommandPayment;
 import com.spiral.simple.store.dao.ClientDao;
 import com.spiral.simple.store.dao.CommandDao;
 import com.spiral.simple.store.dao.CommandPaymentDao;
@@ -83,7 +85,7 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 	
 	/**
 	 * utility method to build JDialog frame,
-	 * UI manager for sell form
+	 * UI manager for sell clientForm
 	 */
 	private synchronized void buildCommandDialog() {
 		sidebar.setEnabledAddCommand(false);
@@ -138,6 +140,8 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 	 */
 	protected class GridCommand extends JPanel implements CommandViewListener{
 		private static final long serialVersionUID = -5526962605839654031L;
+
+		private static final int DELETION_REQUEST_ID = 0x99AA99;
 		
 		private final GridLayout gridLayout = new GridLayout(2, 2, 10, 10);
 		private final JPanel content = new JPanel(gridLayout);
@@ -146,10 +150,45 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 		private int limit;
 		private int offset;
 		
-		private ClientForm form;
-		private JDialog formDialog;
-		private WindowAdapter formDialogWindowAdapter;
-		private FormListener formListener;
+		private ClientForm clientForm;
+		private JDialog clientFormDialog;
+		
+		private CommandPaymentForm paymentForm;
+		private JDialog paymentFormDialog;
+		
+		private WindowAdapter formDialogWindowAdapter = new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				if(e.getSource() == clientFormDialog)
+					disposeClientForm();
+				else if(e.getSource() == paymentFormDialog)
+					disposePaymentForm();
+			}
+		};
+		private final FormListener formListener = new FormListener() {
+			@Override
+			public void onValidate(AbstractForm<?> form) {}
+			@Override
+			public void onRejetData(AbstractForm<?> form, String... causes) {}
+			
+			@Override
+			public void onCancel(AbstractForm<?> form) {
+				if(form == clientForm)
+					disposeClientForm();
+				else if (form == paymentForm)
+					disposePaymentForm();
+			}
+			
+			@Override
+			public void onAcceptData(AbstractForm<?> form) {
+				form.persist();
+				if(form == clientForm)
+					disposeClientForm();
+				else if(form == paymentForm)
+					disposePaymentForm();
+			}
+		};
+		
 		private final ClientDao clientDao = DAOFactory.getDao(ClientDao.class);
 		private final DAOListenerAdapter<Client> clientListenerAdapter = new DAOListenerAdapter<Client>() {
 			@Override
@@ -193,12 +232,51 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 			}
 		};
 		
+		private final DAOListenerAdapter<CommandPayment> paymentListenerAdapter = new  DAOListenerAdapter<CommandPayment>() {
+
+			@Override
+			public void onCreate(CommandPayment... data) {
+				for (CommandPayment payment : data)
+					for (int i = 0; i < commandViews.size(); i++) {
+						CommandView view = commandViews.get(i);
+						if(payment.getCommand().equals(view.getCommand())) {
+							view.reload();
+							break;
+						}
+					}
+			}
+
+			@Override
+			public void onUpdate(CommandPayment newState, CommandPayment oldState) {
+				for (int i = 0; i < commandViews.size(); i++) {
+					CommandView view = commandViews.get(i);
+					if(newState.getCommand().equals(view.getCommand())) {
+						view.reload();
+						break;
+					}
+				}
+			}
+
+			@Override
+			public void onDelete(CommandPayment... data) {
+				for (CommandPayment payment : data)
+					for (int i = 0; i < commandViews.size(); i++) {
+						CommandView view = commandViews.get(i);
+						if(payment.getCommand().equals(view.getCommand())) {
+							view.reload();
+							break;
+						}
+					}
+			}
+		};
+		
 		public GridCommand() {
 			super(new BorderLayout());
 			setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 			clientDao.addBaseListener(clientListenerAdapter);
 			clientDao.addErrorListener(clientListenerAdapter);
 			commandDao.addBaseListener(commandListenerAdapter);
+			commandPaymentDao.addBaseListener(paymentListenerAdapter);
 			
 			content.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
 			
@@ -212,23 +290,16 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 			int width =  getWidth();
 			int rows = gridLayout.getRows(), cols = gridLayout.getColumns();
 			
-			if(width <= 400) {
+			if(width < 700) {
 				rows = commandViews.size();
 				cols = 1;
-			} else if (width >= 700 && width <= 900) {
+			} else if (width >= 700 && width <= 920) {
 				rows = (commandViews.size() / 2) + (commandViews.size() % 2);
 				cols = 2;
-			} else if (width > 900) {
+			} else if (width > 920) {
 				rows = (commandViews.size() / 3) + (commandViews.size() % 3 != 0? 1 : 0);
 				cols = 3;
 			}
-			
-//				int size = width / cols;
-//				Dimension dim = new Dimension(size, size);
-//				for (CommandView view : commandViews){
-//					view.setPreferredSize(dim);
-//					view.setMaximumSize(dim);
-//				}
 			
 			gridLayout.setRows(rows);
 			gridLayout.setColumns(cols);
@@ -291,13 +362,23 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 		}
 		
 		/**
-		 * disposing client form,
-		 * and closing/hiding formDialog
+		 * disposing client clientForm,
+		 * and closing/hiding clientFormDialog
 		 */
 		private void disposeClientForm() {
-			formDialog.setVisible(false);
-			form.setClient(null);
-			formDialog.dispose();
+			clientFormDialog.setVisible(false);
+			clientForm.setClient(null);
+			clientFormDialog.dispose();
+		}
+		
+		/**
+		 * liberation des resource utiliser par la boite de dialogue 
+		 * de payment d'un commande
+		 */
+		private void disposePaymentForm () {
+			paymentFormDialog.setVisible(false);
+			paymentForm.setPayment(null);
+			paymentFormDialog.dispose();
 		}
 		
 		//==============================================
@@ -328,56 +409,28 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 
 		@Override
 		public void onClientUpdateRequest(Client client) {
-			if (form == null) {
-				form = new ClientForm(clientDao);
-				formDialog = new JDialog(MainWindow.getLastInstance(), "Modification de l'identite d'un client", true);
+			if (clientForm == null) {//on creee le formulaire de modification de l'identite du client une fois
+				clientForm = new ClientForm(clientDao);
+				clientFormDialog = new JDialog(MainWindow.getLastInstance(), "Modification de l'identite d'un client", true);
 				
-				formDialogWindowAdapter = new WindowAdapter() {
-					@Override
-					public void windowClosing(WindowEvent e) {
-						disposeClientForm();
-					}
-				};
+				clientForm.addFormListener(formListener);
 				
-				formListener = new FormListener() {
-					
-					@Override
-					public void onValidate(AbstractForm<?> form) {}
-					
-					@Override
-					public void onRejetData(AbstractForm<?> form, String... causes) {}
-					
-					@Override
-					public void onCancel(AbstractForm<?> form) {
-						System.out.println("cancel");
-						disposeClientForm();
-					}
-					
-					@Override
-					public void onAcceptData(AbstractForm<?> form) {
-						form.persist();
-						disposeClientForm();
-					}
-				};
-				
-				form.addFormListener(formListener);
-				
-				JPanel content = (JPanel) formDialog.getContentPane();
+				JPanel content = (JPanel) clientFormDialog.getContentPane();
 				content.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
-				content.add(form, BorderLayout.CENTER);
-				formDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-				formDialog.addWindowListener(formDialogWindowAdapter);
-				formDialog.pack();
-				formDialog.setSize(400, formDialog.getHeight());
-				formDialog.setResizable(false);
+				content.add(clientForm, BorderLayout.CENTER);
+				clientFormDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+				clientFormDialog.addWindowListener(formDialogWindowAdapter);
+				clientFormDialog.pack();
+				clientFormDialog.setSize(400, clientFormDialog.getHeight());
+				clientFormDialog.setResizable(false);
 			}
 			
 			Client copy = clientDao.findById(client.getId());
-			form.setClient(copy);
-			formDialog.setTitle("Client: "+copy.toString());
+			clientForm.setClient(copy);
+			clientFormDialog.setTitle("Client: "+copy.toString());
 			
-			formDialog.setLocationRelativeTo(MainWindow.getLastInstance());
-			formDialog.setVisible(true);
+			clientFormDialog.setLocationRelativeTo(MainWindow.getLastInstance());
+			clientFormDialog.setVisible(true);
 		}
 
 		@Override
@@ -387,9 +440,46 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 		}
 
 		@Override
-		public void onPaymentRequest(Command command) {
-			// TODO Auto-generated method stub
+		public void onPaymentRequest(Command command, CommandPayment payment) {
+			if(paymentForm == null) {//cration unique de du formulaire de payement une et une seul foie
+				paymentForm = new CommandPaymentForm();
+				paymentFormDialog = new  JDialog(MainWindow.getLastInstance(), "Payement d'une commande", true);
+
+				paymentForm.addFormListener(formListener);
+				paymentForm.doReload();
+				
+				JPanel content = (JPanel) paymentFormDialog.getContentPane();
+				content.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+				content.add(paymentForm, BorderLayout.CENTER);
+				
+				paymentFormDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+				paymentFormDialog.pack();
+				paymentFormDialog.setSize(400, paymentFormDialog.getHeight());
+				paymentFormDialog.setResizable(false);
+				paymentFormDialog.addWindowListener(formDialogWindowAdapter);
+			}
 			
+			CommandPayment com = payment;
+			if (payment.getId() != null)
+				com = commandPaymentDao.findById(command.getId());
+			
+			com.setCommand(command);
+			paymentForm.setPayment(com);
+			paymentFormDialog.setLocationRelativeTo(MainWindow.getLastInstance());
+			paymentFormDialog.setVisible(true);
+		}
+		
+		@Override
+		public void onDeletionPayment(CommandPayment payment) {
+			Command command = payment.getCommand();
+			String message ="Voulez-vous vraiment supprimer "+CommandPayment.DECIMAL_FORMAT.format(payment.getAmount());
+			message += " "+payment.getCurrency().getShortName()+"\nle payement de la command numéro "+command.getNumber()+"??";
+			message += "\nCette opération est irreversible?";
+			int status = JOptionPane.showConfirmDialog(MainWindow.getLastInstance(), message, "Suppresion d'un payment", JOptionPane.YES_NO_CANCEL_OPTION);
+			
+			if(status == JOptionPane.YES_OPTION) {
+				commandPaymentDao.delete(DELETION_REQUEST_ID, payment.getId());
+			}
 		}
 		
 	}

@@ -9,6 +9,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Date;
 
 import javax.swing.Box;
 import javax.swing.DefaultComboBoxModel;
@@ -42,6 +43,7 @@ public class CommandPaymentForm extends AbstractForm<CommandPayment> {
 	private final ItemListener currencyItemListener = event -> onCurrencyChange(event);
 	private final ExchangeRateDao exchangeRateDao = DAOFactory.getDao(ExchangeRateDao.class);
 	private final CurrencyDao currencyDao = DAOFactory.getDao(CurrencyDao.class);
+	private final CommandPaymentDao commandPaymentDao = DAOFactory.getDao(CommandPaymentDao.class);
 	
 	private CommandPayment payment;
 	private String cause [] ;
@@ -63,6 +65,17 @@ public class CommandPaymentForm extends AbstractForm<CommandPayment> {
 		getBody().add(fields, BorderLayout.CENTER);
 		fieldCurrency.getField().addItemListener(currencyItemListener);
 		setVisibilityButtonCancellation(true);
+	}
+	
+	@Override
+	public void persist() {
+		if (payment == null) 
+			return;
+		
+		if(payment.getId() != null)
+			commandPaymentDao.update(DEFAULT_ON_PERSIST_REQUEST_ID, payment);
+		else 
+			commandPaymentDao.create(DEFAULT_ON_PERSIST_REQUEST_ID, payment);
 	}
 	
 	/**
@@ -161,6 +174,7 @@ public class CommandPaymentForm extends AbstractForm<CommandPayment> {
 			payment = new CommandPayment();
 		cause = null;
 		payment.setCurrency(currencyModel.getElementAt(fieldCurrency.getField().getSelectedIndex()));
+		payment.setDate(fieldDate.getField().getDate() == null? new Date() : fieldDate.getField().getDate());
 		try {
 			double amount = Double.parseDouble(fieldAmount.getField().getText());
 			payment.setAmount(amount);

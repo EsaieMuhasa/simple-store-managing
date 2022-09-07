@@ -301,6 +301,16 @@ public class Command extends DBEntity {
 	}
 	
 	/**
+	 * mis en jour d'un payement de la commande
+	 * @param index
+	 * @param payment
+	 */
+	public void setPayment(int index, CommandPayment payment) {
+		payments.set(index, payment);
+		sortCredits();
+	}
+	
+	/**
 	 * remove all payment associate with this client command
 	 */
 	public void removePayments () {

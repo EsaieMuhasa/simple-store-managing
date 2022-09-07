@@ -28,7 +28,9 @@ import com.spiral.simple.store.app.models.InvoiceTableModel;
 import com.spiral.simple.store.app.models.ReceivedTableModel;
 import com.spiral.simple.store.beans.Client;
 import com.spiral.simple.store.beans.Command;
+import com.spiral.simple.store.beans.CommandPayment;
 import com.spiral.simple.store.dao.ClientDao;
+import com.spiral.simple.store.dao.CommandDao;
 import com.spiral.simple.store.dao.DAOFactory;
 import com.spiral.simple.store.dao.DAOListenerAdapter;
 import com.spiral.simple.store.dao.ExchangeRateDao;
@@ -42,7 +44,6 @@ import com.spiral.simple.store.tools.UIComponentBuilder;
  */
 public class CommandView extends JComponent {
 	private static final long serialVersionUID = 1802972774245239179L;
-	
 	private final List<CommandViewListener>  listeners = new ArrayList<>();
 	
 	private final InvoiceTableModel invoiceTableModel = new InvoiceTableModel();
@@ -79,6 +80,7 @@ public class CommandView extends JComponent {
 	private final ActionListener pupupOptionListener = event -> onItemOption(event);
 	private Command command;
 	
+	private final CommandDao commandDao = DAOFactory.getDao(CommandDao.class);
 	private final ExchangeRateDao exchangeRateDao = DAOFactory.getDao(ExchangeRateDao.class);
 	private final ClientDao clientDao = DAOFactory.getDao(ClientDao.class);
 	private final DAOListenerAdapter<Client> clientListenerAdapter = new DAOListenerAdapter<Client>() {
@@ -90,6 +92,16 @@ public class CommandView extends JComponent {
 			if(command.getClient().equals(newState)){
 				command.setClient(newState);
 				updateClient();
+			}
+		}
+	};
+	
+	private final DAOListenerAdapter<Command> commandListenerAdapter = new DAOListenerAdapter<Command>() {
+		@Override
+		public void onUpdate(Command newState, Command oldState) {
+			if(newState.getId().equals(command.getId())) {
+				command.setLastUpdateDate(newState.getLastUpdateDate());
+				reload();
 			}
 		}
 	};
@@ -105,6 +117,7 @@ public class CommandView extends JComponent {
 		invoiceTable.addMouseListener(mouseAdapter);
 		tabbedPane.addMouseListener(mouseAdapter);
 		clientDao.addBaseListener(clientListenerAdapter);
+		commandDao.addBaseListener(commandListenerAdapter);
 		
 		//pup up menu
 		for (int i = 0; i < popupOptions.length; i++) {
@@ -121,6 +134,28 @@ public class CommandView extends JComponent {
 		setPreferredSize(max);
 		setMinimumSize(min);
 		setMaximumSize(max);
+	}
+	
+	/**
+	 * rechargement des elements de la commande, depuis la base de donnee
+	 */
+	public synchronized void reload() {
+		receivedTableModel.daoReload();
+		invoiceTableModel.daoReload();
+		updateClient();
+		
+		if(command == null)
+			return;
+		
+		labelPaymentAmount.setText(command.getCreditToString());
+		labelPaymentDebtAmount.setText(command.getSoldToString());
+		
+		labelCommandNumber.setText("N° "+command.getNumber());
+		labelCommandAmount.setText(command.getTotalToString());
+		exchangeRateDao.processingCommandPayment(command);
+		
+		setEnabledItemOption(3, !command.isSuccessfullyPaid());
+		labelCommandAmount.setForeground(command.isSuccessfullyPaid()? Color.GREEN.darker() : Color.RED.darker());
 	}
 	
 	/**
@@ -142,6 +177,7 @@ public class CommandView extends JComponent {
 		invoiceTable.removeMouseListener(mouseAdapter);
 		tabbedPane.removeMouseListener(mouseAdapter);
 		clientDao.removeBaseListener(clientListenerAdapter);
+		commandDao.removeBaseListener(commandListenerAdapter);
 		
 		for (int i = 0; i < popupOptions.length; i++) 
 			popupOptions[i].removeActionListener(pupupOptionListener);
@@ -168,30 +204,42 @@ public class CommandView extends JComponent {
 		int index = Integer.parseInt(item.getName());
 		
 		switch (index) {
-			case 1://deliver command
+			case 1:{//deliver command
 				for (CommandViewListener ls : listeners)
 					ls.onDeliveryRequest(command);
-				break;
+			}break;
 				
-			case 2://update command
+			case 2:{//update command
 				for (CommandViewListener ls : listeners)
 					ls.onUpdateRequest(command);
-				break;
+			}break;
 				
-			case 3://delete command
+			case 3:{//delete command
 				for (CommandViewListener ls : listeners)
 					ls.onDeletionRequest(command);
-				break;
+			}break;
 				
-			case 4://command payment
+			case 4:{//command payment => nouveau payement
 				for (CommandViewListener ls : listeners)
-					ls.onPaymentRequest(command);
-				break;
+					ls.onPaymentRequest(command, new CommandPayment());
+			}break;
 				
-			case 5://update client name and telephone number
+			case 5: {//command payment => edition d'un payement
+				CommandPayment payment = receivedTableModel.getRow(receivedTable.getSelectedRow());
+				for (CommandViewListener ls : listeners)
+					ls.onPaymentRequest(command, payment);
+			}break;
+			
+			case 6: {
+				CommandPayment payment = receivedTableModel.getRow(receivedTable.getSelectedRow());
+				for (CommandViewListener ls : listeners)
+					ls.onDeletionPayment(payment);
+			}break;
+				
+			case 7:{//update client name and telephone number
 				for (CommandViewListener ls : listeners)
 					ls.onClientUpdateRequest(command.getClient());
-				break;
+			}break;
 				
 			default:
 				break;
@@ -212,22 +260,7 @@ public class CommandView extends JComponent {
 		this.command = command;
 		invoiceTableModel.setCommand(command);
 		receivedTableModel.setCommand(command);
-		receivedTableModel.daoReload();
-		invoiceTableModel.daoReload();
-		updateClient();
-		
-		if(command == null)
-			return;
-		
-		labelPaymentAmount.setText(command.getCreditToString());
-		labelPaymentDebtAmount.setText(command.getSoldToString());
-		
-		labelCommandNumber.setText("N° "+command.getNumber());
-		labelCommandAmount.setText(command.getTotalToString());
-		exchangeRateDao.processingCommandPayment(command);
-		
-		setEnabledItemOption(3, !command.isSuccessfullyPaid());
-		labelCommandAmount.setForeground(command.isSuccessfullyPaid()? Color.GREEN.darker() : Color.RED.darker());
+		reload();
 	}
 
 	/**
@@ -369,10 +402,19 @@ public class CommandView extends JComponent {
 		void onDeliveryRequest (Command command);
 		
 		/**
-		 * on new payment of command
+		 * lors que le client voeux executer l'action de payement de la commande.
+		 * soit l'enregistrement d'un nouveau payement, soit la modification d'un payement existant
 		 * @param command
+		 * @param payment
 		 */
-		void onPaymentRequest(Command command);
+		void onPaymentRequest(Command command, CommandPayment payment);
+		
+		/**
+		 * lorsque l'utilisateur veux supprimer le payement d'une commande
+		 * @param payment
+		 */
+		void onDeletionPayment(CommandPayment payment);
+		
 	}
 
 }

@@ -6,6 +6,7 @@ package com.spiral.simple.store.dao;
 import java.util.Date;
 
 import com.spiral.simple.store.beans.CashMoney;
+import com.spiral.simple.store.beans.Currency;
 
 /**
  * @author Esaie MUHASA
@@ -52,13 +53,15 @@ public interface CashMoneyDao <T extends CashMoney> extends DAOInterface <T> {
 	T[] findByDate (Date min, Date max, int limit, int offset) throws DAOException;
 	
 	/**
-	 * return sold at date interval
+	 * selection du cash money en une intervale de temps
 	 * @param min
 	 * @param max
+	 * @param currency
+	 * @param currencyOnly
 	 * @return
 	 * @throws DAOException
 	 */
-	double getSoldByDate (Date min, Date max) throws DAOException;
+	double getSoldByDate (Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException;
 	
 	/**
 	 * check if exist operation at date
@@ -103,13 +106,17 @@ public interface CashMoneyDao <T extends CashMoney> extends DAOInterface <T> {
 	}
 	
 	/**
-	 * return sold at date
+	 * renvoie la somme des cash money pour la devise en 3 eme paramere.
+	 * le parametre currencyOnly permet de dire si l'on doit ignorer les autres cash money qui ne font pas 
+	 * reference a la devise en 3 eme parametre.
 	 * @param date
+	 * @param currency
+	 * @param currencyOnly: true pour recuperre unique ceux de la devise en prametre, false pour faire directement la conversion pour les autres monais
 	 * @return
 	 * @throws DAOException
 	 */
-	default double getSoldByDate (Date date) throws DAOException {
-		return getSoldByDate(date, date);
+	default double getSoldByDate (Date date, Currency currency, boolean currencyOnly) throws DAOException {
+		return getSoldByDate(date, date, currency, currencyOnly);
 	}
 
 }

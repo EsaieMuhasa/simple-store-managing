@@ -14,7 +14,9 @@ import com.spiral.simple.store.beans.Product;
  */
 class ProductDaoSQL extends UtilSQL<Product> implements ProductDao {
 	
-	private final String [] TABLE_FIELDS = { "id", "name", "description", "picture", "recordingDate", "lastUpdateDate" };
+	private final String [] 
+			TABLE_FIELDS = { "id", "name", "description", "picture", "recordingDate", "lastUpdateDate" },
+			UPDATEBLE_TABLE_FIELDS = {"name", "description", "picture", "lastUpdateDate" };
 
 	public ProductDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
@@ -35,10 +37,15 @@ class ProductDaoSQL extends UtilSQL<Product> implements ProductDao {
 	String[] getTableFields() {
 		return TABLE_FIELDS;
 	}
+	
+	@Override
+	String[] getUpdatebleFields() {
+		return UPDATEBLE_TABLE_FIELDS;
+	}
 
 	@Override
 	Object[] getOccurrenceValues(Product entity) {
-		Object [] data = {
+		return new Object [] {
 				entity.getId(),
 				entity.getName(),
 				entity.getDescription(),
@@ -46,7 +53,16 @@ class ProductDaoSQL extends UtilSQL<Product> implements ProductDao {
 				entity.getRecordingDate().getTime(),
 				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null
 		};
-		return data;
+	}
+	
+	@Override
+	Object[] getUpdatebleOccurrenceValues(Product entity) {
+		return new Object [] {
+				entity.getName(),
+				entity.getDescription(),
+				entity.getPicture(),
+				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null
+		};
 	}
 
 	@Override

@@ -348,7 +348,7 @@ public abstract class DBEntityTableModel <T extends DBEntity> extends AbstractTa
 		
 		for (int i=0; i < data.size(); i++) {
 			T t = data.get(i);
-			if(t.getId() == newStat.getId()) {
+			if(t.getId().equals(newStat.getId())) {
 				data.set(i, newStat);
 				fireTableRowsUpdated(i, i);
 				break;
@@ -367,7 +367,7 @@ public abstract class DBEntityTableModel <T extends DBEntity> extends AbstractTa
 			for (int i=0; i < data.size(); i++) {
 				
 				T t = data.get(i);
-				if(t.getId() == newStat[j].getId()) {
+				if(t.getId().equals(newStat[j].getId())) {
 					data.set(i, newStat[j]);
 					fireTableRowsUpdated(i, i);
 					break;
@@ -388,7 +388,7 @@ public abstract class DBEntityTableModel <T extends DBEntity> extends AbstractTa
 		for (T e : ts) {
 			for (int i=0; i < data.size(); i++) {
 				T t = data.get(i);
-				if(t.getId() == e.getId()) {
+				if(t.getId().equals(e.getId())) {
 					data.remove(i);
 					fireTableRowsDeleted(i, i);
 					break;

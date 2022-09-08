@@ -223,7 +223,7 @@ public class StockView extends JComponent {
 
 		@Override
 		public void onUpdate(Stock newState, Stock oldState) {
-			if (stock.getId() == oldState.getId()) {
+			if (stock.getId().equals(newState.getId())) {
 				stock = newState;
 				repaint();
 			}
@@ -238,7 +238,7 @@ public class StockView extends JComponent {
 
 		@Override
 		public void onUpdate(Product newState, Product oldState) {
-			if(stock.getProduct().getId() == newState.getId()) {
+			if(stock.getProduct().getId().equals(newState.getId())) {
 				stock.setProduct(newState);
 				repaint();
 			}

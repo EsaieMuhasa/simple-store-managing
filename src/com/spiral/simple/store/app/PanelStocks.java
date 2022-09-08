@@ -242,6 +242,28 @@ public class PanelStocks extends JPanel{
 			//
 		}
 		
+		@Override
+		public void doLayout() {
+			int rows = gridLayout.getRows();
+			int cols = gridLayout.getColumns();
+			int width = this.getWidth();
+			if ( width < 850) {
+				rows = stocks.size();
+				cols = 1;
+			} else if (width >= 850 && width < 1350) {
+				rows = (stocks.size() / 2) + (stocks.size() % 2);
+				cols = 2;
+			} else {
+				cols = 3;
+				rows = (stocks.size() / 3) + (stocks.size() % 3 != 0? 1 : 0);
+			}
+			
+			gridLayout.setColumns(cols);
+			gridLayout.setRows(rows);
+			contentPanel.revalidate();
+			super.doLayout();
+		}
+		
 		/**
 		 * lors d'une action sur un element du menu
 		 * @param event

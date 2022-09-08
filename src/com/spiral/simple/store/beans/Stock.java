@@ -24,6 +24,8 @@ public class Stock extends DBEntity {
 	private Date manifacturingDate;
 	private Date expiryDate;
 	private String description;
+	
+	private double soldQuantity;//quantite deja vendue
 
 	/**
 	 * 
@@ -196,6 +198,39 @@ public class Stock extends DBEntity {
 	 */
 	public void setMeasureUnit(MeasureUnit measureUnit) {
 		this.measureUnit = measureUnit;
+	}
+	
+	/**
+	 * @return the soldQuantity
+	 */
+	public double getSoldQuantity() {
+		return soldQuantity;
+	}
+
+	/**
+	 * @param soldQuantity the soldQuantity to set
+	 */
+	public void setSoldQuantity(double soldQuantity) {
+		this.soldQuantity = soldQuantity;
+	}
+
+	/**
+	 * renvoie la quantite disponible en stock
+	 * @return
+	 */
+	public double getAvailableQuantity() {
+		double available = quantity - soldQuantity;
+		if(available <= 0)
+			return 0;
+		return available;
+	}
+	
+	/**
+	 * renvoie la quantite disponible en pourcentage
+	 * @return
+	 */
+	public double getAvailableQuantityToPercent () {
+		return (quantity / 100) * getAvailableQuantity();
 	}
 
 	@Override

@@ -52,7 +52,6 @@ public class StockForm extends AbstractForm<Stock> {
 	private final SimpleComboBox<Currency> fieldSalesCurrency = new SimpleComboBox<>("Unité", salesComboModel);
 	private final SimpleComboBox<Product> fieldProduct = new SimpleComboBox<>("Produit", productComboModel);
 
-	private final StockDao stockDao;
 	private final ProductDao productDao;
 	private final MeasureUnitDao measureUnitDao;
 	private final CurrencyDao currencyDao;
@@ -60,10 +59,11 @@ public class StockForm extends AbstractForm<Stock> {
 	private boolean accept;
 	private String [] rejectCause;
 	
+	private Stock  stock;
+	
 	public StockForm () {
 		super(DAOFactory.getDao(StockDao.class));
 		
-		stockDao = DAOFactory.getDao(StockDao.class);
 		productDao = DAOFactory.getDao(ProductDao.class);
 		measureUnitDao = DAOFactory.getDao(MeasureUnitDao.class);
 		currencyDao = DAOFactory.getDao(CurrencyDao.class);
@@ -71,6 +71,52 @@ public class StockForm extends AbstractForm<Stock> {
 		build();
 	}
 	
+	/**
+	 * @return the stock
+	 */
+	public Stock getStock() {
+		return stock;
+	}
+
+	/**
+	 * @param stock the stock to set
+	 */
+	public void setStock(Stock stock) {
+		this.stock = stock;
+		
+		if(stock == null || stock.getId() == null)
+			cleanFields();
+		else {
+			fieldQuantity.getField().setText(stock.getQuantity()+"");
+			fieldBuyingPrice.getField().setText(stock.getBuyingPrice()+"");
+			fieldDate.getField().setDate(stock.getDate());
+			fieldExpiryDate.getField().setDate(stock.getExpiryDate());
+			fieldManufacturingDate.getField().setDate(stock.getManifacturingDate());
+			fieldDefaultUnitPrice.getField().setText(stock.getDefaultUnitPrice()+"");
+			
+			for (int i = 0; i < buyingComboModel.getSize(); i++) {
+				if(buyingComboModel.getElementAt(i).equals(stock.getBuyingCurrency())){
+					fieldBuyingCurrency.getField().setSelectedIndex(i);
+					break;
+				}
+			}
+			
+			for (int i = 0; i < measurUnitComboModel.getSize(); i++) {
+				if(measurUnitComboModel.getElementAt(i).equals(stock.getMeasureUnit())) {
+					fieldQuantityUnit.getField().setSelectedIndex(i);
+					break;
+				}
+			}
+			
+			for (int i = 0; i < productComboModel.getSize(); i++) {
+				if(productComboModel.getElementAt(i).equals(stock.getProduct())) {
+					fieldProduct.getField().setSelectedIndex(i);
+					break;
+				}
+			}
+		}
+	}
+
 	/**
 	 * building UI components
 	 */
@@ -145,11 +191,17 @@ public class StockForm extends AbstractForm<Stock> {
 	@Override
 	protected void doValidate() {
 		String cause ="";
-		Stock s = new Stock();
+		Stock s = stock;
 		
-		double quantity = Integer.parseInt(fieldQuantity.getField().getText().trim());
+		try {
+			double quantity = Double.parseDouble(fieldQuantity.getField().getText().trim());
+			s.setQuantity(quantity);
+			if(s.getSoldQuantity() != 0 && s.getQuantity() < s.getAvailableQuantity())
+				cause += "le stock doit etre suppérieur ou égale a la quanité déjà vendue;";
+		} catch (NumberFormatException e) {
+			cause += "La quantité doit être une valeur numérique valide;";
+		}
 		
-		s.setQuantity(quantity);
 		s.setDate(fieldDate.getField().getDate());
 		s.setProduct(productComboModel.getElementAt(fieldProduct.getField().getSelectedIndex()));
 		s.setBuyingCurrency(buyingComboModel.getElementAt(fieldBuyingCurrency.getField().getSelectedIndex()));
@@ -158,8 +210,17 @@ public class StockForm extends AbstractForm<Stock> {
 		
 		s.setManifacturingDate(fieldManufacturingDate.getField().getDate());
 		s.setExpiryDate(fieldExpiryDate.getField().getDate());
-		s.setDefaultUnitPrice(Double.parseDouble(fieldDefaultUnitPrice.getField().getText()));
-		s.setBuyingPrice(Double.parseDouble(fieldBuyingPrice.getField().getText()));
+		try {
+			s.setBuyingPrice(Double.parseDouble(fieldBuyingPrice.getField().getText()));
+		} catch (NumberFormatException e) {
+			cause += "Le prix d'achat doit être une valeur numérique valide;";
+		}
+		
+		try {
+			s.setDefaultUnitPrice(Double.parseDouble(fieldDefaultUnitPrice.getField().getText()));
+		} catch (NumberFormatException e) {
+			cause += "Le prix unitaire doit être une valeur numérique valide;";
+		}
 		
 		if(cause != "")
 			rejectCause = cause.split(";");
@@ -167,8 +228,6 @@ public class StockForm extends AbstractForm<Stock> {
 			rejectCause = null;
 		
 		accept = rejectCause == null;
-		if(accept)
-			stockDao.create(DEFAULT_ON_PERSIST_REQUEST_ID, s);
 	}
 
 	@Override

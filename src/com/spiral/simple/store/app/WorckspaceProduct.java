@@ -63,7 +63,7 @@ public class WorckspaceProduct extends JPanel {
 		//==
 		
 		JTabbedPane tabbe = new JTabbedPane(JTabbedPane.BOTTOM);
-		tabbe.addTab("Stocks ", new ImageIcon(Config.getIcon("classeur")), new PanelStocks());
+		tabbe.addTab("Stocks ", new ImageIcon(Config.getIcon("classeur")), panelStocks);
 		tabbe.addTab("Liste de produit ", new ImageIcon(Config.getIcon("list")), new PanelProducts());
 		
 		center.add(tool, BorderLayout.NORTH);

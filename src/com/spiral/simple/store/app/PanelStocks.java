@@ -2,22 +2,33 @@ package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.ImageIcon;
 import javax.swing.JDialog;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 
 import com.spiral.simple.store.app.components.StockView;
+import com.spiral.simple.store.app.form.AbstractForm;
+import com.spiral.simple.store.app.form.FormListener;
 import com.spiral.simple.store.app.form.StockForm;
 import com.spiral.simple.store.beans.Stock;
 import com.spiral.simple.store.dao.DAOBaseListener;
 import com.spiral.simple.store.dao.DAOFactory;
+import com.spiral.simple.store.dao.DAOListenerAdapter;
 import com.spiral.simple.store.dao.StockDao;
 import com.spiral.simple.store.swing.CustomTable;
+import com.spiral.simple.store.tools.Config;
 import com.spiral.simple.store.tools.UIComponentBuilder;
 
 public class PanelStocks extends JPanel{
@@ -30,11 +41,49 @@ public class PanelStocks extends JPanel{
 	
 	private final GridLayout gridLayout = new GridLayout(5, 2, 10, 10);
 	private final StocksContainer container;
+	
+	private final FormListener formListener = new FormListener() {
+		
+		@Override
+		public void onValidate(AbstractForm<?> form) {}
+		
+		@Override
+		public void onRejetData(AbstractForm<?> form, String... causes) {}
+		
+		@Override
+		public void onCancel(AbstractForm<?> form) {
+			stockForm.setStock(null);
+		}
+		
+		@Override
+		public void onAcceptData(AbstractForm<?> form) {
+			Stock stock = stockForm.getStock();
+			if(stock.getId() == null)
+				stockDao.create(AbstractForm.DEFAULT_ON_PERSIST_REQUEST_ID, stock);
+			else 
+				stockDao.update(AbstractForm.DEFAULT_ON_PERSIST_REQUEST_ID, stock);
+			
+			stockForm.setEnabled(false);
+		}
+	};
+	
+	private final DAOListenerAdapter<Stock> stockListenerAdapter = new DAOListenerAdapter<Stock>() {
+		@Override
+		public void onCreate(Stock... data) {
+			hideDialogStock();
+		}
+
+		@Override
+		public void onUpdate(Stock newState, Stock oldState) {
+			hideDialogStock();
+		}
+	};
 
 	public PanelStocks() {
 		super(new BorderLayout());
 		
 		stockDao = DAOFactory.getDao(StockDao.class);
+		stockDao.addBaseListener(stockListenerAdapter);
 		container = new StocksContainer();
 		
 		add(createBody(), BorderLayout.CENTER);
@@ -70,27 +119,50 @@ public class PanelStocks extends JPanel{
 	 * utilitaire de demande de creation d'un nouveau stock
 	 */
 	public void addStock () {
-		createStock();
+		createDialogStock();
+		dialogFormStock.setTitle("Insersion d'un nouveau stock");
+		stockForm.setStock(new Stock());
+		dialogFormStock.setLocationRelativeTo(dialogFormStock.getOwner());
+		dialogFormStock.setVisible(true);
+	}
+	
+	/**
+	 * demande de mise en jour du stock en parametre
+	 * @param stock
+	 */
+	public void updateStock (Stock stock) {
+		Stock s = stockDao.findById(stock.getId());
+		createDialogStock();
+		dialogFormStock.setTitle("Mise en jour d'un stock");
+		stockForm.setStock(s);
+		dialogFormStock.setLocationRelativeTo(dialogFormStock.getOwner());
+		dialogFormStock.setVisible(true);
 	}
 	
 	/**
 	 * gere l'instatiation de la boite e dialogue d'insersion d'un stock
 	 */
-	private void createStock() {
+	private void createDialogStock() {
 		if(dialogFormStock == null) {
-			dialogFormStock = new JDialog(MainWindow.getLastInstance(), "Formulaire d'insersion d'un nouveau stock", true);
+			dialogFormStock = new JDialog(MainWindow.getLastInstance(), "Stock", true);
 			dialogFormStock.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
 			stockForm = new StockForm();
-			stockForm.reload();
+			stockForm.addFormListener(formListener);
+			stockForm.doReload();
 			JPanel c = (JPanel) dialogFormStock.getContentPane();
 			c.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
 			c.add(stockForm, BorderLayout.CENTER);
 			dialogFormStock.pack();
 			dialogFormStock.setSize(450, dialogFormStock.getHeight()+20);
 		}
-		dialogFormStock.setLocationRelativeTo(dialogFormStock.getOwner());
-		dialogFormStock.setVisible(true);
+	}
+	
+	private void hideDialogStock () {
+		stockForm.setEnabled(true);
+		stockForm.setStock(null);
+		dialogFormStock.setVisible(false);
+		dialogFormStock.dispose();
 	}
 	
 	/**
@@ -102,6 +174,50 @@ public class PanelStocks extends JPanel{
 		
 		private final List<StockView> stocks = new ArrayList<>();
 		private final JPanel contentPanel = new JPanel(gridLayout);
+		private int selectedIndex = -1;
+		
+		private final JPopupMenu popup = new JPopupMenu();
+		private final JMenuItem [] options = {
+				new JMenuItem("Modifier", new ImageIcon(Config.getIcon("edit"))),
+				new JMenuItem("Supprimer", new ImageIcon(Config.getIcon("close"))),
+				new JMenuItem("Fiche de stock", new ImageIcon(Config.getIcon("report")))
+		};
+		
+		private final MouseAdapter mouseAdapter = new  MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				if(e.getButton() != MouseEvent.BUTTON1)
+					return;
+				
+				StockView view = (StockView) e.getSource();
+				setSelectedItem(view);
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if(!e.isPopupTrigger())
+					return;
+				
+				StockView view = (StockView) e.getSource();
+				setSelectedItem(view);
+				options[1].setEnabled(view.getStock().getSoldQuantity() == 0);
+				popup.show(view, e.getX(), e.getY());
+			}
+			
+			/**
+			 * activation de la view en parametre
+			 * @param view
+			 */
+			private void setSelectedItem (StockView view) {
+				if(selectedIndex != -1)
+					stocks.get(selectedIndex).setSelected(false);
+				
+				selectedIndex = stocks.indexOf(view);
+				view.setSelected(true);
+			}
+		};
+		
+		private final ActionListener optionListener = event -> onOptionItemAction(event);
 
 		public StocksContainer () {
 			super(new BorderLayout());
@@ -115,15 +231,43 @@ public class PanelStocks extends JPanel{
 			add(box, BorderLayout.CENTER);
 			stockDao.addBaseListener(this);
 			contentPanel.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+			
+			//pop up menu items
+			for (JMenuItem item : options) {
+				popup.add(item);
+				item.addActionListener(optionListener);
+				if(item == options[1])
+					popup.addSeparator();
+			}
+			//
+		}
+		
+		/**
+		 * lors d'une action sur un element du menu
+		 * @param event
+		 */
+		private void onOptionItemAction (ActionEvent event) {
+			if (event.getSource() == options[0]) {
+				updateStock(stocks.get(selectedIndex).getStock());
+			} else if (event.getSource() == options[1]) {
+				
+			} else if (event.getSource() == options[2]) {
+				
+			}
 		}
 		
 		/**
 		 * dispose all used resources
 		 */
 		private void dispose () {
+			if(selectedIndex != -1)
+				stocks.get(selectedIndex).setSelected(false);
+			
+			selectedIndex = -1;
 			for (StockView view : stocks){
 				contentPanel.remove(view);
 				view.dispose();
+				view.removeMouseListener(mouseAdapter);
 			}
 			
 			stocks.clear();
@@ -138,6 +282,7 @@ public class PanelStocks extends JPanel{
 			Stock data [] = stockDao.findAll();
 			for (Stock stock : data) {
 				StockView view = new StockView(stock);
+				view.addMouseListener(mouseAdapter);
 				stocks.add(view);
 				contentPanel.add(view);
 			}
@@ -165,6 +310,7 @@ public class PanelStocks extends JPanel{
 					if (view.getStock().getId() == stock.getId()) {
 						view.dispose();
 						stocks.remove(view);
+						view.removeMouseListener(mouseAdapter);
 						break;
 					}
 				}

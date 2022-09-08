@@ -19,6 +19,11 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 			"id", "quantity", "measureUnit", "description", "defaultUnitPrice", "salesCurrency",
 			"buyingPrice", "buyingCurrency", "manifacturingDate", "expiryDate",
 			"product", "date", "recordingDate", "lastUpdateDate" };
+	
+	private final String [] UPDATEBLE_TABLE_FIELDS = { 
+			"quantity", "measureUnit", "description", "defaultUnitPrice", "salesCurrency",
+			"buyingPrice", "buyingCurrency", "manifacturingDate", "expiryDate",
+			"product", "date", "lastUpdateDate" };
 
 	public StockDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
@@ -73,6 +78,11 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 	String[] getTableFields() {
 		return TABLE_FIELDS;
 	}
+	
+	@Override
+	String[] getUpdatebleFields() {
+		return UPDATEBLE_TABLE_FIELDS;
+	}
 
 	@Override
 	Object[] getOccurrenceValues(Stock entity) {
@@ -90,6 +100,24 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 				entity.getProduct().getId(),
 				entity.getDate().getTime(),
 				entity.getRecordingDate().getTime(),
+				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null
+		};
+	}
+	
+	@Override
+	Object[] getUpdatebleOccurrenceValues(Stock entity) {
+		return new Object[] {
+				entity.getQuantity(),
+				entity.getMeasureUnit().getId(),
+				entity.getDescription(),
+				entity.getDefaultUnitPrice(),
+				entity.getSalesCurrency().getId(),
+				entity.getBuyingPrice(),
+				entity.getBuyingCurrency().getId(),
+				entity.getManifacturingDate() != null? entity.getManifacturingDate().getTime() : null,
+				entity.getExpiryDate() != null? entity.getExpiryDate().getTime() : null,
+				entity.getProduct().getId(),
+				entity.getDate().getTime(),
 				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null
 		};
 	}
@@ -118,6 +146,7 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 		s.initManufacturingDate(result.getLong("manifacturingDate"));
 		s.initExpiryDate(result.getLong("expiryDate"));
 		s.initDate(result.getLong("date"));
+		s.setSoldQuantity(result.getDouble("soldQuantity"));
 		s.setProduct(daoFactory.get(ProductDao.class).findById(result.getString("product")));
 		return s;
 	}

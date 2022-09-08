@@ -18,7 +18,7 @@ CREATE VIEW V_Stock AS
 		(SELECT 
 			SUM(AffectedStock.quantity)
 				FROM AffectedStock WHERE AffectedStock.stock = Stock.id
-		) AS used
+		) AS soldQuantity
 	FROM Stock;
 
 DROP VIEW IF EXISTS V_CommandItem;

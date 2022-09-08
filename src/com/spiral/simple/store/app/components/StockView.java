@@ -10,6 +10,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
 import java.util.Objects;
@@ -43,6 +45,7 @@ public class StockView extends JComponent {
 		DATE_FONT = new Font("Arial", Font.ITALIC, 14),
 		UNIT_PRICE_FONT = new Font("Arial", Font.BOLD, 20);
 	
+	private static final Color HOVER_COLOR = new Color(0xAAAACC);
 	
 	//la forme qui perme d'arrondir le images des articles 
 	private static final int ROUND_RECT_X = 10, ROUND_RECT_Y = 25, ROUND_RECT_SIZE = 90;
@@ -53,22 +56,27 @@ public class StockView extends JComponent {
 	//==
 	
 	private Stock stock;
+	private boolean selected = false;//pour savoie le sotock est selectionner
+	private boolean hovered = false;
 	
 	private final StockDao stockDao = DAOFactory.getDao(StockDao.class);
 	private final ProductDao productDao = DAOFactory.getDao(ProductDao.class);
 	
 	private final StockListenerAdapter stockListenerAdapter = new StockListenerAdapter();
 	private final ProductListenerAdapter productListenerAdapter = new ProductListenerAdapter();
+	private final ViewMouseListener mouseListener = new ViewMouseListener();
 
 	/**
-	 * 
+	 * constructeur par defaut
 	 */
 	public StockView() {
 		super();
 		initSize();
+		init();
 	}
 	
 	/**
+	 * initialisation du stock dont on doit visualiser l'etat
 	 * @param stock
 	 */
 	public StockView (Stock stock) {
@@ -77,8 +85,34 @@ public class StockView extends JComponent {
 		this.stock = stock;
 		listeningDao();
 		initSize();
+		init();
 	}
 	
+	/**
+	 * ecoute des evenements bas niveau
+	 */
+	private void init() {
+		addMouseListener(mouseListener);
+	}
+	
+	/**
+	 * @return the selected
+	 */
+	public boolean isSelected() {
+		return selected;
+	}
+
+	/**
+	 * @param selected the selected to set
+	 */
+	public void setSelected(boolean selected) {
+		if(this.selected == selected)
+			return;
+		
+		this.selected = selected;
+		repaint();
+	}
+
 	/**
 	 * initialization of required size component geometry
 	 */
@@ -97,8 +131,8 @@ public class StockView extends JComponent {
 		Graphics2D g = (Graphics2D) graphics;
 		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
-		g.setColor(CustomTable.GRID_COLOR);
-		int left =ROUND_RECT_X *2 + ROUND_RECT_SIZE ;
+		g.setColor(hovered? HOVER_COLOR : CustomTable.GRID_COLOR);
+		int left = ROUND_RECT_X *2 + ROUND_RECT_SIZE ;
 		
 		g.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
 		g.drawImage(stock.getProduct().getImage().getImage(), ROUND_RECT_X, ROUND_RECT_Y, ROUND_RECT_SIZE, ROUND_RECT_SIZE, null);
@@ -108,18 +142,17 @@ public class StockView extends JComponent {
 		g.setFont(TITLE_FONT);
 		g.drawString(stock.getProduct().getName(), ROUND_RECT_X + left, ROUND_RECT_Y);
 		
-		g.fillRoundRect(left, ROUND_RECT_Y + 10, getWidth() - left - ROUND_RECT_X , 10, 10, 10);
+		double widthProgress = getWidth() - left - ROUND_RECT_X; // = stock.quantity = 100 %
+		double available = (widthProgress / stock.getQuantity()) * stock.getAvailableQuantity();
 		
-		String date = "Arrivage du "+DBEntityTableModel.DEFAULT_DATE_FORMAT.format(stock.getDate());
-		g.setFont(DATE_FONT);
-		g.setColor(Color.BLUE.darker().darker().darker());
-		g.drawString(date, getWidth() - g.getFontMetrics().stringWidth(date) - 15, ROUND_RECT_Y * 2 + 10);
-		
+		g.drawRoundRect(left, ROUND_RECT_Y + 10, (int)widthProgress , 10, 10, 10);
+		g.fillRoundRect(left, ROUND_RECT_Y + 10, (int)available, 10, 10, 10);
+
 		g.setColor(Color.BLACK);
-		String text = Stock.DECIMAL_FORMAT.format(stock.getBuyingPrice())+" "+stock.getBuyingCurrency().getShortName();
+		String text = Stock.DECIMAL_FORMAT.format(stock.getAvailableQuantity())+" "+stock.getMeasureUnit().getShortName();
 		text += " / "+Stock.DECIMAL_FORMAT.format(stock.getQuantity())+" "+stock.getMeasureUnit().getShortName();
 		
-		g.drawString(text, left + ROUND_RECT_X, ROUND_RECT_Y * 2 + 10);
+		g.drawString(text, left + ROUND_RECT_X, ROUND_RECT_Y * 2 + 15);
 		g.setFont(UNIT_PRICE_FONT);
 		
 		text = Stock.DECIMAL_FORMAT.format(stock.getDefaultUnitPrice())+" "+ stock.getSalesCurrency().getShortName() +" / "+stock.getMeasureUnit().getShortName();
@@ -131,10 +164,15 @@ public class StockView extends JComponent {
 		g.setColor(Color.BLACK);
 		g.drawString(text, x + 15, y + 22);
 		
-		g.setFont(DATE_FONT.deriveFont(Font.PLAIN, 12));
+		g.setFont(DATE_FONT.deriveFont(Font.BOLD, 12));
 		g.setColor(Color.BLUE.darker().darker().darker());
-		date = "Enregistrer en date du "+DBEntityTableModel.DEFAULT_DATE_FORMAT.format(stock.getRecordingDate());
-		g.drawString(date, getWidth() - g.getFontMetrics().stringWidth(date) - 15, getHeight() - 7);
+		String date = "Arrivage du "+DBEntityTableModel.DEFAULT_DATE_FORMAT.format(stock.getDate())+", enregistrer en date du "+DBEntityTableModel.DEFAULT_DATE_FORMAT.format(stock.getRecordingDate());
+		g.drawString(date, getWidth() - g.getFontMetrics().stringWidth(date) - 15, getHeight() - 5);
+		
+		if(selected){
+			g.setColor(Color.BLUE.darker());
+			g.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, 10, 10);
+		}
 	}
 	
 	/**
@@ -151,6 +189,7 @@ public class StockView extends JComponent {
 	public void dispose() {
 		stockDao.removeBaseListener(stockListenerAdapter);
 		productDao.removeBaseListener(productListenerAdapter);
+		removeMouseListener(mouseListener);
 	}
 	
 	/**
@@ -203,6 +242,26 @@ public class StockView extends JComponent {
 				stock.setProduct(newState);
 				repaint();
 			}
+		}
+		
+	}
+	
+	/**
+	 * @author Esaie Muhasa
+	 * event de la sourie
+	 */
+	private class ViewMouseListener extends MouseAdapter{
+
+		@Override
+		public void mouseEntered(MouseEvent e) {
+			hovered = true;
+			repaint();
+		}
+
+		@Override
+		public void mouseExited(MouseEvent e) {
+			hovered = false;
+			repaint();
 		}
 		
 	}

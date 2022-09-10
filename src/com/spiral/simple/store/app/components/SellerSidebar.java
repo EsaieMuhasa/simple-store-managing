@@ -5,29 +5,39 @@ package com.spiral.simple.store.app.components;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeListener;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
 
+import com.spiral.simple.store.app.MainWindow;
 import com.spiral.simple.store.beans.Command;
+import com.spiral.simple.store.beans.CommandPayment;
 import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.dao.CommandDao;
 import com.spiral.simple.store.dao.CommandPaymentDao;
@@ -42,7 +52,12 @@ import com.spiral.simple.store.tools.Config;
 import com.spiral.simple.store.tools.UIComponentBuilder;
 import com.toedter.calendar.JCalendar;
 import com.trimeur.swing.chart.CloudChartRender;
+import com.trimeur.swing.chart.DateAxis;
+import com.trimeur.swing.chart.DefaultAxis;
 import com.trimeur.swing.chart.DefaultCloudChartModel;
+import com.trimeur.swing.chart.DefaultMaterialPoint;
+import com.trimeur.swing.chart.DefaultPointCloud;
+import com.trimeur.swing.chart.PointCloud.CloudType;
 
 /**
  * @author Esaie Muhasa
@@ -51,23 +66,32 @@ import com.trimeur.swing.chart.DefaultCloudChartModel;
 public class SellerSidebar extends JPanel {
 	private static final long serialVersionUID = -8618632784321077214L;
 	
-	private final JButton btnAddCommand =new JButton("Nouvele commande", new ImageIcon(Config.getIcon("new")));
+	public final SimpleDateFormat MONTH_NAME_FORMAT = new SimpleDateFormat("MMMM yyyy");
+	
+	private final JButton btnAddCommand =new JButton("Nouvelle commande", new ImageIcon(Config.getIcon("new")));
 	private final JCalendar calendar = new JCalendar();
 
-	private final DefaultCloudChartModel chartModel = new DefaultCloudChartModel();
-	private final DefaultComboBoxModel<Currency> currencyBoxModel = new DefaultComboBoxModel<>();
+	
+	private final DefaultComboBoxModel<Currency> cardsCurrencyBoxModel = new DefaultComboBoxModel<>();
 	
 	private final List<SellerSidebarListener> listeners = new ArrayList<>();
 	private final PropertyChangeListener calendarListener = event -> onSelectedDateChange();
-	private final StateContainer stateContainer = new  StateContainer();
-	private final JLabel title = UIComponentBuilder.createH2("Synthèse du 28/08/2022");
-	private final CloudChartRender chartRender = new CloudChartRender(chartModel);
+	private final PropertyChangeListener monthListener = event -> onSelectedMonthChange();
 	
-	private final JCheckBox currencyCheck = new JCheckBox("", true);
-	private final JComboBox<Currency> currencyBox = new JComboBox<>(currencyBoxModel);
+	private final StateContainer stateContainer = new  StateContainer();
+	private final ChartContainer chartContainer = new ChartContainer();
+	
+	private final JLabel 
+		titleCharts = UIComponentBuilder.createH2("Septembre"),
+		labelYear = UIComponentBuilder.createH2("2022"),
+		titleCards = UIComponentBuilder.createH2("28/08/2022");
+	
+	private final JCheckBox cardsCurrencyCheck = new JCheckBox("", true);
+	private final JComboBox<Currency> cardsCurrencyBox = new JComboBox<>(cardsCurrencyBoxModel);
 	
 	{
 		calendar.addPropertyChangeListener("calendar", calendarListener);
+		calendar.getMonthChooser().addPropertyChangeListener("month", monthListener);
 		btnAddCommand.addActionListener(event -> {
 			for (SellerSidebarListener ls : listeners)
 				ls.onNewCommand();
@@ -102,8 +126,9 @@ public class SellerSidebar extends JPanel {
 		}
 	};
 	
-	private final ActionListener checkCurrencyChangeListener = event -> onCheckCurrenceChange(event);
-	private final ItemListener boxCurrencyListener = event -> onBoxCurrencyChange(event);
+	private final ActionListener cardCurrencyActionListener = event -> onCardCheckCurrencyAction(event);
+	
+	private final ItemListener cardBoxCurrencyListener = event -> onCardBoxCurrencyChange(event);
 	
 	public SellerSidebar() {
 		super(new BorderLayout(5, 5));
@@ -113,7 +138,8 @@ public class SellerSidebar extends JPanel {
 			center = new JPanel(new BorderLayout()),
 			btn = new JPanel(new BorderLayout()),
 			chart = new JPanel(new BorderLayout(5, 5)),
-			titlePanel = new JPanel(new GridLayout(1, 2, 5, 5));
+			cardsTitle = new JPanel(new GridLayout(1, 2, 5, 5)),
+			chartTitle = new JPanel(new BorderLayout());
 		
 		btn.add(btnAddCommand, BorderLayout.CENTER);
 		btn.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
@@ -122,24 +148,30 @@ public class SellerSidebar extends JPanel {
 		top.add(btn, BorderLayout.NORTH);
 		
 		Box box = Box.createHorizontalBox();
-		box.add(currencyCheck);
+		box.add(cardsCurrencyCheck);
 		box.add(Box.createHorizontalStrut(5));
-		box.add(currencyBox);
+		box.add(cardsCurrencyBox);
 		
-		currencyCheck.addActionListener(checkCurrencyChangeListener);
-		currencyBox.addItemListener(boxCurrencyListener);
+		cardsCurrencyCheck.addActionListener(cardCurrencyActionListener);
+		cardsCurrencyBox.addItemListener(cardBoxCurrencyListener);
 		
-		titlePanel.add(title);
-		titlePanel.add(box);
-		titlePanel.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
-		titlePanel.setBackground(CustomTable.GRID_COLOR);
+		cardsTitle.add(titleCards);
+		cardsTitle.add(box);
+		cardsTitle.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+		cardsTitle.setBackground(CustomTable.GRID_COLOR);
 		
-		center.add(titlePanel, BorderLayout.NORTH);
+		center.add(cardsTitle, BorderLayout.NORTH);
 		center.add(stateContainer, BorderLayout.CENTER);
-		center.setBorder(BorderFactory.createLineBorder(titlePanel.getBackground()));
+		center.setBorder(BorderFactory.createLineBorder(cardsTitle.getBackground()));
 		
-		chart.setBorder(BorderFactory.createLineBorder(titlePanel.getBackground()));
-		chart.add(chartRender, BorderLayout.CENTER);
+		chartTitle.add(titleCharts, BorderLayout.CENTER);
+		chartTitle.add(labelYear, BorderLayout.EAST);
+		chartTitle.setBackground(CustomTable.GRID_COLOR);
+		chartTitle.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+		
+		chart.add(chartTitle, BorderLayout.NORTH);
+		chart.setBorder(BorderFactory.createLineBorder(cardsTitle.getBackground()));
+		chart.add(chartContainer, BorderLayout.CENTER);
 		
 		add(top, BorderLayout.NORTH);
 		add(chart, BorderLayout.CENTER);
@@ -151,32 +183,36 @@ public class SellerSidebar extends JPanel {
 
 		reloadCurrencies();
 	}
-	
+
 	/**
 	 * mis en jour du model du combo box qui contiens 
 	 * les devises
 	 */
 	private void reloadCurrencies() {
-		currencyBoxModel.removeAllElements();
-		currencyBox.setEnabled(currencyCheck.isSelected());
+		cardsCurrencyBoxModel.removeAllElements();
+		cardsCurrencyBox.setEnabled(cardsCurrencyCheck.isSelected());
 		if(currencyDao.countAll() == 0)
 			return;
 		
 		Currency []  cs = currencyDao.findAll();
-		for (Currency currency : cs) 
-			currencyBoxModel.addElement(currency);
+		for (Currency currency : cs)
+			cardsCurrencyBoxModel.addElement(currency);
 		
 		stateContainer.initTabs(cs);
-		if(!currencyCheck.isSelected())
-			stateContainer.setSelectedCurrency(currencyBoxModel.getElementAt(currencyBox.getSelectedIndex()), calendar.getDate());
+		chartContainer.initCurrencies(cs);
+		
+		if(!cardsCurrencyCheck.isSelected())//doit-ton effectuer la conversion des devises directement???
+			stateContainer.setSelectedCurrency(cardsCurrencyBoxModel.getElementAt(cardsCurrencyBox.getSelectedIndex()), calendar.getDate());
 	}
 	
 	/**
 	 * rechargeemnt de donnes depuis la bdd
-	 * pour metre enjour l'UI
+	 * pour metre en jour l'UI.
+	 * cette methode recharge le(s) modele(s) du/des graphique(s) et ceux des cards
 	 */
 	private synchronized void reload() {
 		stateContainer.onDateChange(calendar.getDate());
+		chartContainer.reload(calendar.getDate());
 	}
 	
 	/**
@@ -185,11 +221,11 @@ public class SellerSidebar extends JPanel {
 	 * pour la devise selectionner, sinon on le solde selon chaque devise dans un tabbed panel
 	 * @param event
 	 */
-	private void onCheckCurrenceChange(ActionEvent event) {
-		currencyBox.setEnabled(currencyCheck.isSelected());
+	private void onCardCheckCurrencyAction(ActionEvent event) {
+		cardsCurrencyBox.setEnabled(cardsCurrencyCheck.isSelected());
 		
-		if(currencyCheck.isSelected())
-			stateContainer.setSelectedCurrency(currencyBoxModel.getElementAt(currencyBox.getSelectedIndex()), calendar.getDate());
+		if(cardsCurrencyCheck.isSelected())
+			stateContainer.setSelectedCurrency(cardsCurrencyBoxModel.getElementAt(cardsCurrencyBox.getSelectedIndex()), calendar.getDate());
 		else
 			stateContainer.onDateChange(calendar.getDate());
 	}
@@ -198,19 +234,32 @@ public class SellerSidebar extends JPanel {
 	 * lors l'utilisateur decide change la devise
 	 * @param event
 	 */
-	private void onBoxCurrencyChange(ItemEvent event) {
+	private void onCardBoxCurrencyChange(ItemEvent event) {
 		if(event.getStateChange() != ItemEvent.SELECTED)
 			return;
 		
-		stateContainer.setSelectedCurrency(currencyBoxModel.getElementAt(currencyBox.getSelectedIndex()), null);
+		stateContainer.setSelectedCurrency(cardsCurrencyBoxModel.getElementAt(cardsCurrencyBox.getSelectedIndex()), null);
 	}
 	
 	/**
 	 * when selected date change
 	 */
 	private void onSelectedDateChange () {
+		String title = MONTH_NAME_FORMAT.format(calendar.getDate());
+		title = title.substring(0, 1).toUpperCase() + title.substring(1, title.length());
+		titleCharts.setText(title);
 		for (SellerSidebarListener ls : listeners)
 			ls.onDateChange(calendar.getDate());
+	}
+	
+	/**
+	 * lors du changemet d'un mois de l'annee
+	 */
+	private void onSelectedMonthChange () {
+		chartContainer.reload(calendar.getDate());
+		String title = MONTH_NAME_FORMAT.format(calendar.getDate());
+		title = title.substring(0, 1).toUpperCase() + title.substring(1, title.length());
+		titleCharts.setText(title);
 	}
 	
 	/**
@@ -290,10 +339,10 @@ public class SellerSidebar extends JPanel {
 
 		@Override
 		public void onDateChange(Date date) {
-			title.setText("Le "+Command.DATE_FORMAT.format(date));
+			titleCards.setText("Le "+Command.DATE_FORMAT.format(date));
 			removeAll();
 			
-			if(currencyCheck.isSelected()) {
+			if(cardsCurrencyCheck.isSelected()) {
 				item.setCurrentDate(date);
 				add(item, BorderLayout.CENTER);
 			} else {
@@ -425,6 +474,166 @@ public class SellerSidebar extends JPanel {
 				return;
 			this.currencyOnly = currencyOnly;
 			reloadCardModel();
+		}
+
+	}
+	
+	/**
+	 * @author Esaie Muhasa
+	 * containeur des graphiques
+	 */
+	private class ChartContainer extends JPanel {
+		private static final long serialVersionUID = 1142782728896444128L;
+		
+		private final DateFormat 
+			DATE_GET_MONTH_YEAR = new SimpleDateFormat("MM-yyyy"),
+			DATE_FORMAT = new SimpleDateFormat("dd-MM-yyyy"); 
+		
+		private final DefaultAxis yAxis = new DefaultAxis("Montant", "$", "$");
+		private final DateAxis xAxis = new DateAxis("Date", "date", "");
+		private final DefaultCloudChartModel chartModel = new DefaultCloudChartModel(xAxis, yAxis);
+		private final CloudChartRender chartRender = new CloudChartRender(chartModel);
+		private final DefaultPointCloud cloud = new DefaultPointCloud(Color.RED.darker());
+		
+		private final JPanel panelCurrencies = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		private final ButtonGroup groupCurrencies =  new ButtonGroup(); 
+		private final JCheckBox checkConverter = new JCheckBox("Convertir", true);
+		private final List<JRadioButton> radios = new ArrayList<>();
+		private final List<Currency> currencies = new ArrayList<>();
+		private final ActionListener radiosAction = event -> onRadioAction(event);
+		private final ActionListener checkConverterAction = event -> onCheckConverterAction (event);
+		
+		public ChartContainer() {
+			super(new  BorderLayout());
+			init();
+			
+			cloud.setTitle("Vente journalière");
+			cloud.setDefaultPointSize(0.9d);
+			cloud.setType(CloudType.STICK_CHART);
+			chartModel.addChart(cloud);
+			checkConverter.addActionListener(checkConverterAction);
+		}
+		
+		@Override
+		public void doLayout() {
+			super.doLayout();
+			int h = getHeight();
+			chartRender.setVisible(h > 80);
+		}
+		
+		/**
+		 * initialisation des composant graphique
+		 */
+		private void init() {
+			final JPanel center = new JPanel(new BorderLayout()),
+					bottom = new JPanel(new BorderLayout());
+			
+			center.add(chartRender, BorderLayout.CENTER);
+			center.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+			
+			bottom.add(checkConverter, BorderLayout.WEST);
+			bottom.add(panelCurrencies, BorderLayout.CENTER);
+			
+			bottom.setBackground(CustomTable.GRID_COLOR);
+			panelCurrencies.setOpaque(false);
+			
+			add(bottom, BorderLayout.SOUTH);
+			add(center, BorderLayout.CENTER);
+		}
+		
+		/**
+		 * prepation du panel de selection de la devise
+		 * @param currencies
+		 */
+		private void initCurrencies (Currency [] currencies) {
+			for (Currency currency : currencies) {
+				JRadioButton radio = new JRadioButton(currency.getShortName(), true);
+				radio.addActionListener(radiosAction);
+				radios.add(radio);
+				groupCurrencies.add(radio);
+				panelCurrencies.add(radio);
+				this.currencies.add(currency);
+			}
+		}
+		
+		/**
+		 * lors du click sur un bouton ration
+		 * @param event
+		 */
+		private void onRadioAction(ActionEvent event) {
+			JRadioButton  radio = (JRadioButton) event.getSource();
+			if(!radio.isSelected())
+				return;
+			
+			Currency currency = currencies.get(radios.indexOf(radio));
+			reload(calendar.getDate(), currency, checkConverter.isSelected());
+		}
+		
+		/**
+		 * lorsque l'utilisateur active/desactive la conversion automatique
+		 * @param event
+		 */
+		private void onCheckConverterAction (ActionEvent event) {
+			reload (calendar.getDate());
+		}
+		
+		/**
+		 * de donnee du model du graphique.
+		 * on charge directement des operations de mois de la date en parametre
+		 * @param date
+		 */
+		private void reload (Date date) {
+			JRadioButton radio = null;
+			for (int i = 0; i < radios.size(); i++) {
+				radio = radios.get(i);
+				if (radio.isSelected())
+					break;
+			}
+			
+			Objects.requireNonNull(radio);
+			Currency currency = currencies.get(radios.indexOf(radio));
+			reload(calendar.getDate(), currency, checkConverter.isSelected());
+		}
+
+		/**
+		 * mis en jours des models des graphiques
+		 * @param date
+		 */
+		private void reload(Date date, Currency currency, boolean currencyOnly) {
+			Calendar calendar = Calendar.getInstance();
+			calendar.setTime(date);
+			
+			long maxDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+			
+			String minToString = "01-"+DATE_GET_MONTH_YEAR.format(date);
+			//String maxToString = (maxDay < 10? "0":"")+maxDay+"-"+DATE_GET_MONTH_YEAR.format(date);
+			
+			try {
+				Date min = DATE_FORMAT.parse(minToString);
+				//Date max = DATE_FORMAT.parse(maxToString);
+				cloud.setTitle("Vente journalière");
+				yAxis.setMeasureUnit(currency.getSymbol());
+				cloud.removePoints();
+				
+				for (long i = 0; i <= maxDay; i++) {
+					long time = min.getTime() + (1000l * 60l * 60l * 24l * i);
+					Date day = new Date(time);
+					
+					double amount = commandPaymentDao.getSoldByDate(day, currency, currencyOnly);
+					DefaultMaterialPoint point = new DefaultMaterialPoint(Color.RED.darker());
+					
+					point.setX(UIComponentBuilder.toDateAxisValue(day));
+					point.setLabelX(CommandPayment.DATE_FORMAT.format(day));
+					point.setLabelY(CommandPayment.DECIMAL_FORMAT.format(amount)+" "+currency.getShortName());
+					point.setY(amount);
+					
+					cloud.addPoint(point);
+					cloud.setBackgroundColor(Color.RED.darker());
+				}
+			} catch (ParseException e) {
+				JOptionPane.showMessageDialog(MainWindow.getLastInstance(), "Une erreur est survenue lors de parsage de la date\n"+e.getMessage(),
+						"Erreur parsage date", JOptionPane.ERROR_MESSAGE);
+			}
 		}
 
 	}

@@ -5,10 +5,13 @@ package com.spiral.simple.store.tools;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.Date;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.border.EmptyBorder;
+
+import com.trimeur.swing.chart.tools.Utility;
 
 /**
  * @author Esaie MUHASA
@@ -60,6 +63,32 @@ public final class UIComponentBuilder {
 	public static ImageIcon loadIcon (String name) {
 		ImageIcon icon = new ImageIcon(Config.getIcon(name));
 		return icon;
+	}
+	
+	
+	/**
+	 * renvoie l'equivatent numerique de la date en param
+	 * @param date
+	 * @return
+	 */
+	public static double toDateAxisValue (Date date) {
+		Date middle = Utility.toMiddleTimestampOfDay(date);
+		Date toDay = Utility.toMiddleTimestampOfDay(new Date());
+		
+		if (middle.getTime() == toDay.getTime())
+			return 0;
+		
+		double value = middle.getTime() - toDay.getTime();
+		
+		value /= 1000d;
+		value /= 60d;
+		value /= 60d;
+		value /= 24d;
+		
+//		if (middle.getTime() < toDay.getTime())
+//			value *= -1;
+		
+		return value;
 	}
 	
 

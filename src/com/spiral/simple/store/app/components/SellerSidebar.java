@@ -503,6 +503,8 @@ public class SellerSidebar extends JPanel {
 		private final ActionListener radiosAction = event -> onRadioAction(event);
 		private final ActionListener checkConverterAction = event -> onCheckConverterAction (event);
 		
+		private boolean convert = false;
+		
 		public ChartContainer() {
 			super(new  BorderLayout());
 			init();
@@ -566,7 +568,7 @@ public class SellerSidebar extends JPanel {
 				return;
 			
 			Currency currency = currencies.get(radios.indexOf(radio));
-			reload(calendar.getDate(), currency, checkConverter.isSelected());
+			reload(calendar.getDate(), currency, convert);
 		}
 		
 		/**
@@ -574,6 +576,7 @@ public class SellerSidebar extends JPanel {
 		 * @param event
 		 */
 		private void onCheckConverterAction (ActionEvent event) {
+			convert = !convert;
 			reload (calendar.getDate());
 		}
 		
@@ -592,14 +595,14 @@ public class SellerSidebar extends JPanel {
 			
 			Objects.requireNonNull(radio);
 			Currency currency = currencies.get(radios.indexOf(radio));
-			reload(calendar.getDate(), currency, checkConverter.isSelected());
+			reload(calendar.getDate(), currency, convert);
 		}
 
 		/**
 		 * mis en jours des models des graphiques
 		 * @param date
 		 */
-		private void reload(Date date, Currency currency, boolean currencyOnly) {
+		private void reload(Date date, Currency currency, final boolean currencyOnly) {
 			Calendar calendar = Calendar.getInstance();
 			calendar.setTime(date);
 			
@@ -611,7 +614,7 @@ public class SellerSidebar extends JPanel {
 			try {
 				Date min = DATE_FORMAT.parse(minToString);
 				//Date max = DATE_FORMAT.parse(maxToString);
-				cloud.setTitle("Vente journalière");
+				cloud.setTitle("Vente journalière ( "+(currencyOnly? "Pour le " : "Conversion en ")+currency.getShortName()+")");
 				yAxis.setMeasureUnit(currency.getSymbol());
 				cloud.removePoints();
 				

@@ -118,6 +118,14 @@ public interface ExchangeRateDao extends DAOInterface<ExchangeRate> {
 	boolean checkByCurrencies (String currency1, String currency2) throws DAOException;
 	
 	/**
+	 * selection de toutes le variation du taux d'echange de la devise dont l'ID est en parametre
+	 * @param currencyKey
+	 * @return
+	 * @throws DAOException
+	 */
+	ExchangeRate [] findByCurrency (String currencyKey) throws DAOException;
+	
+	/**
 	 * return all exchange rate available for currency
 	 * @param currency
 	 * @return

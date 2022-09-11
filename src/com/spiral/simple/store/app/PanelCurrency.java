@@ -15,10 +15,17 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import com.spiral.simple.store.app.form.CurrencyForm;
 import com.spiral.simple.store.app.form.ExchangeRateForm;
+import com.spiral.simple.store.app.models.ExchangeRateTableModel;
 import com.spiral.simple.store.beans.Currency;
+import com.spiral.simple.store.dao.CurrencyDao;
+import com.spiral.simple.store.dao.DAOFactory;
 import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.tools.Config;
 import com.spiral.simple.store.tools.UIComponentBuilder;
@@ -30,8 +37,8 @@ import com.spiral.simple.store.tools.UIComponentBuilder;
 public class PanelCurrency extends JPanel {
 	private static final long serialVersionUID = -659627479279912684L;
 	
-	private final DefaultListModel<Currency> currecyListModel = new DefaultListModel<>();
-	private final JList<Currency> currencyList = new JList<>(currecyListModel);
+	private final DefaultListModel<Currency> currencyListModel = new DefaultListModel<>();
+	private final JList<Currency> currencyList = new JList<>(currencyListModel);
 	private final CurrencyWorkspace workspace = new CurrencyWorkspace();
 	
 	private final JButton btnNewCurrency = new JButton("Ajoute une dévise", new ImageIcon(Config.getIcon("new")));
@@ -43,14 +50,29 @@ public class PanelCurrency extends JPanel {
 	
 	private CurrencyForm currencyForm;
 	private ExchangeRateForm exchangeRateForm;
+	
+	private final CurrencyDao currencyDao = DAOFactory.getDao(CurrencyDao.class);
+	private final ListSelectionListener currencyListSelectionListener = event -> onListSelectionListener (event);
 
 	public PanelCurrency() {
 		super(new BorderLayout());
 		init();
 		btnNewCurrency.addActionListener(btnNewCurrencyListener);
 		btnNewExchangeRate.addActionListener(btnNewExchangeRateListener);
+		
+		currencyList.addListSelectionListener(currencyListSelectionListener);
+		currencyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 	}
 	
+	/**
+	 * lors dela selection d'un item de la liste de devise deja sauvegarder dans la BDD (pour l'instant dans la liste de devise)
+	 * @param event
+	 */
+	private void onListSelectionListener(ListSelectionEvent event) {
+		Currency currency = currencyListModel.getElementAt(currencyList.getSelectedIndex());
+		workspace.setCurrency(currency);
+	}
+
 	/**
 	 * initialization of main components
 	 */
@@ -79,6 +101,21 @@ public class PanelCurrency extends JPanel {
 		
 		final JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, padding, paddingCenter);
 		add(split, BorderLayout.CENTER);
+		
+		load();
+	}
+	
+	/***
+	 * chargement des donnees pour la premiere fois, depuis la BDD
+	 */
+	private void load () {
+		if(currencyDao.countAll() == 0)
+			return;
+		
+		Currency [] currencies = currencyDao.findAll();
+		for (Currency currency : currencies) {
+			currencyListModel.addElement(currency);
+		}
 	}
 	
 	/**
@@ -151,11 +188,56 @@ public class PanelCurrency extends JPanel {
 	private class CurrencyWorkspace extends JPanel {
 		private static final long serialVersionUID = 8659928962281195916L;
 		
-		private Currency currency;//the selected currency
+		private final ExchangeRateTableModel 
+			availableTateTableModel = new ExchangeRateTableModel(),
+			allRateTableModel = new ExchangeRateTableModel();
+		
+		private final JTabbedPane tabbed = new JTabbedPane();
+		private final CustomTable 
+			tableAvailable = new CustomTable(availableTateTableModel),
+			tableAll = new CustomTable(allRateTableModel);
 		
 		public CurrencyWorkspace() {
 			super(new BorderLayout());
 			setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
+			
+			init();
+			add(tabbed, BorderLayout.CENTER);
+			
+			availableTateTableModel.setAvailableOnly(true);
+			allRateTableModel.setAvailableOnly(false);
+		}
+		
+		/**
+		 * initialisation des composants graphiques
+		 */
+		private void init() {
+			
+			final JPanel 
+				panel1 = new JPanel(new BorderLayout()),
+				panel2 = new JPanel(new BorderLayout());
+			
+			final JScrollPane
+				scroll1 = new JScrollPane(tableAvailable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER),
+				scroll2 = new JScrollPane(tableAll, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+			
+			scroll1.setBorder(null);
+			scroll2.setBorder(null);
+			
+			panel1.add(scroll1, BorderLayout.CENTER);
+			panel2.add(scroll2, BorderLayout.CENTER);
+			
+			tabbed.addTab("Taux actuels ", new ImageIcon(Config.getIcon("success")), panel1);
+			tabbed.addTab("Voir tout ", new ImageIcon(Config.getIcon("report")), panel2);
+		}
+
+		/**
+		 * mutation du currency dans les table models
+		 * @param currency the currency to set
+		 */
+		public void setCurrency(Currency currency) {
+			availableTateTableModel.setCurrency(currency);
+			allRateTableModel.setCurrency(currency);
 		}
 
 	}

@@ -855,7 +855,10 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 		
 		SQL_QUERY = SQL_QUERY.substring(0, SQL_QUERY.length()-1) + " WHERE id=?";
 		
-		try ( PreparedStatement statement = prepare(SQL_QUERY, connection, false, columnsValues, idEntity) ) {
+		try ( PreparedStatement statement = connection.prepareStatement(SQL_QUERY) ) {
+			for (int i = 0; i < columnsValues.length; i++)
+				statement.setObject(i+1, columnsValues[i]);
+			statement.setString(columnsValues.length+1, idEntity);
 			int statut=statement.executeUpdate();
 			if(statut == 0 )
 				throw new DAOException("Aucune mise ajours n'a été effectuer. Veiller re-essayer svp!");

@@ -63,5 +63,10 @@ public class DistributionConfigItem extends DBEntity {
 	public void setPercent(double percent) {
 		this.percent = percent;
 	}
+	
+	@Override
+	public String toString() {
+		return rubric.getLabel();
+	}
 
 }

@@ -22,23 +22,23 @@ class DistributionConfigItemDaoSQL extends UtilSQL<DistributionConfigItem> imple
 	}
 
 	@Override
-	public boolean checkByKey(String configId, String rubricId) throws DAOException {
-		return checkData("SELECT * FROM "+getTableName()+" WHERE config = ? AND rubric = ?", configId, rubricId);
+	public boolean checkByKey(String ownerId, String rubricId) throws DAOException {
+		return checkData("SELECT * FROM "+getTableName()+" WHERE owner = ? AND rubric = ?", ownerId, rubricId);
 	}
 
 	@Override
-	public DistributionConfigItem findByKey(String configId, String rubricId) throws DAOException {
-		return readData("SELECT * FROM "+getTableName()+" WHERE config = ? AND rubric = ?", configId, rubricId)[0];
+	public DistributionConfigItem findByKey(String ownerId, String rubricId) throws DAOException {
+		return readData("SELECT * FROM "+getTableName()+" WHERE owner = ? AND rubric = ?", ownerId, rubricId)[0];
 	}
 
 	@Override
-	public boolean checkByConfig(String configKey) throws DAOException {
-		return check("confing", configKey);
+	public boolean checkByConfig(String ownerKey) throws DAOException {
+		return check("owner", ownerKey);
 	}
 
 	@Override
-	public DistributionConfigItem[] findByConfig(String configKey) throws DAOException {
-		return readData("SELECT * FROM "+getTableName()+" WHERE config = ? AND rubric = ?", configKey);
+	public DistributionConfigItem[] findByConfig(String ownerKey) throws DAOException {
+		return readData("SELECT DISTINCT * FROM "+getTableName()+" WHERE owner = ?", ownerKey);
 	}
 
 	@Override

@@ -26,24 +26,30 @@ public class ConfigWorkspace extends JPanel {
 		init();
 		add(container, BorderLayout.CENTER);
 		setBorder(UIComponentBuilder.EMPTY_BORDER_5);
+		
 	}
 	
+
+
 	/**
 	 * initialization of content components by container component
 	 */
 	private void init() {
-		final String titles  [] = {"Dévises", "Unité de mésure", "Budjet"};
+		final String titles  [] = {"Dévises", "Unité de mésure"};
 		final CaptionnablePanel [] contents = {				
 				new CaptionnablePanel("Configuration des devises", new PanelCurrency()),
-				new CaptionnablePanel("Configuration des unite de mesure", new PanelMeasureUnit()),
-				new CaptionnablePanel("Configuration de la repartition des recette", new PanelBudgetConfig())
+				new CaptionnablePanel("Configuration des unite de mesure", new PanelMeasureUnit())
 		};
 		
+		final PanelBudgetConfig budget = new PanelBudgetConfig();
+		
 		for (int i = 0; i < titles.length; i++) {
-			contents[i].setCaptionFont(new Font("Arial", Font.PLAIN, 20));
+			contents[i].setCaptionFont(new Font("Arial", Font.PLAIN, 18));
 			contents[i].setCaptionPadding(5);
 			container.addTab(titles[i], contents[i]);
 		}
+		
+		container.addTab("Budget", budget);
 	}
 	
 	@Override

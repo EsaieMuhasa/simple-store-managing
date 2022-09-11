@@ -31,6 +31,11 @@ import com.spiral.simple.store.dao.DistributionConfigItemDao;
 import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.tools.Config;
 import com.spiral.simple.store.tools.UIComponentBuilder;
+import com.trimeur.swing.chart.DefaultPieModel;
+import com.trimeur.swing.chart.DefaultPiePart;
+import com.trimeur.swing.chart.PiePart;
+import com.trimeur.swing.chart.PieRender;
+import com.trimeur.swing.chart.tools.Utility;
 
 /**
  * @author Esaie Muhasa
@@ -47,6 +52,9 @@ public class DistributionConfigForm extends JPanel{
 	private final JLabel labelTitle = new JLabel();
 	private final JButton btnValidate = new JButton("Valider", new ImageIcon(Config.getIcon("success")));
 	private final JButton btnCancel = new JButton("Annuler", new ImageIcon(Config.getIcon("close")));
+	
+	private final DefaultPieModel pieModel = new DefaultPieModel(100, "Repartition des recettes");
+	private final PieRender pieRender = new PieRender(pieModel);
 	
 	private final DistributionConfigItemDao distributionConfigItemDao = DAOFactory.getDao(DistributionConfigItemDao.class);
 	private final BudgetRubricDao budgetRubricDao = DAOFactory.getDao(BudgetRubricDao.class);
@@ -76,14 +84,14 @@ public class DistributionConfigForm extends JPanel{
 		top.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
 		top.setBackground(CustomTable.GRID_COLOR);
 		
-		container.setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
+//		container.setBorder(BorderFactory.createLineBorder(CustomTable.GRID_COLOR));
 		JScrollPane scroll = new JScrollPane(container, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		
 		scroll.setBorder(null);
 		
 		center.setBorder(UIComponentBuilder.EMPTY_BORDER_5);
 		center.add(scroll);
-		center.add(new JPanel());// ==> pie chart
+		center.add(pieRender);// ==> pie chart
 		
 		add(top, BorderLayout.NORTH);
 		add(center, BorderLayout.CENTER);
@@ -118,6 +126,7 @@ public class DistributionConfigForm extends JPanel{
 		for (FieldDistributionConfigItem item : items)
 			item.dispose();
 		
+		pieModel.removeAll();
 		container.removeAll();
 		reload();
 		container.revalidate();
@@ -151,7 +160,8 @@ public class DistributionConfigForm extends JPanel{
 		BudgetRubric [] rubrics = budgetRubricDao.findAll();
 		Box box = Box.createVerticalBox();
 		box.add(Box.createVerticalGlue());
-		for (BudgetRubric rubric : rubrics) {
+		for (int i = 0; i< rubrics.length; i++) {
+			BudgetRubric rubric = rubrics[i];
 			DistributionConfigItem item = null;
 
 			if ((config.getId() != null && !config.getId().trim().isEmpty())
@@ -165,9 +175,10 @@ public class DistributionConfigForm extends JPanel{
 			item.setOwner(config);
 			config.addItems(item);
 			
-			FieldDistributionConfigItem field = new FieldDistributionConfigItem();
+			FieldDistributionConfigItem field = new FieldDistributionConfigItem(i);
 			field.setItem(item);
 			items.add(field);
+			pieModel.addPart(field.getPart());
 			box.add(field);
 			box.add(Box.createVerticalStrut(10));
 		}
@@ -194,12 +205,14 @@ public class DistributionConfigForm extends JPanel{
 		private DistributionConfigItem item;
 		private final JLabel label = new JLabel();
 		private final JTextField field = new JTextField();
+		private final DefaultPiePart part;
 		
 		/**
 		 * construct to initialize distribution field
 		 */
-		public FieldDistributionConfigItem() {
+		public FieldDistributionConfigItem(int index) {
 			super(new BorderLayout());
+			part = new DefaultPiePart(Utility.getColorAt(index), 0, "");
 			buildUI();
 			field.addCaretListener(this);
 		}
@@ -210,6 +223,13 @@ public class DistributionConfigForm extends JPanel{
 			field.setEnabled(enabled);
 		}
 		
+		/**
+		 * @return the part
+		 */
+		public PiePart getPart() {
+			return part;
+		}
+
 		/**
 		 * builder of UI components
 		 */
@@ -242,6 +262,8 @@ public class DistributionConfigForm extends JPanel{
 			if(item != null) {				
 				label.setText(" "+item.getRubric().getLabel());
 				field.setText(item.getPercent()+"");
+				part.setValue(item.getPercent());
+				part.setLabel(item.getRubric().getLabel());
 			}
 		}
 
@@ -267,8 +289,10 @@ public class DistributionConfigForm extends JPanel{
 
 		@Override
 		public void caretUpdate(CaretEvent e) {
-			if (dataIsValid())
+			if (dataIsValid()){
 				item.setPercent(Double.parseDouble(field.getText().trim()));
+				part.setValue(item.getPercent());
+			}
 		}
 	}
 

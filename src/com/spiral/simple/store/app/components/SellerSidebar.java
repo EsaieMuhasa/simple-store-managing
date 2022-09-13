@@ -203,6 +203,8 @@ public class SellerSidebar extends JPanel {
 		
 		if(!cardsCurrencyCheck.isSelected())//doit-ton effectuer la conversion des devises directement???
 			stateContainer.setSelectedCurrency(cardsCurrencyBoxModel.getElementAt(cardsCurrencyBox.getSelectedIndex()), calendar.getDate());
+		
+		reload();
 	}
 	
 	/**
@@ -510,7 +512,7 @@ public class SellerSidebar extends JPanel {
 			init();
 			
 			cloud.setTitle("Vente journalière");
-			cloud.setDefaultPointSize(0.9d);
+			cloud.setDefaultPointSize(0.7d);
 			cloud.setType(CloudType.STICK_CHART);
 			chartModel.addChart(cloud);
 			checkConverter.addActionListener(checkConverterAction);
@@ -614,7 +616,7 @@ public class SellerSidebar extends JPanel {
 			try {
 				Date min = DATE_FORMAT.parse(minToString);
 				//Date max = DATE_FORMAT.parse(maxToString);
-				cloud.setTitle("Vente journalière ( "+(currencyOnly? "Pour le " : "Conversion en ")+currency.getShortName()+")");
+				cloud.setTitle("Vente journalière");
 				yAxis.setMeasureUnit(currency.getSymbol());
 				cloud.removePoints();
 				

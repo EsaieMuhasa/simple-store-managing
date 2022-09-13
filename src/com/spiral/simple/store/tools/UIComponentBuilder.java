@@ -6,6 +6,7 @@ package com.spiral.simple.store.tools;
 import java.awt.Color;
 import java.awt.Font;
 import java.util.Date;
+import java.util.Objects;
 
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
@@ -89,6 +90,34 @@ public final class UIComponentBuilder {
 //			value *= -1;
 		
 		return value;
+	}
+	
+	/**
+	 * verification dela date l'intervale des deux premier dates
+	 * @param min
+	 * @param max
+	 * @param date
+	 * @return
+	 */
+	public static boolean inIntervale (Date min, Date max, Date date) {
+		Objects.requireNonNull(min);
+		Objects.requireNonNull(max);
+		Objects.requireNonNull(date);
+		return (min.getTime() >=  date.getTime() && max.getTime() <= date.getTime());
+	}
+	
+	/**
+	 * transforme la valeur en parametre en une date.
+	 * la formule de transformation de la valeur en une date est liée aux regles de la classe DateAxis
+	 * @param value
+	 * @return
+	 */
+	public static Date fromDateAxisValue (final double value) {
+		if(value == 0)
+			return new Date();
+		double days = value * 1000d * 60d * 60d * 24d;
+		long time = (long) (System.currentTimeMillis() + days);
+		return new Date(time);
 	}
 	
 

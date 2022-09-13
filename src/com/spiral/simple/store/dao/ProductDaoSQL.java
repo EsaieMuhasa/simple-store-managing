@@ -21,6 +21,13 @@ class ProductDaoSQL extends UtilSQL<Product> implements ProductDao {
 	public ProductDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
 	}
+	
+	@Override
+	public Product[] findByAvailableStock() throws DAOException {
+		String subSql = "SELECT DISTINCT V_Stock.product FROM V_Stock WHERE (quantity > soldQuantity OR soldQuantity IS NULL)";
+		String sql = String.format("SELECT * FROM "+getViewName()+" WHERE id IN (%s) ORDER BY name ASC", subSql);
+		return readData(sql);
+	}
 
 	@Override
 	public Product[] search(String value) throws DAOException {

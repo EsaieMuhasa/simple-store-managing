@@ -69,4 +69,44 @@ public interface StockDao extends DAOInterface<Stock> {
 	 */
 	Stock [] findAvailableByProduct (String key) throws DAOException;
 	
+	/**
+	 * renvoie le nombre des stock qui ne sont pas vide
+	 * @return
+	 * @throws DAOException
+	 */
+	int countAvailable() throws DAOException;
+	
+	/**
+	 * verifie s'il ya  aumoin un stock non vide
+	 * @return
+	 * @throws DAOException
+	 */
+	default boolean checkAvailable () throws DAOException {
+		return checkAvailable(0);
+	}
+	
+	/**
+	 * verifie s'il y a aumoin un stock non vide, apres X stock
+	 * @param offset
+	 * @return
+	 * @throws DAOException
+	 */
+	boolean checkAvailable (int offset) throws DAOException;
+	
+	/**
+	 * renvoie tout les stock non-vide
+	 * @return
+	 * @throws DAOException
+	 */
+	Stock [] findAvailable() throws DAOException;
+	
+	/**
+	 * renvoie une partie des stock non vide
+	 * @param limit
+	 * @param offset
+	 * @return
+	 * @throws DAOException
+	 */
+	Stock [] findAvailable(int limit, int offset) throws DAOException;
+	
 }

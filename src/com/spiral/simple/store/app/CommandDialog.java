@@ -4,8 +4,16 @@
 package com.spiral.simple.store.app;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -13,6 +21,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Date;
@@ -20,6 +31,7 @@ import java.util.Date;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -41,7 +53,6 @@ import com.spiral.simple.store.app.form.AbstractForm;
 import com.spiral.simple.store.app.form.CommandPaymentForm;
 import com.spiral.simple.store.app.form.FormListener;
 import com.spiral.simple.store.app.models.InvoiceTableModel;
-import com.spiral.simple.store.beans.AffectedStock;
 import com.spiral.simple.store.beans.Client;
 import com.spiral.simple.store.beans.Command;
 import com.spiral.simple.store.beans.CommandItem;
@@ -59,6 +70,7 @@ import com.spiral.simple.store.dao.DAOListenerAdapter;
 import com.spiral.simple.store.dao.ExchangeRateDao;
 import com.spiral.simple.store.dao.MeasureUnitDao;
 import com.spiral.simple.store.dao.ProductDao;
+import com.spiral.simple.store.dao.StockDao;
 import com.spiral.simple.store.swing.CaptionnablePanel;
 import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.swing.SimpleComboBox;
@@ -78,7 +90,7 @@ public class CommandDialog extends JDialog {
 	public static final int DAO_REQUEST_ID = 0x007700;
 	
 	private final DefaultListModel<Product> listModelProduct=  new DefaultListModel<>();
-	private final JList<Product> listProdut = new JList<>(listModelProduct);
+	private final JList<Product> listProduct = new JList<>(listModelProduct);
 	private final JTextField fieldSearchProdut = new  JTextField();
 	
 	private final JButton btnValidate = new JButton("Valider", new ImageIcon(Config.getIcon("success")));
@@ -105,6 +117,7 @@ public class CommandDialog extends JDialog {
 	
 	private final MeasureUnitDao measureUnitDao = DAOFactory.getDao(MeasureUnitDao.class);
 	private final ProductDao productDao = DAOFactory.getDao(ProductDao.class);
+	private final StockDao stockDao = DAOFactory.getDao(StockDao.class);
 	private final CommandDao commandDao = DAOFactory.getDao(CommandDao.class);
 	private final CurrencyDao currencyDao = DAOFactory.getDao(CurrencyDao.class);
 	private final ExchangeRateDao exchangeRateDao = DAOFactory.getDao(ExchangeRateDao.class);
@@ -122,9 +135,10 @@ public class CommandDialog extends JDialog {
 		public void mouseClicked(MouseEvent e) {
 			
 			if(e.getClickCount() == 2) {
-				Product product = listModelProduct.getElementAt(listProdut.getSelectedIndex());
+				Product product = listModelProduct.getElementAt(listProduct.getSelectedIndex());
 				fieldsCommand.fieldItemProduct.getField().removeItemListener(fieldsCommand.productItemListener);
 				fieldsCommand.fieldCurrency.getField().removeItemListener(fieldsCommand.currencyItemListener);
+				fieldsCommand.fieldQuantityUnit.getField().removeItemListener(fieldsCommand.measureUnitListenenr);
 				CommandItem item = null;
 				if(productModel.getIndexOf(product) == -1){
 					/*
@@ -158,23 +172,33 @@ public class CommandDialog extends JDialog {
 				} else 
 					item = tableModel.findByProduct(product);
 				
-				if(item.countStock() != 0) {
-					AffectedStock a = item.getStockAt(0);
-					for (int j = 0; j < measureUnitModel.getSize(); j++) {
-						if (measureUnitModel.getElementAt(j).getId().equals(a.getStock().getMeasureUnit().getId())) {
-							fieldsCommand.fieldQuantityUnit.getField().setSelectedIndex(j);
-							break;
-						}
+				/*
+				 * les stocks d'un produits sont succeptible d'avoir plusieur unite de menuse.
+				 * lors le personnalisation de l'element de la commande, le choix de l'unite de mesure determine le(s) stock(s)
+				 * qui seront crediter
+				 */
+				measureUnitModel.removeAllElements();
+				MeasureUnit [] units = item.getStocksUnit();
+				if(item.countStock() != 0) {//manipulation de l'unite de mesure
+					for (MeasureUnit unit : units) {
+						measureUnitModel.addElement(unit);
+						if(item.getMeasureUnit() == null || unit.equals(item.getMeasureUnit()))
+							fieldsCommand.fieldQuantityUnit.getField().setSelectedItem(unit);
 					}
-				}
+					fieldsCommand.fieldQuantityUnit.setEnabled(true);
+				} else 
+					fieldsCommand.fieldQuantityUnit.setEnabled(false);
 				
-				fieldsCommand.fieldQuantityUnit.setEnabled(false);
 				fieldsCommand.fieldItemProduct.getField().setSelectedItem(product);
 				fieldsCommand.fieldItemQuantity.getField().setText(item.getQuantity()+"");
 				fieldsCommand.fieldItemUnitPrice.getField().setText(item.getUnitPrice()+"");
 				fieldsCommand.fieldCurrency.getField().setSelectedItem(item.getCurrency());
+				
 				fieldsCommand.fieldItemProduct.getField().addItemListener(fieldsCommand.productItemListener);
 				fieldsCommand.fieldCurrency.getField().addItemListener(fieldsCommand.currencyItemListener);
+				fieldsCommand.fieldQuantityUnit.getField().addItemListener(fieldsCommand.measureUnitListenenr);
+				
+				revalidateCommand();
 			}
 		}
 	};
@@ -313,6 +337,8 @@ public class CommandDialog extends JDialog {
 		
 	};
 	
+	private String [] invalidityReason;//tableau contenant les raison d'invalidite de la commande
+	
 	/**
 	 * default construct
 	 */
@@ -335,8 +361,8 @@ public class CommandDialog extends JDialog {
 		
 		initViews();
 		
-		listProdut.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		listProdut.addMouseListener(listProductMouseAdapter);
+		listProduct.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		listProduct.addMouseListener(listProductMouseAdapter);
 		itemTable.addMouseListener(invoiceTableMouseAdapter);
 		
 		for (JMenuItem item : itemOptions) {
@@ -376,8 +402,12 @@ public class CommandDialog extends JDialog {
 		bottomPanel.setBackground(itemTable.getGridColor());
 		itemTable.setShowVerticalLines(false);
 		
+		listProduct.setFixedCellHeight(40);
+		listProduct.setFont(new Font("Arial", Font.BOLD, 12));
+		listProduct.setCellRenderer(new ProductCellRender());
+		
 		JScrollPane 
-			scrollList = new JScrollPane(listProdut),
+			scrollList = new JScrollPane(listProduct),
 			scrollTable = new JScrollPane(itemTable);
 		
 		final JPanel 
@@ -467,11 +497,12 @@ public class CommandDialog extends JDialog {
 	}
 	
 	/**
-	 * method to validate command
-	 * -first we must validate command items
-	 * -second we validate command payment
+	 * utilitaire d'initialisation dela commande.
+	 * cette method erecupere la commande sauvegarder dans le tableModel de 
+	 * elemenet de ladite command, et y ajoute les informations concernant le client
+	 * @return
 	 */
-	private void doValidate () {
+	private Command initCommand () {
 		Command command = tableModel.getCommand();
 		Client client = command.getClient();
 		
@@ -486,10 +517,62 @@ public class CommandDialog extends JDialog {
 			command.setClient(clientDao.findByTelephone(client.getTelephone()));
 		
 		command.setDate(date == null? new Date() : date);
+		return command;
+	}
+	
+	/**
+	 * method to validate command
+	 * -first we must validate command items
+	 * -second we validate command payment
+	 */
+	private void doValidate () {
+		Command command = initCommand();
+		if (!isValid(command, command.getId() == null)) {
+			JOptionPane.showMessageDialog(this, invalidityReason, "Echec d'enregistremnt", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		
 		if(command.getId() == null)
 			commandDao.create(DAO_REQUEST_ID, command);
 		else 
 			commandDao.update(DAO_REQUEST_ID, command);
+	}
+	
+	/**
+	 * validation de la commande.
+	 * Le message d'invaliditee son conserver dans un tableau
+	 * @param command
+	 * @param onCreate
+	 * @return
+	 */
+	private boolean isValid (Command command, boolean onCreate) {
+		String message = "";
+		
+		for (int i = 0; i < tableModel.getRowCount(); i++) {
+			CommandItem item = tableModel.getRow(i);
+
+			if(!item.isValidable()) {
+				message += "Le stocks disponible ( en "+item.getMeasureUnit().getShortName()+") pour le produit "+item.getProduct().getName()+" sont insufisante;";
+			}
+			
+		}
+		
+		if(message.isEmpty())
+			invalidityReason = null;
+		else
+			invalidityReason = message.split(";");
+		return message.isEmpty();
+	}
+	
+	/**
+	 * cette methode demande la revalidation dela commande.
+	 * Re-verifie les quantites requise pour la satisfaction des elements de la commande
+	 * conformement aux stock disponible
+	 */
+	private void revalidateCommand () {
+		Command command = initCommand();
+		boolean valid = isValid(command, command.getId() == null);
+		btnValidate.setEnabled(valid);
 	}
 
 	/**
@@ -503,9 +586,9 @@ public class CommandDialog extends JDialog {
 				measureUnitModel.addElement(unit);
 		}
 		
-		if(productDao.countAll() != 0) {
+		if(stockDao.checkAvailable()) {
 			listModelProduct.removeAllElements();
-			Product [] products = productDao.findAll();
+			Product [] products = productDao.findByAvailableStock();
 			for (Product product : products)
 				listModelProduct.addElement(product);
 		}
@@ -515,6 +598,57 @@ public class CommandDialog extends JDialog {
 			Currency [] currencies = currencyDao.findAll();
 			for (Currency currency : currencies) 
 				currencyModel.addElement(currency);
+		}
+	}
+	
+	/**
+	 * @author Esaie Muhasa
+	 * rendue des produits dans la liste des produits
+	 */
+	private static class ProductCellRender extends DefaultListCellRenderer {
+		private static final long serialVersionUID = -7511388178715292366L;
+		
+		private static final Area ROUND_AREA = new Area(new Rectangle2D.Float(5, 5, 30, 30));
+		static {
+			ROUND_AREA.subtract(new Area(new Ellipse2D.Float(5, 5, 30, 30)));
+		}
+		
+		private Product product;
+		private boolean isSelected;
+		
+		@Override
+		public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+			product = (Product) value;
+			this.isSelected = isSelected;
+			setFont(list.getFont());
+			return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+		}
+		
+		@Override
+		protected void paintComponent(Graphics graphics) {
+			if (product != null) {
+				Graphics2D g = (Graphics2D) graphics;
+				g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+				g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB);
+				Image img = product.getImage().getImage();
+				
+				g.setColor(getBackground());
+				g.fillRect(0, 0, getWidth(), getHeight());
+				g.drawImage(img, 5, 5, 30, 30, null);
+				g.setColor(getBackground());
+				g.fill(ROUND_AREA);
+				
+				FontMetrics metrics = g.getFontMetrics();
+				g.setFont(getFont());
+				g.setColor(isSelected? Color.WHITE : Color.BLACK);
+				
+				g.drawString(product.getName(), 40, (getHeight()/2) + (metrics.getHeight()/4));
+				
+				g.setColor(Color.DARK_GRAY);
+				g.drawLine(30, 30, getWidth()-10, 30);
+				return;
+			} else
+				super.paintComponent(graphics);
 		}
 	}
 	
@@ -544,6 +678,7 @@ public class CommandDialog extends JDialog {
 		
 		private final ItemListener productItemListener =  event -> onProductSelectionChange(event);
 		private final ItemListener currencyItemListener = event -> onCurrencySelectionChange(event);
+		private final ItemListener measureUnitListenenr = event -> onMeasureUnitSelectionChange(event);
 		
 		//payment panel
 		private final JPanel paymentPanel = new JPanel(new BorderLayout());
@@ -567,16 +702,20 @@ public class CommandDialog extends JDialog {
 				return;
 			
 			CommandItem item = tableModel.findByProduct(product);
+			double quantity = 0;
 			if(!fieldItemQuantity.getField().getText().trim().isEmpty()) {
 				try {
-					double quantity = Double.parseDouble(fieldItemQuantity.getField().getText());					
-					item.setQuantity(quantity);
-					tableModel.repaintRow(item);
-					updateLabelTotalAmount();
+					quantity = Double.parseDouble(fieldItemQuantity.getField().getText());					
 				} catch (NumberFormatException e) {
 					JOptionPane.showMessageDialog(CommandDialog.this, "La quantité doit être une valeur numérique valide.", "Erreur: valeur numérique invalide", JOptionPane.ERROR_MESSAGE);
 				}
-			}
+			} else 
+				quantity = 0;
+			
+			item.setQuantity(quantity);
+			tableModel.repaintRow(item);
+			updateLabelTotalAmount();
+			revalidateCommand();
 		};
 		
 		private final CaretListener caretUnitPriceListener = event -> {
@@ -588,16 +727,20 @@ public class CommandDialog extends JDialog {
 				return;
 			
 			CommandItem item = tableModel.findByProduct(product);
+			double price = 0;
 			if(!fieldItemUnitPrice.getField().getText().trim().isEmpty()) {
 				try {
-					double unitPrice = Double.parseDouble(fieldItemUnitPrice.getField().getText());					
-					item.setUnitPrice(unitPrice);
-					tableModel.repaintRow(item);
-					updateLabelTotalAmount();
+					price = Double.parseDouble(fieldItemUnitPrice.getField().getText());					
 				} catch (NumberFormatException e) {
 					JOptionPane.showMessageDialog(CommandDialog.this, "La prix unitaire doit être une valeur numérique valide.", "Erreur: valeur numérique invalide", JOptionPane.ERROR_MESSAGE);
 				}
-			}
+			} else 
+				price = 0;
+			
+			item.setUnitPrice(price);
+			tableModel.repaintRow(item);
+			updateLabelTotalAmount();
+			revalidateCommand();
 		};
 		
 		private final MouseAdapter listPaymentMouseAdapter = new MouseAdapter() {//listening mouse on JList payment to show pop up menu options
@@ -763,7 +906,7 @@ public class CommandDialog extends JDialog {
 		
 		/**
 		 * when change currency,
-		 * we ask question, so he is prefer execute trading of currency
+		 * we ask question, so user prefer execute trading of currency
 		 * @param event
 		 */
 		private void onCurrencySelectionChange (ItemEvent event) {
@@ -792,6 +935,24 @@ public class CommandDialog extends JDialog {
 				item.setCurrency(currency2);
 				updateLabelTotalAmount();
 			}
+		}
+		
+		/**
+		 * lors de la commande d'un produit dont les stock disponible ne sont pas vendue au meme unite de mesure,
+		 * l'utililsateur a la posiblite de changer l'unite de mesure. en fonction de l'unite de mesure,
+		 * le stock qui sera debiter est determiné
+		 * @param event
+		 */
+		private void onMeasureUnitSelectionChange (ItemEvent event) {
+			if(event.getStateChange() != ItemEvent.SELECTED || measureUnitModel.getSize() == 0 || productModel.getSize() == 0)
+				return;
+			
+			Product product = productModel.getElementAt(fieldItemProduct.getField().getSelectedIndex());
+			if(!tableModel.checkByProduct(product))
+				return;
+			
+			CommandItem item = tableModel.findByProduct(product);
+			item.dispatchQantityTo(measureUnitModel.getElementAt(fieldQuantityUnit.getField().getSelectedIndex()));
 		}
 		
 		/**

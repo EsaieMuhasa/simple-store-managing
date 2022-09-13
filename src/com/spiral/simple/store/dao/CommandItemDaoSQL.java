@@ -118,15 +118,17 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 		List<AffectedStock> stocks = new ArrayList<>();
 		for (CommandItem item : t) {
 			
+			//pour les elements de la commande, produits dont la configurations de repartititon des recettes est diponible
 			if(item.getConfig() == null && daoFactory.get(DistributionConfigDao.class).checkAvailableByProduct(item.getProduct().getId()))
 				item.setConfig(daoFactory.get(DistributionConfigDao.class).findAvailableByProduct(item.getProduct().getId()));
 			
 			AffectedStock [] st = item.getStocks();
-			if(st == null)
+			if(st == null)//on prevoie dans le cas ou on auras l'intension de prendre en charge les comandes sans penser a la quantite disponible en stock
 				continue;
 			
 			for (AffectedStock s : st) 
-				stocks.add(s);
+				if(s.getQuantity() != 0.0)//on recupere uniquement le elements dont les stockes ont ete toucher
+					stocks.add(s);
 		}
 		
 		AffectedStock [] data = stocks.toArray(new AffectedStock[stocks.size()]);

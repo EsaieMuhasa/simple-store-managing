@@ -19,4 +19,11 @@ public interface ProductDao extends DAOInterface<Product> {
 	 */
 	Product [] search (String value) throws DAOException;
 
+	/**
+	 * selectionne uniquement les produits qui ont des stock non vide
+	 * @return
+	 * @throws DAOException
+	 */
+	Product [] findByAvailableStock () throws DAOException;
+
 }

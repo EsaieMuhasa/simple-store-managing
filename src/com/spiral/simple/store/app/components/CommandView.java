@@ -16,6 +16,7 @@ import java.util.List;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
@@ -61,10 +62,14 @@ public class CommandView extends JComponent {
 	
 	private final JPopupMenu popupMenu = new JPopupMenu();
 	private final JMenuItem [] popupOptions = {
-			new JMenuItem("Livraison la commande", new ImageIcon(Config.getIcon("success"))),
+			new JCheckBoxMenuItem("Livraison la commande", new ImageIcon(Config.getIcon("success"))),
 			new JMenuItem("Editer la commande", new ImageIcon(Config.getIcon("edit"))),
 			new JMenuItem("Supprimer la commande", new ImageIcon(Config.getIcon("close"))),
-			new JMenuItem("Nouveau payement", new ImageIcon(Config.getIcon("new"))),
+			
+			new JMenuItem("Nouveau payement"),
+			new JMenuItem("Editer le payement"),
+			new JMenuItem("Supprimer le payement"),
+			
 			new JMenuItem("Modifier l'identite du client", new ImageIcon(Config.getIcon("usredit")))
 	};
 
@@ -72,7 +77,17 @@ public class CommandView extends JComponent {
 		@Override
 		public void mouseReleased(MouseEvent e) {
 			if(e.isPopupTrigger()) {
-				popupMenu.show(CommandView.this, e.getX(), e.getY());
+				JComponent source = (JComponent)e.getSource();
+				int [] indexs = {3, 4, 5};
+				int index = -1;
+				
+				if (source == receivedTable) //pour les items qui concerne la modeification d'un payement
+					index = receivedTable.getSelectedRow();
+					
+				for (int i : indexs) 
+					popupOptions[i].setEnabled(index != -1);
+				
+				popupMenu.show(source, e.getX(), e.getY());
 			}
 		}
 	};
@@ -87,8 +102,6 @@ public class CommandView extends JComponent {
 
 		@Override
 		public void onUpdate(Client newState, Client oldState) {
-			System.out.println(newState);
-			System.out.println(oldState);
 			if(command.getClient().equals(newState)){
 				command.setClient(newState);
 				updateClient();
@@ -115,6 +128,7 @@ public class CommandView extends JComponent {
 		buildUI();
 		addMouseListener(mouseAdapter);
 		invoiceTable.addMouseListener(mouseAdapter);
+		receivedTable.addMouseListener(mouseAdapter);
 		tabbedPane.addMouseListener(mouseAdapter);
 		clientDao.addBaseListener(clientListenerAdapter);
 		commandDao.addBaseListener(commandListenerAdapter);
@@ -124,7 +138,7 @@ public class CommandView extends JComponent {
 			popupMenu.add(popupOptions[i]);
 			popupOptions[i].addActionListener(pupupOptionListener);
 			popupOptions[i].setName((i+1)+"");
-			if(i == 2 || i == 3)
+			if(i == 2 || i == 5)
 				popupMenu.addSeparator();
 		}
 		//==

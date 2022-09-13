@@ -135,15 +135,19 @@ public class InvoiceTableModel extends DBEntityTableModel<CommandItem> {
 		item.setProduct(product);
 		item.setQuantity(1d);
 		if (stockDao.checkAvailableByProduct(product.getId())) {
-			Stock stock = stockDao.findAvailableByProduct(product.getId())[0];
+			Stock [] stocks = stockDao.findAvailableByProduct(product.getId());
 			
-			AffectedStock affected = new AffectedStock();
-			affected.setQuantity(1d);
-			affected.setStock(stock);
-			
-			item.addStock(affected);
-			item.setUnitPrice(stock.getDefaultUnitPrice());
-			item.setCurrency(stock.getSalesCurrency());
+			for (int i = 0; i < stocks.length; i++) {				
+				AffectedStock affected = new AffectedStock();
+				Stock stock = stocks[i];
+				affected.setQuantity(i == 0? 1d : 0);
+				affected.setStock(stock);
+				
+				item.addStock(affected);
+				item.setUnitPrice(stock.getDefaultUnitPrice());
+				item.setCurrency(stock.getSalesCurrency());
+			}
+			item.dispatchQantityTo(item.getStockAt(0).getStock().getMeasureUnit());
 		} else if (stockDao.checkByProduct(product.getId())) {
 			Stock stock = stockDao.findLatestByProduct(product.getId());
 			item.setUnitPrice(stock.getDefaultUnitPrice());

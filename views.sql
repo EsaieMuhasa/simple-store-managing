@@ -34,7 +34,7 @@ CREATE VIEW V_CommandItem AS
 		CommandItem.unitPrice AS unitPrice,
 		CommandItem.currency AS currency,
 		(SELECT 
-			Stock.measureUnit FROM Stock WHERE Stock.product = CommandItem.product
+			Stock.measureUnit FROM Stock WHERE Stock.product = CommandItem.product LIMIT 1
 		) AS measureUnit
 	FROM CommandItem;
 		

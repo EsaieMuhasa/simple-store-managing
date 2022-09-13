@@ -355,6 +355,8 @@ public class Command extends DBEntity {
 		for (CommandPayment credit : payments)
 			c+= credit.toString() +" + ";
 		c = c.trim();
+		if(c.length() < 2)
+			return c;
 		c = c.substring(0, c.length()-2);
 		return c;
 	}

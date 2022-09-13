@@ -35,13 +35,34 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 	}
 
 	@Override
+	public int countAvailable() throws DAOException {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public boolean checkAvailable(int offset) throws DAOException {
+		return checkData("SELECT * FROM "+getViewName()+" WHERE (quantity > soldQuantity OR soldQuantity IS NULL) LIMIT 1 OFFSET ?", offset);
+	}
+
+	@Override
+	public Stock[] findAvailable() throws DAOException {
+		return readData("SELECT * FROM "+getViewName()+" WHERE (quantity > soldQuantity OR soldQuantity IS NULL)");
+	}
+
+	@Override
+	public Stock[] findAvailable(int limit, int offset) throws DAOException {
+		return readData("SELECT * FROM "+getViewName()+" WHERE (quantity > soldQuantity OR soldQuantity IS NULL) LIMIT ? OFFSET ?", limit, offset);
+	}
+
+	@Override
 	public boolean checkByProduct(String key) throws DAOException {
 		return check("product", key);
 	}
 
 	@Override
 	public boolean checkAvailableByProduct(String key) throws DAOException {
-		return checkData("SELECT * FROM "+getViewName()+" WHERE product = ? AND (quantity > used OR used IS NULL) LIMIT 1 OFFSET 0", key);
+		return checkData("SELECT * FROM "+getViewName()+" WHERE product = ? AND (quantity > soldQuantity OR soldQuantity IS NULL) LIMIT 1 OFFSET 0", key);
 	}
 	
 	@Override
@@ -66,7 +87,7 @@ class StockDaoSQL extends UtilSQL<Stock> implements StockDao {
 
 	@Override
 	public Stock[] findAvailableByProduct (String key) throws DAOException {
-		return readData("SELECT * FROM "+getViewName()+" WHERE product = ? AND (quantity > used OR used IS NULL) LIMIT 1 OFFSET 0", key);
+		return readData("SELECT * FROM "+getViewName()+" WHERE product = ? AND (quantity > soldQuantity OR soldQuantity IS NULL) LIMIT 1 OFFSET 0", key);
 	}
 
 	@Override

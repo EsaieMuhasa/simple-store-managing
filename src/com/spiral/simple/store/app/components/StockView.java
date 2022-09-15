@@ -19,8 +19,11 @@ import java.util.Objects;
 import javax.swing.JComponent;
 
 import com.spiral.simple.store.app.models.DBEntityTableModel;
+import com.spiral.simple.store.beans.Command;
+import com.spiral.simple.store.beans.CommandItem;
 import com.spiral.simple.store.beans.Product;
 import com.spiral.simple.store.beans.Stock;
+import com.spiral.simple.store.dao.CommandDao;
 import com.spiral.simple.store.dao.DAOFactory;
 import com.spiral.simple.store.dao.DAOListenerAdapter;
 import com.spiral.simple.store.dao.ProductDao;
@@ -61,9 +64,11 @@ public class StockView extends JComponent {
 	
 	private final StockDao stockDao = DAOFactory.getDao(StockDao.class);
 	private final ProductDao productDao = DAOFactory.getDao(ProductDao.class);
+	private final CommandDao commandDao = DAOFactory.getDao(CommandDao.class);
 	
 	private final StockListenerAdapter stockListenerAdapter = new StockListenerAdapter();
 	private final ProductListenerAdapter productListenerAdapter = new ProductListenerAdapter();
+	private final CommandListenerAdapter commandListenerAdapter = new CommandListenerAdapter();
 	private final ViewMouseListener mouseListener = new ViewMouseListener();
 
 	/**
@@ -181,6 +186,7 @@ public class StockView extends JComponent {
 	private void listeningDao() {
 		stockDao.addBaseListener(stockListenerAdapter);
 		productDao.addBaseListener(productListenerAdapter);
+		commandDao.addBaseListener(commandListenerAdapter);
 	}
 	
 	/**
@@ -189,6 +195,7 @@ public class StockView extends JComponent {
 	public void dispose() {
 		stockDao.removeBaseListener(stockListenerAdapter);
 		productDao.removeBaseListener(productListenerAdapter);
+		commandDao.removeBaseListener(commandListenerAdapter);
 		removeMouseListener(mouseListener);
 	}
 	
@@ -241,6 +248,53 @@ public class StockView extends JComponent {
 			if(stock.getProduct().getId().equals(newState.getId())) {
 				stock.setProduct(newState);
 				repaint();
+			}
+		}
+		
+	}
+	
+	/**
+	 * 
+	 * @author Esaie Muhasa
+	 * adaptateur d'ecoute des evenements sur le DAO de l'entite command
+	 */
+	private class CommandListenerAdapter  extends DAOListenerAdapter<Command> {
+
+		@Override
+		public void onCreate(Command... data) {
+			CommandItem [] items = data[0].getItems();
+			for (CommandItem item : items) {
+				if(item.getProduct().equals(stock.getProduct())) {
+					stock.setSoldQuantity(stock.getSoldQuantity() + item.getQuantity());
+					repaint();
+					break;
+				}
+			}
+		}
+
+		@Override
+		public void onUpdate(Command newState, Command oldState) {
+			CommandItem [] items = newState.getItems();
+			for (CommandItem item : items) {
+				if(item.getProduct().equals(stock.getProduct())) {
+					stock.setSoldQuantity(stock.getSoldQuantity() + item.getQuantity());
+					repaint();
+					break;
+				}
+			}
+		}
+
+		@Override
+		public void onDelete(Command... data) {
+			for (Command command : data) {
+				CommandItem [] items = command.getItems();
+				for (CommandItem item : items) {
+					if(item.getProduct().equals(stock.getProduct())) {
+						stock.setSoldQuantity(stock.getSoldQuantity() - item.getQuantity());
+						repaint();
+						break;
+					}
+				}
 			}
 		}
 		

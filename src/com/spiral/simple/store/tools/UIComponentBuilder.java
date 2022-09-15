@@ -103,7 +103,7 @@ public final class UIComponentBuilder {
 		Objects.requireNonNull(min);
 		Objects.requireNonNull(max);
 		Objects.requireNonNull(date);
-		return (min.getTime() >=  date.getTime() && max.getTime() <= date.getTime());
+		return (min.getTime() <=  date.getTime() && max.getTime() >= date.getTime());
 	}
 	
 	/**

@@ -2,6 +2,7 @@ package com.spiral.simple.store.swing.navs;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -64,6 +65,7 @@ public class NavbarItem extends JButton {
 		
 		this.active = active;
 		setFont(active? getFont().deriveFont(Font.BOLD) : getFont().deriveFont(Font.PLAIN));
+		setForeground(active? Color.BLUE.darker().darker() : Color.BLACK);
 	}
 
 	/**
@@ -90,6 +92,7 @@ public class NavbarItem extends JButton {
     private void init() {
         setContentAreaFilled(false);
         setForeground(new Color(255, 255, 255));
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         setHorizontalAlignment(JButton.LEFT);
         addMouseListener(new MouseAdapter() {
             @Override

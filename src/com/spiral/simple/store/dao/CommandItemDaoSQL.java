@@ -114,7 +114,6 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 	
 	@Override
 	synchronized void create(Connection connection, int requestId, CommandItem... t) throws DAOException, SQLException {
-		super.create(connection, requestId, t);
 		List<AffectedStock> stocks = new ArrayList<>();
 		for (CommandItem item : t) {
 			
@@ -131,6 +130,7 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 					stocks.add(s);
 		}
 		
+		super.create(connection, requestId, t);
 		AffectedStock [] data = stocks.toArray(new AffectedStock[stocks.size()]);
 		((AffectedStockDaoSQL) daoFactory.get(AffectedStockDao.class)).create(connection, requestId, data);
 	}

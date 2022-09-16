@@ -93,7 +93,7 @@ public class MainWindow extends JFrame {
         containers[0] = new PanelDashboard();
         containers[1] = new SellerWorkspace();
         containers[2] = new WorckspaceProduct();
-        containers[3] = new JPanel();
+        containers[3] = new AdminWorkspace();
         containers[4] = new ConfigWorkspace();
         
         navigation.setItems(navs);

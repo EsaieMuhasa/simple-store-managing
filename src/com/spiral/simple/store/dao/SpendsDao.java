@@ -5,6 +5,7 @@ package com.spiral.simple.store.dao;
 
 import java.util.Date;
 
+import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.beans.Spends;
 
 /**
@@ -48,6 +49,58 @@ public interface SpendsDao extends CashMoneyDao<Spends> {
 	Spends[] findByRubric (String rubricId) throws DAOException;
 	
 	/**
+	 * comptage des operations qui font reference a la rubrique par defaut
+	 * @return
+	 * @throws DAOException
+	 */
+	int countByDefaultRubric ()  throws DAOException;
+	
+	/**
+	 * verification de l'existance d'une operation deja faite
+	 * pour le compte default
+	 * @return
+	 * @throws DAOException
+	 */
+	boolean checkByDefaultRubric () throws DAOException;
+	
+	/**
+	 * renvoie le tableau des operations qui ne font pas reference au rubrique budgetaire
+	 * le trie des donnes est fait sur base de la date d'enregistrement en ordre decroisante
+	 * @return
+	 * @throws DAOException
+	 */
+	Spends[] findByDefaultRubric () throws DAOException;
+	
+	/**
+	 * selection d'une intervale des donnees qui ne sont pas liee au rubrique budgetaire
+	 * @param limit
+	 * @param offset
+	 * @return
+	 * @throws DAOException
+	 */
+	Spends[] findByDefaultRubric (int limit, int offset) throws DAOException;
+	
+	/**
+	 * renvoie le operations qui ont ete fait sur la rubrique par defaut,
+	 * en une intervale de temps
+	 * @param min
+	 * @param max
+	 * @return
+	 * @throws DAOException
+	 */
+	Spends[] findByDefaultRubric (Date min, Date max) throws DAOException;
+	
+	/**
+	 * selectionne les depense faite la rubrique par defaut en une date
+	 * @param date
+	 * @return
+	 * @throws DAOException
+	 */
+	default Spends[] findByDefaultRubric (Date date) throws DAOException{
+		return findByDefaultRubric(date, date);
+	}
+	
+	/**
 	 * select part of operation referenced budget rubric
 	 * @param rubricId
 	 * @param limit
@@ -86,7 +139,7 @@ public interface SpendsDao extends CashMoneyDao<Spends> {
 	 * @return
 	 * @throws DAOException
 	 */
-	double getSoldByRubric(String rubricId) throws DAOException;
+	double getSoldByRubric(String rubricId, Currency currency, boolean currencyOnly) throws DAOException;
 	
 	/**
 	 * return sum of spends at date interval for budget rubric
@@ -96,7 +149,7 @@ public interface SpendsDao extends CashMoneyDao<Spends> {
 	 * @return
 	 * @throws DAOException
 	 */
-	double getSoldByRubric (String rubricId, Date min, Date max) throws DAOException;
+	double getSoldByRubric (String rubricId, Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException;
 	
 	/**
 	 * return operation perfected in budget rubric at date
@@ -127,8 +180,41 @@ public interface SpendsDao extends CashMoneyDao<Spends> {
 	 * @return
 	 * @throws DAOException
 	 */
-	default double getSoldByRubric (String rubricId, Date date) throws DAOException {
-		return getSoldByRubric(rubricId, date, date);
+	default double getSoldByRubric (String rubricId, Date date, Currency currency, boolean currencyOnly) throws DAOException {
+		if (rubricId == null || rubricId.trim().isEmpty())
+			return getSoldByDefaultRubric(date, date, currency, currencyOnly);
+		return getSoldByRubric(rubricId, date, date, currency, currencyOnly);
 	}
 	
+	/**
+	 * renvoie le solde (montant total) des operations deja faite sur la rubrique par defaut
+	 * @param currency
+	 * @param currencyOnly
+	 * @return
+	 * @throws DAOException
+	 */
+	double getSoldByDefaultRubric (Currency currency, boolean currencyOnly) throws DAOException;
+	
+	/**
+	 * renvoie le solde des operations faite en une date sur la rubrique par defaut
+	 * @param date
+	 * @param currency
+	 * @param currencyOnly
+	 * @return
+	 * @throws DAOException
+	 */
+	default double getSoldByDefaultRubric (Date date, Currency currency, boolean currencyOnly) throws DAOException {
+		return getSoldByDefaultRubric(date, date, currency, currencyOnly);
+	}
+	
+	/**
+	 * renvoie le sold (montant total) des operations faite sur le compte default, en une intervale de date
+	 * @param min
+	 * @param max
+	 * @param currency
+	 * @param currencyOnly
+	 * @return
+	 * @throws DAOException
+	 */
+	double getSoldByDefaultRubric (Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException;
 }

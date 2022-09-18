@@ -11,6 +11,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 
 import com.spiral.simple.store.app.admin.AdminDashboard;
+import com.spiral.simple.store.app.admin.PanelBudgetConfig;
 import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.swing.navs.Navbar;
 import com.spiral.simple.store.swing.navs.NavbarListener;
@@ -49,12 +50,12 @@ public class AdminWorkspace extends JPanel {
 		
 		navbar
 		.addItem("Tableau de board")
-		.addItem("Commandes")
-		.addItem("Dépenses");
+		.addItem("Dépenses")
+		.addItem("Configurations");
 		
 		containers.add(new AdminDashboard());
 		containers.add(new JPanel());
-		containers.add(new JPanel());
+		containers.add(new PanelBudgetConfig());
 		
 		navbar.addNavbarListener(navbarListener);
 		navbar.setCurrentItem(0);

@@ -13,7 +13,6 @@ import java.util.List;
 public class DistributionConfig extends DBEntity{
 
 	private static final long serialVersionUID = 6488059592608684622L;
-	private Product product;
 	
 	private List<DistributionConfigItem> items = new ArrayList<>();
 
@@ -26,20 +25,6 @@ public class DistributionConfig extends DBEntity{
 	 */
 	public boolean isEnabled() {
 		return lastUpdateDate == null && recordingDate != null;
-	}
-
-	/**
-	 * @return the product
-	 */
-	public Product getProduct() {
-		return product;
-	}
-
-	/**
-	 * @param product the product to set
-	 */
-	public void setProduct(Product product) {
-		this.product = product;
 	}
 	
 	/**

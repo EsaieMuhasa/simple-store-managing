@@ -41,15 +41,11 @@ public class ConfigWorkspace extends JPanel {
 				new CaptionnablePanel("Configuration des unite de mesure", new PanelMeasureUnit())
 		};
 		
-		final PanelBudgetConfig budget = new PanelBudgetConfig();
-		
 		for (int i = 0; i < titles.length; i++) {
 			contents[i].setCaptionFont(new Font("Arial", Font.PLAIN, 18));
 			contents[i].setCaptionPadding(5);
 			container.addTab(titles[i], contents[i]);
 		}
-		
-		container.addTab("Budget", budget);
 	}
 	
 	@Override

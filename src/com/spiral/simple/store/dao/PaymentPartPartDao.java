@@ -6,16 +6,16 @@ package com.spiral.simple.store.dao;
 import java.util.Date;
 
 import com.spiral.simple.store.beans.BudgetRubric;
-import com.spiral.simple.store.beans.CommandItem;
+import com.spiral.simple.store.beans.CommandPayment;
 import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.beans.DistributionConfigItem;
-import com.spiral.simple.store.beans.helper.CommandItemPart;
+import com.spiral.simple.store.beans.helper.PaymentPart;
 
 /**
  * @author Esaie Muhasa
  *
  */
-public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
+public interface PaymentPartPartDao extends DAOInterface<PaymentPart> {
 	
 	/**
 	 * selection des operations de repartiton d'un element de la commande
@@ -23,7 +23,7 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	CommandItemPart [] findByCommandItem (CommandItem item) throws DAOException;
+	PaymentPart [] findByCommandPayment (CommandPayment item) throws DAOException;
 	
 	/**
 	 * selectionne tout les operations faites dans l'intervale de temps
@@ -32,7 +32,7 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	CommandItemPart [] findByDate (Date min, Date max) throws DAOException;
+	PaymentPart [] findByDate (Date min, Date max) throws DAOException;
 	
 	/**
 	 * selection des operations faite en une date
@@ -40,7 +40,7 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	default CommandItemPart [] findByDate (Date date) throws DAOException {
+	default PaymentPart [] findByDate (Date date) throws DAOException {
 		return findByDate(date, date);
 	}
 	
@@ -53,25 +53,25 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	CommandItemPart [] findByDate (Date min, Date max, int limit, int offset) throws DAOException;
+	PaymentPart [] findByDate (Date min, Date max, int limit, int offset) throws DAOException;
 	
 	/**
 	 * renvoi la colleection des operations qui font reference a la configuration en parametre
-	 * @param itemPart
+	 * @param item
 	 * @return
 	 * @throws DAOException
 	 */
-	CommandItemPart [] findByItemPart (DistributionConfigItem itemPart) throws DAOException;
+	PaymentPart [] findByItem (DistributionConfigItem item) throws DAOException;
 	
 	/**
 	 * renvoie le recette qui font reference a la dite rubrique, pour l'intervale de temps choisie
-	 * @param itemPart
+	 * @param item
 	 * @param min
 	 * @param max
 	 * @return
 	 * @throws DAOException
 	 */
-	CommandItemPart [] findByItemPart (DistributionConfigItem itemPart, Date min, Date max) throws DAOException;
+	PaymentPart [] findByItem (DistributionConfigItem item, Date min, Date max) throws DAOException;
 	
 	/**
 	 * selection de tout les operations qui font reference a une rubrique, pour l'intervale de temps choisie
@@ -81,7 +81,7 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	CommandItemPart [] findByRubric (BudgetRubric rubric, Date min, Date max) throws DAOException;
+	PaymentPart [] findByRubric (BudgetRubric rubric, Date min, Date max) throws DAOException;
 	
 	/**
 	 * comptage des operations qui reference a la rubrique budgetaire
@@ -104,7 +104,7 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	CommandItemPart [] findByRubric (BudgetRubric rubric) throws DAOException;
+	PaymentPart [] findByRubric (BudgetRubric rubric) throws DAOException;
 	
 	/**
 	 * selection d'un partie des operations qui font reference a une rubrique budgetaire
@@ -114,7 +114,7 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	CommandItemPart [] findByRubric (BudgetRubric rubric, int limit, int offset) throws DAOException;
+	PaymentPart [] findByRubric (BudgetRubric rubric, int limit, int offset) throws DAOException;
 	
 	/**
 	 * recuperation des operations qui font refenrence a une rubrique budgetaire, en une date X
@@ -123,7 +123,7 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	default CommandItemPart [] findByRubric (BudgetRubric rubric, Date date) throws DAOException {
+	default PaymentPart [] findByRubric (BudgetRubric rubric, Date date) throws DAOException {
 		return findByRubric(rubric, date, date);
 	}
 	
@@ -132,7 +132,7 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	CommandItemPart [] findByDefaultRubric () throws DAOException;
+	PaymentPart [] findByDefaultRubric () throws DAOException;
 	
 	/**
 	 * selectionne une partie des operations qui font reference a la rubrique par defaut
@@ -141,7 +141,7 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	CommandItemPart [] findByDefaultRubric (int limit, int offset) throws DAOException;
+	PaymentPart [] findByDefaultRubric (int limit, int offset) throws DAOException;
 	
 	/**
 	 * selectionne tout les operations qui font reference a la rubrique par defaut,
@@ -151,7 +151,7 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	CommandItemPart [] findByDefaultRubric (Date min, Date max) throws DAOException;
+	PaymentPart [] findByDefaultRubric (Date min, Date max) throws DAOException;
 	
 	/**
 	 * selectionne tout les operations qui font reference au compte par defaut pout ladite date
@@ -159,7 +159,7 @@ public interface CommandItemPartDao extends DAOInterface<CommandItemPart> {
 	 * @return
 	 * @throws DAOException
 	 */
-	default CommandItemPart [] findByDefaultRubric (Date date) throws DAOException {
+	default PaymentPart [] findByDefaultRubric (Date date) throws DAOException {
 		return findByDefaultRubric(date, date);
 	}
 	

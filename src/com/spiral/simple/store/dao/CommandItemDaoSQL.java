@@ -12,7 +12,6 @@ import java.util.List;
 import com.spiral.simple.store.beans.AffectedStock;
 import com.spiral.simple.store.beans.Command;
 import com.spiral.simple.store.beans.CommandItem;
-import com.spiral.simple.store.beans.DistributionConfig;
 
 /**
  * @author Esaie Muhasa
@@ -75,7 +74,6 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null,
 				entity.getCommand().getId(),
 				entity.getProduct().getId(),
-				entity.getConfig() != null? entity.getConfig().getId() : null,
 				entity.getQuantity(),
 				entity.getUnitPrice(),
 				entity.getCurrency().getId()
@@ -98,10 +96,6 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 		i.setQuantity(result.getDouble("quantity"));
 		i.setCommand(new Command());
 		i.getCommand().setId(result.getString("command"));
-		if(result.getString("config") != null) {
-			i.setConfig(new DistributionConfig());
-			i.getConfig().setId(result.getString("config"));
-		}
 		
 		if(result.getString("measureUnit") != null)
 			i.setMeasureUnit(daoFactory.get(MeasureUnitDao.class).findById(result.getString("measureUnit")));
@@ -116,10 +110,6 @@ class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 	synchronized void create(Connection connection, int requestId, CommandItem... t) throws DAOException, SQLException {
 		List<AffectedStock> stocks = new ArrayList<>();
 		for (CommandItem item : t) {
-			
-			//pour les elements de la commande, produits dont la configurations de repartititon des recettes est diponible
-			if(item.getConfig() == null && daoFactory.get(DistributionConfigDao.class).checkAvailableByProduct(item.getProduct().getId()))
-				item.setConfig(daoFactory.get(DistributionConfigDao.class).findAvailableByProduct(item.getProduct().getId()));
 			
 			AffectedStock [] st = item.getStocks();
 			if(st == null)//on prevoie dans le cas ou on auras l'intension de prendre en charge les comandes sans penser a la quantite disponible en stock

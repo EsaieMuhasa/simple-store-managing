@@ -49,7 +49,7 @@ public class DistributionConfigForm extends JPanel{
 	private final JPanel container = new JPanel(new BorderLayout());
 	
 	private final JLabel labelMax = new JLabel();
-	private final JLabel labelTitle = new JLabel();
+	private final JLabel labelTitle = new JLabel("Formulaire de configuration de repartition");
 	private final JButton btnValidate = new JButton("Valider", new ImageIcon(Config.getIcon("success")));
 	private final JButton btnCancel = new JButton("Annuler", new ImageIcon(Config.getIcon("close")));
 	
@@ -131,9 +131,6 @@ public class DistributionConfigForm extends JPanel{
 		reload();
 		container.revalidate();
 		container.repaint();
-		
-		if(config != null)
-			labelTitle.setText(config.getProduct().getName());
 	}
 	
 	/**

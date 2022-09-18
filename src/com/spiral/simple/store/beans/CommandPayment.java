@@ -12,6 +12,7 @@ public class CommandPayment extends CashMoney {
 	private static final long serialVersionUID = 1340171519317359710L;
 	
 	private Command command;
+	private DistributionConfig config;//configuration auquel l'operation est liee
 	private int number;//payment number
 
 	/**
@@ -19,6 +20,20 @@ public class CommandPayment extends CashMoney {
 	 */
 	public CommandPayment() {
 		super();
+	}
+	
+	/**
+	 * @return the configuration binded command item
+	 */
+	public DistributionConfig getConfig() {
+		return config;
+	}
+
+	/**
+	 * @param config the configuration to set
+	 */
+	public void setConfig(DistributionConfig config) {
+		this.config = config;
 	}
 
 	/**

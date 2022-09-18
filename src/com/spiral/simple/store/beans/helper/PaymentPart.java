@@ -5,7 +5,7 @@ package com.spiral.simple.store.beans.helper;
 
 import java.util.Date;
 
-import com.spiral.simple.store.beans.CommandItem;
+import com.spiral.simple.store.beans.CommandPayment;
 import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.beans.DBEntity;
 import com.spiral.simple.store.beans.DistributionConfigItem;
@@ -16,10 +16,10 @@ import com.spiral.simple.store.beans.DistributionConfigItem;
  * Donc aucun opperation d'enregistrement/update/delete est prise en charge depuis le dit DAO.
  * la repartiton et faite depuis une vue quelcoque dans la BDD
  */
-public class CommandItemPart extends DBEntity {
+public class PaymentPart extends DBEntity {
 	private static final long serialVersionUID = -3840728451074383580L;
 	
-	private CommandItem source;
+	private CommandPayment source;
 	private DistributionConfigItem itemPart;
 	private double amount;
 	private double percent;
@@ -27,7 +27,7 @@ public class CommandItemPart extends DBEntity {
 	/**
 	 * 
 	 */
-	public CommandItemPart() {
+	public PaymentPart() {
 		super();
 	}
 	
@@ -81,14 +81,14 @@ public class CommandItemPart extends DBEntity {
 	/**
 	 * @return the source
 	 */
-	public CommandItem getSource() {
+	public CommandPayment getSource() {
 		return source;
 	}
 
 	/**
 	 * @param source the source to set
 	 */
-	public void setSource(CommandItem source) {
+	public void setSource(CommandPayment source) {
 		this.source = source;
 	}
 
@@ -111,7 +111,7 @@ public class CommandItemPart extends DBEntity {
 	 */
 	public double getAmount() {
 		if(source != null && source.getConfig() == null)
-			return (source.getQuantity() * source.getUnitPrice());
+			return source.getAmount();
 		return amount;
 	}
 

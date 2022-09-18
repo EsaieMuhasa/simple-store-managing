@@ -34,7 +34,7 @@ public class ExchangeRateTableModel extends DBEntityTableModel<ExchangeRate> {
 		data.clear();
 		ExchangeRate [] rates = null;
 		if(currency == null) {//on affiche tout
-			if(exchangeRateDao.countAll() == 0){
+			if(exchangeRateDao.countAll() != 0){
 				if(availableOnly)
 					rates = exchangeRateDao.findAvailable();
 				else

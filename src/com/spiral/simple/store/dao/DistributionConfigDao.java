@@ -22,35 +22,17 @@ public interface DistributionConfigDao extends DAOInterface<DistributionConfig> 
 	void toggle (int requestId, DistributionConfig config);
 	
 	/**
-	 * check distribution configuration of product
-	 * @param productKey
+	 * verifie s'il y a une configuation falide
 	 * @return
 	 * @throws DAOException
 	 */
-	boolean checkByProduct (String productKey) throws DAOException;
+	boolean checkAvailable () throws DAOException;
 	
 	/**
-	 * check available configuration of product
-	 * @param productKey
+	 * renvoie la configuration valide
 	 * @return
 	 * @throws DAOException
 	 */
-	boolean checkAvailableByProduct (String productKey) throws DAOException;
-	
-	/**
-	 * return available distribution configuration of product 
-	 * @param productKey
-	 * @return
-	 * @throws DAOException
-	 */
-	DistributionConfig findAvailableByProduct (String productKey) throws DAOException;
-	
-	/***
-	 * return all product configuration in database
-	 * @param productKey
-	 * @return
-	 * @throws DAOException
-	 */
-	DistributionConfig[] findByProduct (String productKey) throws DAOException;
+	DistributionConfig findAvailable () throws DAOException;
 
 }

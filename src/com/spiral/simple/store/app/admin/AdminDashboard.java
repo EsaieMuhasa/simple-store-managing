@@ -19,6 +19,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
 
 import com.spiral.simple.store.beans.BudgetRubric;
@@ -130,6 +131,8 @@ public class AdminDashboard extends JPanel {
 		private final JComboBox<Currency> currencyBox = new  JComboBox<>(currencyModel);
 		private final JLabel chartTitle = new  JLabel();
 		private final JCheckBox checkCurrency = new JCheckBox("Convertiseur", true);
+		
+		private final JRadioButton [] radios = {new JRadioButton("Recettes", false), new JRadioButton("Dépenses", true)};
 		
 		private final ActionListener checkCurrencyActionListener = event -> reload();
 		private final List<BudgetRubric> rubrics = new ArrayList<>();

@@ -27,6 +27,14 @@ public interface CommandPaymentDao extends CashMoneyDao<CommandPayment> {
 	boolean checkByCommand (String commandId) throws DAOException;
 	
 	/**
+	 * verification de l'existance d'un payement qui fait reference a la configuration en parametre
+	 * @param configKey
+	 * @return
+	 * @throws DAOException
+	 */
+	boolean checkByConfig (String configKey) throws DAOException;
+	
+	/**
 	 * select all payment of command
 	 * @param commandId
 	 * @return

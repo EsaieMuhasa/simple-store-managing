@@ -30,7 +30,6 @@ CREATE VIEW V_CommandItem AS
 		CommandItem.quantity AS quantity,
 		CommandItem.command AS command,
 		CommandItem.product AS product,
-		CommandItem.config AS config,
 		CommandItem.unitPrice AS unitPrice,
 		CommandItem.currency AS currency,
 		(SELECT 
@@ -38,24 +37,24 @@ CREATE VIEW V_CommandItem AS
 		) AS measureUnit
 	FROM CommandItem;
 
-DROP VIEW IF EXISTS V_CommandItemPart;
-CREATE VIEW V_CommandItemPart AS 
+DROP VIEW IF EXISTS V_CommandPaymentPart;
+CREATE VIEW V_CommandPaymentPart AS 
 	SELECT 
-		CommandItem.id AS id,
-		CommandItem.config AS config,
-		CommandItem.currency AS currency,
-		CommandItem.product AS product,
+		CommandPayment.id AS id,
+		CommandPayment.config AS config,
+		CommandPayment.currency AS currency,
+		CommandPayment.command AS command,
 		DistributionConfigItem.id AS itemPart,
-		CommandItem.recordingDate AS recordingDate,
-		CommandItem.lastUpdateDate AS lastUpdateDate,
-		CommandItem.quantity AS quantity,
-		CommandItem.unitPrice AS unitPrice,
+		CommandPayment.recordingDate AS recordingDate,
+		CommandPayment.lastUpdateDate AS lastUpdateDate,
+		CommandPayment.amount AS amount,
+		CommandPayment.date AS date,
 		DistributionConfigItem.percent AS percent,
 		(SELECT 
-			((CommandItem.unitPrice * CommandItem.quantity ) / 100.0) * DistributionConfigItem.percent AS part
-			FROM CommandItem WHERE CommandItem.config = DistributionConfigItem.owner
-		) AS amount
-	FROM CommandItem LEFT JOIN DistributionConfigItem ON DistributionConfigItem.owner = CommandItem.config;
+			(CommandPayment.amount / 100.0) * DistributionConfigItem.percent AS part
+			FROM CommandPayment WHERE CommandPayment.config = DistributionConfigItem.owner
+		) AS part
+	FROM CommandPayment LEFT JOIN DistributionConfigItem ON DistributionConfigItem.owner = CommandPayment.config;
 
 DROP VIEW IF EXISTS V_DistributionConfigItem;
 --CREATE VIEW V_DistributionConfigItem AS

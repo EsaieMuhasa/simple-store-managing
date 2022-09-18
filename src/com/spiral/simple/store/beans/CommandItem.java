@@ -20,7 +20,6 @@ public class CommandItem extends DBEntity {
 	private double quantity;
 	private double unitPrice;
 	private Currency currency;
-	private DistributionConfig config;
 	private MeasureUnit measureUnit;//confert les stock d'un produit => uniquement dans la vue V_CommandItem
 	
 	private final List<AffectedStock> stocks = new ArrayList<>();
@@ -74,20 +73,6 @@ public class CommandItem extends DBEntity {
 		this.quantity = quantity;
 		if(!stocks.isEmpty())
 			stocks.get(0).setQuantity(quantity);
-	}
-
-	/**
-	 * @return the configuration binded command item
-	 */
-	public DistributionConfig getConfig() {
-		return config;
-	}
-
-	/**
-	 * @param config the configuration to set
-	 */
-	public void setConfig(DistributionConfig config) {
-		this.config = config;
 	}
 	
 	/**

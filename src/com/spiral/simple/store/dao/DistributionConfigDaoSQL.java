@@ -4,7 +4,6 @@
 package com.spiral.simple.store.dao;
 
 import java.sql.Connection;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -12,7 +11,6 @@ import java.util.List;
 
 import com.spiral.simple.store.beans.DistributionConfig;
 import com.spiral.simple.store.beans.DistributionConfigItem;
-import com.spiral.simple.store.beans.Product;
 
 /**
  * @author Esaie Muhasa
@@ -20,30 +18,20 @@ import com.spiral.simple.store.beans.Product;
  */
 class DistributionConfigDaoSQL extends UtilSQL<DistributionConfig> implements DistributionConfigDao {
 
-	private static final String[] FIELDS_LABELS = {"id", "recordingDate", "lastUpdateDate", "product"};
+	private static final String[] FIELDS_LABELS = {"id", "recordingDate", "lastUpdateDate"};
 
 	public DistributionConfigDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
 	}
 
 	@Override
-	public boolean checkByProduct(String productKey) throws DAOException {
-		return check("product", productKey);
+	public boolean checkAvailable() throws DAOException {
+		return checkData("SELECT * FROM "+getTableName()+" WHERE lastUpdateDate IS NULL LIMIT 1 OFFSET 0");
 	}
 
 	@Override
-	public boolean checkAvailableByProduct(String productKey) throws DAOException {
-		return checkData("SELECT * FROM "+getTableName()+" WHERE product = ? AND lastUpdateDate IS NULL LIMIT 1 OFFSET 0", productKey);
-	}
-
-	@Override
-	public DistributionConfig findAvailableByProduct(String productKey) throws DAOException {
-		return readData("SELECT * FROM "+getTableName()+" WHERE product = ? AND lastUpdateDate IS NULL LIMIT 1 OFFSET 0", productKey)[0];
-	}
-
-	@Override
-	public DistributionConfig[] findByProduct(String productKey) throws DAOException {
-		return readData("SELECT * FROM "+getTableName()+" WHERE product = ?", productKey);
+	public DistributionConfig findAvailable() throws DAOException {
+		return readData("SELECT * FROM "+getTableName()+" WHERE lastUpdateDate IS NULL LIMIT 1 OFFSET 0")[0];
 	}
 	
 	@Override
@@ -74,9 +62,10 @@ class DistributionConfigDaoSQL extends UtilSQL<DistributionConfig> implements Di
 		try (Connection connection = daoFactory.getConnection()) {
 			connection.setAutoCommit(false);
 			if(config.getId() == null || config.getId().trim().isEmpty()) {//nouvelle configuration,
-				if(checkAvailableByProduct(config.getProduct().getId())){//nouvons archiver l'enciene si elle existe
-					Date now = new Date();
-					DistributionConfig old = findAvailableByProduct(config.getProduct().getId());
+				Date now = new Date();
+				if(checkAvailable()){//on cheche la derniere configuration qui existe
+					DistributionConfig old = findAvailable();
+					
 					old.setLastUpdateDate(now);
 					updateInTable(connection, new String[] {"lastUpdateDate"}, new Object[] {now.getTime()}, old.getId());
 					config.setRecordingDate(now);
@@ -152,17 +141,8 @@ class DistributionConfigDaoSQL extends UtilSQL<DistributionConfig> implements Di
 		return new Object[] {
 				entity.getId(),
 				entity.getRecordingDate().getTime(),
-				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null,
-				entity.getProduct().getId()
+				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null
 		};
-	}
-	
-	@Override
-	protected DistributionConfig mapping(ResultSet result) throws SQLException {
-		DistributionConfig c = super.mapping(result);
-		c.setProduct(new Product());
-		c.getProduct().setId(result.getString("product"));
-		return c;
 	}
 
 	@Override

@@ -10,6 +10,7 @@ import java.sql.Statement;
 
 import com.spiral.simple.store.beans.Command;
 import com.spiral.simple.store.beans.CommandPayment;
+import com.spiral.simple.store.beans.DistributionConfig;
 
 /**
  * @author Esaie Muhasa
@@ -17,7 +18,7 @@ import com.spiral.simple.store.beans.CommandPayment;
  */
 class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> implements CommandPaymentDao {
 	private static final String [] 
-			FEILDS_TITLES = {"id", "recordingDate", "lastUpdateDate", "command", "amount", "currency", "date", "number"},
+			FEILDS_TITLES = {"id", "recordingDate", "lastUpdateDate", "command", "amount", "currency", "date", "config", "number"},
 			UPDATEBLE_FEILDS_TITLES = {"lastUpdateDate", "amount", "currency", "date", "number"};
 
 	public CommandPaymentDaoSQL(DefaultDAOFactorySql daoFactory) {
@@ -37,6 +38,11 @@ class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> implement
 		}
 		return number;
 	}
+	
+	@Override
+	public boolean checkByConfig(String configKey) throws DAOException {
+		return check("config", configKey);
+	}
 
 	@Override
 	public boolean checkByCommand(String commandId) throws DAOException {
@@ -49,10 +55,14 @@ class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> implement
 	}
 	
 	@Override
-	synchronized void create(Connection connection, int requestId, CommandPayment... t) throws DAOException, SQLException {
+	synchronized void create (Connection connection, int requestId, CommandPayment... t) throws DAOException, SQLException {
 		int number = getLastPaymentNumber();
-		for (CommandPayment payment : t)
+		for (CommandPayment payment : t){
 			payment.setNumber(++number);
+			//pour les elements de la commande, produits dont la configurations de repartititon des recettes est diponible
+			if(payment.getConfig() == null && daoFactory.get(DistributionConfigDao.class).checkAvailable())
+				payment.setConfig(daoFactory.get(DistributionConfigDao.class).findAvailable());
+		}
 		super.create(connection, requestId, t);
 	}
 
@@ -81,6 +91,7 @@ class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> implement
 				entity.getAmount(),
 				entity.getCurrency().getId(),
 				entity.getDate().getTime(),
+				entity.getConfig() != null? entity.getConfig().getId() : null,
 				entity.getNumber()
 		};
 	}
@@ -102,6 +113,10 @@ class CommandPaymentDaoSQL extends BaseCashMoneyDaoSQL<CommandPayment> implement
 		payment.setCommand(new Command());
 		payment.getCommand().setId(result.getString("command"));
 		payment.setNumber(result.getInt("number"));
+		if(result.getString("config") != null) {
+			payment.setConfig(new DistributionConfig());
+			payment.getConfig().setId(result.getString("config"));
+		}
 		return payment;
 	}
 

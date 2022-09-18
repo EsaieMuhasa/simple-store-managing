@@ -57,7 +57,8 @@ public interface ExchangeRateDao extends DAOInterface<ExchangeRate> {
 		Money [] totals = command.getTotalMoney();
 		
 		if (totals == null || totals.length == 0)
-			throw new IllegalStateException("Impossible d'effectuer cette operation les prix des element de la command ne sont pas determiné");
+			return;
+			//throw new IllegalStateException("Impossible d'effectuer cette operation les prix des element de la command ne sont pas determiné");
 		
 		double total = totals[0].getAmount();
 		Currency currency = totals[0].getCurrency();

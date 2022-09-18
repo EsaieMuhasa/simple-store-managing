@@ -301,6 +301,9 @@ public class PanelStocks extends JPanel{
 		private void reload() {
 			dispose();
 			
+			if(stockDao.countAll() == 0)
+				return;
+			
 			Stock data [] = stockDao.findAll();
 			for (Stock stock : data) {
 				StockView view = new StockView(stock);

@@ -192,7 +192,7 @@ public class PanelDashboard extends JPanel implements ChartRenderTranslationList
 		Currency currency = currencyModel.getElementAt(boxCurrency.getSelectedIndex());
 		for (double i = intervale.getMin(); i <= intervale.getMax(); i += 1d) {
 			Date date = UIComponentBuilder.fromDateAxisValue(i);
-			double amount = commandPaymentDao.getSoldByDate(date, currency, false);
+			double amount = commandPaymentDao.getSumByDate(date, currency, false);
 			
 			DefaultMaterialPoint point = new DefaultMaterialPoint(Color.RED.darker());
 			point.setX(i);

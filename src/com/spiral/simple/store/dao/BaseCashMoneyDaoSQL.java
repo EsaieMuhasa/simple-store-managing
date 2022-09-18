@@ -54,7 +54,7 @@ abstract class BaseCashMoneyDaoSQL <T extends CashMoney> extends UtilSQL<T> impl
 	 * @return
 	 * @throws DAOException
 	 */
-	protected double getSoldByQuerry (String sqlQuerry, Object ...params) throws DAOException{
+	protected double getSumByQuerry (String sqlQuerry, Object ...params) throws DAOException{
 		double amount = 0;
 		try (
 				Connection connection = daoFactory.getConnection();
@@ -70,10 +70,10 @@ abstract class BaseCashMoneyDaoSQL <T extends CashMoney> extends UtilSQL<T> impl
 	}
 
 	@Override
-	public double getSoldByDate(Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException {
+	public double getSumByDate(Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException {
 		String sql = "SELECT SUM(amount) AS montant FROM "+getViewName()+" WHERE currency = ? AND (date BETWEEN ? AND ?)";
 
-		double amount = getSoldByQuerry(sql, currency.getId(), 
+		double amount = getSumByQuerry(sql, currency.getId(), 
 						toMinTimestampOfDay(min).getTime(), toMaxTimestampOfDay(max).getTime());
 		
 		if(!currencyOnly) {
@@ -82,7 +82,7 @@ abstract class BaseCashMoneyDaoSQL <T extends CashMoney> extends UtilSQL<T> impl
 				if(c.equals(currency))
 					continue;
 				
-				double sub = getSoldByDate(min, max, c, true);
+				double sub = getSumByDate(min, max, c, true);
 				if(sub > 0)
 					amount += daoFactory.get(ExchangeRateDao.class).convert(sub, c, currency);
 			}

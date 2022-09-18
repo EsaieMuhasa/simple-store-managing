@@ -6,6 +6,7 @@ package com.spiral.simple.store.app.admin;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
@@ -33,6 +35,7 @@ import com.spiral.simple.store.dao.CommandPaymentDao;
 import com.spiral.simple.store.dao.CurrencyDao;
 import com.spiral.simple.store.dao.DAOFactory;
 import com.spiral.simple.store.dao.DAOListenerAdapter;
+import com.spiral.simple.store.dao.PaymentPartDao;
 import com.spiral.simple.store.dao.SpendsDao;
 import com.spiral.simple.store.tools.Config;
 import com.spiral.simple.store.tools.UIComponentBuilder;
@@ -46,6 +49,7 @@ import com.trimeur.swing.chart.DefaultAxis;
 import com.trimeur.swing.chart.DefaultCloudChartModel;
 import com.trimeur.swing.chart.DefaultMaterialPoint;
 import com.trimeur.swing.chart.DefaultPieModel;
+import com.trimeur.swing.chart.DefaultPiePart;
 import com.trimeur.swing.chart.DefaultPointCloud;
 import com.trimeur.swing.chart.PiePanel;
 import com.trimeur.swing.chart.PointCloud.CloudType;
@@ -67,6 +71,7 @@ public class AdminDashboard extends JPanel {
 	private final SpendsDao  spendsDao = DAOFactory.getDao(SpendsDao.class);
 	private final CommandDao commandDao = DAOFactory.getDao(CommandDao.class);
 	private final BudgetRubricDao budgetRubricDao = DAOFactory.getDao(BudgetRubricDao.class);
+	private final PaymentPartDao paymentDao = DAOFactory.getDao(PaymentPartDao.class);
 	
 	private final DAOListenerAdapter<Command> commandAdapter = new DAOListenerAdapter<Command>() {
 	};
@@ -92,10 +97,10 @@ public class AdminDashboard extends JPanel {
 		tabbed.addTab("Etats ", new ImageIcon(Config.getIcon("pie")), piePanel);
 		tabbed.addTab("Entrées/Sorties ", new ImageIcon(Config.getIcon("chart")), histogrammPanel);
 		
-		if (currencyDao.countAll() == 0)
-			return;
+		Currency [] currencies = null;
+		if (currencyDao.countAll() != 0)
+			currencies = currencyDao.findAll();
 		
-		Currency [] currencies = currencyDao.findAll();
 		piePanel.firstData(currencies);
 		histogrammPanel.firstData(currencies);
 	}
@@ -129,12 +134,20 @@ public class AdminDashboard extends JPanel {
 		private final DefaultPieModel pieModel = new DefaultPieModel();
 		private final PiePanel piePanel = new PiePanel(pieModel);
 		private final JComboBox<Currency> currencyBox = new  JComboBox<>(currencyModel);
-		private final JLabel chartTitle = new  JLabel();
 		private final JCheckBox checkCurrency = new JCheckBox("Convertiseur", true);
 		
-		private final JRadioButton [] radios = {new JRadioButton("Recettes", false), new JRadioButton("Dépenses", true)};
-		
+		private final JRadioButton [] radios = {
+				new JRadioButton("Recettes", false),
+				new JRadioButton("Dépenses", false),
+				new JRadioButton("Etat de la caisse", true)};
+		private int chartType = 1;//1: pour un grahique des recette, 2: pour graphique des depenses
 		private final ActionListener checkCurrencyActionListener = event -> reload();
+		private final ActionListener radioListener = event -> {
+			JRadioButton radio = (JRadioButton) event.getSource();
+			chartType = Integer.parseInt(radio.getName());
+			reload();
+		};
+		
 		private final List<BudgetRubric> rubrics = new ArrayList<>();
 		
 		public PieChartPanel() {
@@ -142,7 +155,8 @@ public class AdminDashboard extends JPanel {
 			
 			final JPanel 
 				top = new JPanel(new BorderLayout()),
-				left = new  JPanel();
+				left = new  JPanel(),
+				radios = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			
 			pieModel.setTitle("Montant disponible ne caisse");
 			pieModel.setRealMaxPriority(false);
@@ -150,7 +164,7 @@ public class AdminDashboard extends JPanel {
 			currencyBox.setPreferredSize(new Dimension(200, 26));
 			checkCurrency.addActionListener(checkCurrencyActionListener);
 			
-			top.add(chartTitle, BorderLayout.CENTER);
+			top.add(radios, BorderLayout.CENTER);
 			top.add(left, BorderLayout.EAST);
 			left.add(checkCurrency);
 			left.add(currencyBox);
@@ -159,6 +173,18 @@ public class AdminDashboard extends JPanel {
 			top.setBackground(Color.LIGHT_GRAY);
 			add(top, BorderLayout.NORTH);
 			add(piePanel, BorderLayout.CENTER);
+			
+			//boutons radio de choix du graphique a selectionner
+			radios.setOpaque(false);
+			ButtonGroup group = new ButtonGroup();
+			for (int i = 0; i < this.radios.length; i++) {
+				JRadioButton radio = this.radios[i];
+				radios.add(radio);
+				group.add(radio);
+				radio.setName(String.valueOf(i+1));
+				radio.addActionListener(radioListener);
+			}
+			//==
 		}
 		
 		/**
@@ -166,9 +192,9 @@ public class AdminDashboard extends JPanel {
 		 * @param currencies
 		 */
 		public void firstData (Currency [] currencies) {
-			for (Currency currency : currencies) {
-				currencyModel.addElement(currency);
-			}
+			if(currencies != null)
+				for (Currency currency : currencies)
+					currencyModel.addElement(currency);
 			
 			if (budgetRubricDao.countAll() != 0) {
 				BudgetRubric [] brs = budgetRubricDao.findAll();
@@ -181,9 +207,49 @@ public class AdminDashboard extends JPanel {
 		 * rechargement des donnees du model du graphique
 		 */
 		private void reload () {
-			for (int i = 0; i < rubrics.size(); i++) {
-				
+			if(currencyModel.getSize() == 0 || rubrics.size() == 0)
+				return;
+			
+			List<DefaultPiePart> parts = new ArrayList<>();
+			pieModel.removeAll();
+			boolean currencyOnly = checkCurrency.isSelected();
+			Currency currency = currencyModel.getElementAt(currencyBox.getSelectedIndex());
+			switch (chartType) {
+				case 1:{//graphique des recettes
+					for (int i = 0; i < rubrics.size(); i++) {
+						BudgetRubric rubric = rubrics.get(i);
+						double amount = paymentDao.getSumByRubric(rubric, currency, currencyOnly);
+						DefaultPiePart part = new  DefaultPiePart(Utility.getColorAt(i), amount, rubric.toString());
+						
+						parts.add(part);
+					}
+					pieModel.setTitle("Répartition des recettes, de maniere globale");
+				} break;
+				case 2:{//graphique des depense
+					for (int i = 0; i < rubrics.size(); i++) {
+						BudgetRubric rubric = rubrics.get(i);
+						double amount = spendsDao.getSumByRubric(rubric.getId(), currency, currencyOnly);
+						DefaultPiePart part = new  DefaultPiePart(Utility.getColorAt(i), amount, rubric.toString());
+						
+						parts.add(part);
+					}
+					pieModel.setTitle("Répartition des dépenses");
+				} break;
+				default:{//graphique des etats diponible en caisse
+					for (int i = 0; i < rubrics.size(); i++) {
+						BudgetRubric rubric = rubrics.get(i);
+						double spend = spendsDao.getSumByRubric(rubric.getId(), currency, currencyOnly);
+						double recipe = paymentDao.getSumByRubric(rubric, currency, currencyOnly);
+						double amount = recipe - spend;
+						DefaultPiePart part = new  DefaultPiePart(Utility.getColorAt(i), amount, rubric.toString());
+						
+						parts.add(part);
+					}
+					pieModel.setTitle("Etat du liquidité en caisse");
+				}break;
 			}
+			
+			pieModel.addParts(parts.toArray(new DefaultPiePart[parts.size()]));
 		}
 		
 	}
@@ -281,9 +347,9 @@ public class AdminDashboard extends JPanel {
 		 * @param currencies
 		 */
 		public void firstData(Currency [] currencies) {
-			for (Currency currency : currencies) {
-				currencyModel.addElement(currency);
-			}
+			if(currencies != null)
+				for (Currency currency : currencies)
+					currencyModel.addElement(currency);
 		}
 		
 		/**
@@ -300,7 +366,7 @@ public class AdminDashboard extends JPanel {
 			Currency currency = currencyModel.getElementAt(currencyBox.getSelectedIndex());
 			for (double i = interval.getMin(); i <= interval.getMax(); i += 1d) {
 				Date date = UIComponentBuilder.fromDateAxisValue(i);
-				double amount = commandPaymentDao.getSoldByDate(date, currency, false);
+				double amount = commandPaymentDao.getSumByDate(date, currency, false);
 				
 				DefaultMaterialPoint point = new DefaultMaterialPoint(Color.RED.darker());
 				point.setX(i);

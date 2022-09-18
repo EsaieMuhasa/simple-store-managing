@@ -423,7 +423,7 @@ public class SellerSidebar extends JPanel {
 			if(currency == null || currentDate == null)
 				return;
 			
-			double in = commandPaymentDao.getSoldByDate(currentDate, currency, currencyOnly);
+			double in = commandPaymentDao.getSumByDate(currentDate, currency, currencyOnly);
 			modelInput.setValue(in);
 			
 		}
@@ -624,7 +624,7 @@ public class SellerSidebar extends JPanel {
 					long time = min.getTime() + (1000l * 60l * 60l * 24l * i);
 					Date day = new Date(time);
 					
-					double amount = commandPaymentDao.getSoldByDate(day, currency, currencyOnly);
+					double amount = commandPaymentDao.getSumByDate(day, currency, currencyOnly);
 					DefaultMaterialPoint point = new DefaultMaterialPoint(Color.RED.darker());
 					
 					point.setX(UIComponentBuilder.toDateAxisValue(day));

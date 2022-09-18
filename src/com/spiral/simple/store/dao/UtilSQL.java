@@ -630,7 +630,7 @@ abstract class UtilSQL <T extends DBEntity> implements DAOInterface<T>{
 	 * @return
 	 * @throws SQLException
 	 */
-	protected T mapping (ResultSet result) throws SQLException {
+	T mapping (ResultSet result) throws SQLException {
 		T t = instantiate();
 		t.setId(result.getString("id"));
 		t.initRecordingDate(result.getLong("recordingDate"));

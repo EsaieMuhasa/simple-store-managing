@@ -61,7 +61,7 @@ public interface CashMoneyDao <T extends CashMoney> extends DAOInterface <T> {
 	 * @return
 	 * @throws DAOException
 	 */
-	double getSoldByDate (Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException;
+	double getSumByDate (Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException;
 	
 	/**
 	 * check if exist operation at date
@@ -115,8 +115,8 @@ public interface CashMoneyDao <T extends CashMoney> extends DAOInterface <T> {
 	 * @return
 	 * @throws DAOException
 	 */
-	default double getSoldByDate (Date date, Currency currency, boolean currencyOnly) throws DAOException {
-		return getSoldByDate(date, date, currency, currencyOnly);
+	default double getSumByDate (Date date, Currency currency, boolean currencyOnly) throws DAOException {
+		return getSumByDate(date, date, currency, currencyOnly);
 	}
 
 }

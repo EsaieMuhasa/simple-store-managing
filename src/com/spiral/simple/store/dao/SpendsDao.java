@@ -139,7 +139,7 @@ public interface SpendsDao extends CashMoneyDao<Spends> {
 	 * @return
 	 * @throws DAOException
 	 */
-	double getSoldByRubric(String rubricId, Currency currency, boolean currencyOnly) throws DAOException;
+	double getSumByRubric(String rubricId, Currency currency, boolean currencyOnly) throws DAOException;
 	
 	/**
 	 * return sum of spends at date interval for budget rubric
@@ -149,7 +149,7 @@ public interface SpendsDao extends CashMoneyDao<Spends> {
 	 * @return
 	 * @throws DAOException
 	 */
-	double getSoldByRubric (String rubricId, Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException;
+	double getSumByRubric (String rubricId, Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException;
 	
 	/**
 	 * return operation perfected in budget rubric at date
@@ -180,10 +180,10 @@ public interface SpendsDao extends CashMoneyDao<Spends> {
 	 * @return
 	 * @throws DAOException
 	 */
-	default double getSoldByRubric (String rubricId, Date date, Currency currency, boolean currencyOnly) throws DAOException {
+	default double getSumByRubric (String rubricId, Date date, Currency currency, boolean currencyOnly) throws DAOException {
 		if (rubricId == null || rubricId.trim().isEmpty())
-			return getSoldByDefaultRubric(date, date, currency, currencyOnly);
-		return getSoldByRubric(rubricId, date, date, currency, currencyOnly);
+			return getSumByDefaultRubric(date, date, currency, currencyOnly);
+		return getSumByRubric(rubricId, date, date, currency, currencyOnly);
 	}
 	
 	/**
@@ -193,7 +193,7 @@ public interface SpendsDao extends CashMoneyDao<Spends> {
 	 * @return
 	 * @throws DAOException
 	 */
-	double getSoldByDefaultRubric (Currency currency, boolean currencyOnly) throws DAOException;
+	double getSumByDefaultRubric (Currency currency, boolean currencyOnly) throws DAOException;
 	
 	/**
 	 * renvoie le solde des operations faite en une date sur la rubrique par defaut
@@ -203,8 +203,8 @@ public interface SpendsDao extends CashMoneyDao<Spends> {
 	 * @return
 	 * @throws DAOException
 	 */
-	default double getSoldByDefaultRubric (Date date, Currency currency, boolean currencyOnly) throws DAOException {
-		return getSoldByDefaultRubric(date, date, currency, currencyOnly);
+	default double getSumByDefaultRubric (Date date, Currency currency, boolean currencyOnly) throws DAOException {
+		return getSumByDefaultRubric(date, date, currency, currencyOnly);
 	}
 	
 	/**
@@ -216,5 +216,5 @@ public interface SpendsDao extends CashMoneyDao<Spends> {
 	 * @return
 	 * @throws DAOException
 	 */
-	double getSoldByDefaultRubric (Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException;
+	double getSumByDefaultRubric (Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException;
 }

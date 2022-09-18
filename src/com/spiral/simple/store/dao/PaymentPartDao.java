@@ -15,7 +15,7 @@ import com.spiral.simple.store.beans.helper.PaymentPart;
  * @author Esaie Muhasa
  *
  */
-public interface PaymentPartPartDao extends DAOInterface<PaymentPart> {
+public interface PaymentPartDao extends DAOInterface<PaymentPart> {
 	
 	/**
 	 * selection des operations de repartiton d'un element de la commande

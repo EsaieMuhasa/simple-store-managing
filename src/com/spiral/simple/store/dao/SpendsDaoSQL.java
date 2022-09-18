@@ -91,12 +91,12 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 	}
 
 	@Override
-	public double getSoldByRubric(String rubricId, Currency currency, boolean currencyOnly) throws DAOException {
+	public double getSumByRubric(String rubricId, Currency currency, boolean currencyOnly) throws DAOException {
 		if(rubricId == null)
-			return getSoldByDefaultRubric(currency, currencyOnly);
+			return getSumByDefaultRubric(currency, currencyOnly);
 		
 		String sql = "SELECT SUM(amount) AS montant FROM "+getViewName()+" WHERE rubric = ? AND currency = ? AND (date BETWEEN ? AND ?)";
-		double amount = getSoldByQuerry(sql, rubricId, currency.getId());
+		double amount = getSumByQuerry(sql, rubricId, currency.getId());
 		
 		if(!currencyOnly) {
 			Currency [] currencies = daoFactory.get(CurrencyDao.class).findAll();
@@ -104,7 +104,7 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 				if(c.equals(currency))
 					continue;
 				
-				double sub = getSoldByRubric(rubricId, c, true);
+				double sub = getSumByRubric(rubricId, c, true);
 				if(sub > 0)
 					amount += daoFactory.get(ExchangeRateDao.class).convert(sub, c, currency);
 			}
@@ -114,12 +114,12 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 	}
 
 	@Override
-	public double getSoldByRubric(String rubricId, Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException {
+	public double getSumByRubric(String rubricId, Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException {
 		if(rubricId == null)
-			return getSoldByDefaultRubric(min, max, currency, currencyOnly);
+			return getSumByDefaultRubric(min, max, currency, currencyOnly);
 		
 		String sql = "SELECT SUM(amount) AS montant FROM "+getViewName()+" WHERE rubric = ? AND currency = ? AND (date BETWEEN ? AND ?)";
-		double amount = getSoldByQuerry(sql, rubricId, currency.getId(), toMinTimestampOfDay(min).getTime(), toMaxTimestampOfDay(max).getTime());
+		double amount = getSumByQuerry(sql, rubricId, currency.getId(), toMinTimestampOfDay(min).getTime(), toMaxTimestampOfDay(max).getTime());
 		
 		if(!currencyOnly) {
 			Currency [] currencies = daoFactory.get(CurrencyDao.class).findAll();
@@ -127,7 +127,7 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 				if(c.equals(currency))
 					continue;
 				
-				double sub = getSoldByRubric(rubricId, min, max, c, true);
+				double sub = getSumByRubric(rubricId, min, max, c, true);
 				if(sub > 0)
 					amount += daoFactory.get(ExchangeRateDao.class).convert(sub, c, currency);
 			}
@@ -137,9 +137,9 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 	}
 
 	@Override
-	public double getSoldByDefaultRubric(Currency currency, boolean currencyOnly) throws DAOException {
+	public double getSumByDefaultRubric(Currency currency, boolean currencyOnly) throws DAOException {
 		String sql = "SELECT SUM(amount) AS montant FROM "+getViewName()+" WHERE currency = ? AND rubric IS NULL";
-		double amount = getSoldByQuerry(sql, currency.getId());
+		double amount = getSumByQuerry(sql, currency.getId());
 		
 		if(!currencyOnly) {
 			Currency [] currencies = daoFactory.get(CurrencyDao.class).findAll();
@@ -147,7 +147,7 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 				if(c.equals(currency))
 					continue;
 				
-				double sub = getSoldByDefaultRubric(c, true);
+				double sub = getSumByDefaultRubric(c, true);
 				if(sub > 0)
 					amount += daoFactory.get(ExchangeRateDao.class).convert(sub, c, currency);
 			}
@@ -157,9 +157,9 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 	}
 
 	@Override
-	public double getSoldByDefaultRubric(Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException {
+	public double getSumByDefaultRubric(Date min, Date max, Currency currency, boolean currencyOnly) throws DAOException {
 		String sql = "SELECT SUM(amount) AS montant FROM "+getViewName()+" WHERE rubric IS NULL AND currency = ? AND (date BETWEEN ? AND ?)";
-		double amount = getSoldByQuerry(sql, currency.getId(), toMinTimestampOfDay(min).getTime(), toMaxTimestampOfDay(max).getTime());
+		double amount = getSumByQuerry(sql, currency.getId(), toMinTimestampOfDay(min).getTime(), toMaxTimestampOfDay(max).getTime());
 		
 		if(!currencyOnly) {
 			Currency [] currencies = daoFactory.get(CurrencyDao.class).findAll();
@@ -167,7 +167,7 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 				if(c.equals(currency))
 					continue;
 				
-				double sub = getSoldByDefaultRubric(min, max, c, true);
+				double sub = getSumByDefaultRubric(min, max, c, true);
 				if(sub > 0)
 					amount += daoFactory.get(ExchangeRateDao.class).convert(sub, c, currency);
 			}

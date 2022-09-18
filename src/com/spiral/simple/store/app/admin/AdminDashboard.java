@@ -9,7 +9,9 @@ import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -19,10 +21,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
+import com.spiral.simple.store.beans.BudgetRubric;
 import com.spiral.simple.store.beans.Command;
 import com.spiral.simple.store.beans.CommandPayment;
 import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.beans.Spends;
+import com.spiral.simple.store.dao.BudgetRubricDao;
 import com.spiral.simple.store.dao.CommandDao;
 import com.spiral.simple.store.dao.CommandPaymentDao;
 import com.spiral.simple.store.dao.CurrencyDao;
@@ -61,6 +65,7 @@ public class AdminDashboard extends JPanel {
 	private final CommandPaymentDao commandPaymentDao = DAOFactory.getDao(CommandPaymentDao.class);
 	private final SpendsDao  spendsDao = DAOFactory.getDao(SpendsDao.class);
 	private final CommandDao commandDao = DAOFactory.getDao(CommandDao.class);
+	private final BudgetRubricDao budgetRubricDao = DAOFactory.getDao(BudgetRubricDao.class);
 	
 	private final DAOListenerAdapter<Command> commandAdapter = new DAOListenerAdapter<Command>() {
 	};
@@ -127,6 +132,7 @@ public class AdminDashboard extends JPanel {
 		private final JCheckBox checkCurrency = new JCheckBox("Convertiseur", true);
 		
 		private final ActionListener checkCurrencyActionListener = event -> reload();
+		private final List<BudgetRubric> rubrics = new ArrayList<>();
 		
 		public PieChartPanel() {
 			super(new BorderLayout());
@@ -160,13 +166,21 @@ public class AdminDashboard extends JPanel {
 			for (Currency currency : currencies) {
 				currencyModel.addElement(currency);
 			}
+			
+			if (budgetRubricDao.countAll() != 0) {
+				BudgetRubric [] brs = budgetRubricDao.findAll();
+				for (BudgetRubric br : brs)
+					rubrics.add(br);
+			}
 		}
 		
 		/**
 		 * rechargement des donnees du model du graphique
 		 */
 		private void reload () {
-			
+			for (int i = 0; i < rubrics.size(); i++) {
+				
+			}
 		}
 		
 	}

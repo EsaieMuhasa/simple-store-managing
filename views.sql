@@ -37,4 +37,52 @@ CREATE VIEW V_CommandItem AS
 			Stock.measureUnit FROM Stock WHERE Stock.product = CommandItem.product LIMIT 1
 		) AS measureUnit
 	FROM CommandItem;
+
+DROP VIEW IF EXISTS V_CommandItemPart;
+CREATE VIEW V_CommandItemPart AS 
+	SELECT 
+		CommandItem.id AS id,
+		CommandItem.config AS config,
+		CommandItem.currency AS currency,
+		CommandItem.product AS product,
+		DistributionConfigItem.id AS itemPart,
+		CommandItem.recordingDate AS recordingDate,
+		CommandItem.lastUpdateDate AS lastUpdateDate,
+		CommandItem.quantity AS quantity,
+		CommandItem.unitPrice AS unitPrice,
+		DistributionConfigItem.percent AS percent,
+		(SELECT 
+			((CommandItem.unitPrice * CommandItem.quantity ) / 100.0) * DistributionConfigItem.percent AS part
+			FROM CommandItem WHERE CommandItem.config = DistributionConfigItem.owner
+		) AS amount
+	FROM CommandItem LEFT JOIN DistributionConfigItem ON DistributionConfigItem.owner = CommandItem.config;
+
+DROP VIEW IF EXISTS V_DistributionConfigItem;
+--CREATE VIEW V_DistributionConfigItem AS
+--	SELECT DISTINCT  
+--		DistributionConfigItem.id AS id,
+--		DistributionConfigItem.recordingDate AS recordingDate,
+--		DistributionConfigItem.lastUpdateDate AS lastUpdateDate,
+--		DistributionConfigItem.percent AS percent,
+--		DistributionConfigItem.owner AS owner,
+--		DistributionConfigItem.rubric AS rubric,
+--		(SELECT 
+--			(SUM(CommandItem.unitPrice * CommandItem.quantity ) / 100.0) * DistributionConfigItem.percent AS percentAmount
+--			FROM CommandItem WHERE CommandItem.config = DistributionConfigItem.owner
+--		) AS realizedAmount
+--	FROM DistributionConfigItem LEFT JOIN CommandItem ON DistributionConfigItem.owner = CommandItem.config ORDER BY id;
+
+DROP VIEW IF EXISTS V_BudgetRubric;
+--CREATE VIEW V_BudgetRubric AS 
+--	SELECT 
+--		BudgetRubric.id AS id,
+--		BudgetRubric.recordingDate AS recordingDate,
+--		BudgetRubric.lastUpdateDate AS lastUpdateDate,
+--		BudgetRubric.label AS label,
+--		BudgetRubric.description AS description,
+--		(SELECT 
+--			SUM(V_DistributionConfigItem.realizedAmount) sumAmount FROM V_DistributionConfigItem 
+--			WHERE V_DistributionConfigItem.rubric = BudgetRubric.id
+--		) AS totalPayment
+--	FROM BudgetRubric LEFT JOIN V_DistributionConfigItem ON V_DistributionConfigItem.rubric = BudgetRubric.id;
 		

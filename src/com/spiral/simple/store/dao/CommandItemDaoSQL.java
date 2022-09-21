@@ -19,7 +19,7 @@ import com.spiral.simple.store.beans.CommandItem;
  */
 class CommandItemDaoSQL extends UtilSQL<CommandItem> implements CommandItemDao {
 	private static final String [] 
-			FIELDS_LABELS = {"id", "recordingDate", "lastUpdateDate", "command", "product", "config", "quantity", "unitPrice", "currency"},
+			FIELDS_LABELS = {"id", "recordingDate", "lastUpdateDate", "command", "product", "quantity", "unitPrice", "currency"},
 			UPDATEBLE_FIELDS_LABELS = {"lastUpdateDate", "quantity", "unitPrice", "currency"};
 	
 	public CommandItemDaoSQL(DefaultDAOFactorySql daoFactory) {

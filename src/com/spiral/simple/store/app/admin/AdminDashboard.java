@@ -159,7 +159,7 @@ public class AdminDashboard extends JPanel {
 				radios = new JPanel(new FlowLayout(FlowLayout.LEFT));
 			
 			pieModel.setTitle("Montant disponible ne caisse");
-			pieModel.setRealMaxPriority(false);
+			pieModel.setRealMaxPriority(true);
 			
 			currencyBox.setPreferredSize(new Dimension(200, 26));
 			checkCurrency.addActionListener(checkCurrencyActionListener);
@@ -212,8 +212,9 @@ public class AdminDashboard extends JPanel {
 			
 			List<DefaultPiePart> parts = new ArrayList<>();
 			pieModel.removeAll();
-			boolean currencyOnly = checkCurrency.isSelected();
+			boolean currencyOnly = !checkCurrency.isSelected();
 			Currency currency = currencyModel.getElementAt(currencyBox.getSelectedIndex());
+			pieModel.setSuffix(currency.getSymbol());
 			switch (chartType) {
 				case 1:{//graphique des recettes
 					for (int i = 0; i < rubrics.size(); i++) {

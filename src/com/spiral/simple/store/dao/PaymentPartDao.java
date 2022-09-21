@@ -15,7 +15,7 @@ import com.spiral.simple.store.beans.helper.PaymentPart;
  * @author Esaie Muhasa
  *
  */
-public interface PaymentPartDao extends DAOInterface<PaymentPart> {
+public interface PaymentPartDao extends CashMoneyDao<PaymentPart> {
 	
 	/**
 	 * selection des operations de repartiton d'un element de la commande
@@ -24,36 +24,6 @@ public interface PaymentPartDao extends DAOInterface<PaymentPart> {
 	 * @throws DAOException
 	 */
 	PaymentPart [] findByCommandPayment (CommandPayment item) throws DAOException;
-	
-	/**
-	 * selectionne tout les operations faites dans l'intervale de temps
-	 * @param min
-	 * @param max
-	 * @return
-	 * @throws DAOException
-	 */
-	PaymentPart [] findByDate (Date min, Date max) throws DAOException;
-	
-	/**
-	 * selection des operations faite en une date
-	 * @param date
-	 * @return
-	 * @throws DAOException
-	 */
-	default PaymentPart [] findByDate (Date date) throws DAOException {
-		return findByDate(date, date);
-	}
-	
-	/**
-	 * renvoie une partie des operations faite dans le temps
-	 * @param min
-	 * @param max
-	 * @param limit
-	 * @param offset
-	 * @return
-	 * @throws DAOException
-	 */
-	PaymentPart [] findByDate (Date min, Date max, int limit, int offset) throws DAOException;
 	
 	/**
 	 * renvoi la colleection des operations qui font reference a la configuration en parametre

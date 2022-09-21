@@ -316,9 +316,10 @@ public class PanelStocks extends JPanel{
 		@Override
 		public void onCreate(Stock... data) {
 			StockView view = new StockView(data[0]);
+			view.addMouseListener(mouseAdapter);
 			stocks.add(view);
 			contentPanel.add(view);
-			contentPanel.revalidate();
+			revalidate();
 			contentPanel.repaint();
 		}
 
@@ -336,6 +337,8 @@ public class PanelStocks extends JPanel{
 						view.dispose();
 						stocks.remove(view);
 						view.removeMouseListener(mouseAdapter);
+						revalidate();
+						contentPanel.repaint();
 						break;
 					}
 				}

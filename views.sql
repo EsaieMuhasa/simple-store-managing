@@ -37,24 +37,22 @@ CREATE VIEW V_CommandItem AS
 		) AS measureUnit
 	FROM CommandItem;
 
-DROP VIEW IF EXISTS V_CommandPaymentPart;
-CREATE VIEW V_CommandPaymentPart AS 
+DROP VIEW IF EXISTS V_PaymentPart;
+CREATE VIEW V_PaymentPart AS 
 	SELECT 
 		CommandPayment.id AS id,
 		CommandPayment.config AS config,
 		CommandPayment.currency AS currency,
-		CommandPayment.command AS command,
+		CommandPayment.command AS payment,
 		DistributionConfigItem.id AS itemPart,
+		DistributionConfigItem.rubric AS rubric,
 		CommandPayment.recordingDate AS recordingDate,
 		CommandPayment.lastUpdateDate AS lastUpdateDate,
 		CommandPayment.amount AS amount,
 		CommandPayment.date AS date,
 		DistributionConfigItem.percent AS percent,
-		(SELECT 
-			(CommandPayment.amount / 100.0) * DistributionConfigItem.percent AS part
-			FROM CommandPayment WHERE CommandPayment.config = DistributionConfigItem.owner
-		) AS part
-	FROM CommandPayment LEFT JOIN DistributionConfigItem ON DistributionConfigItem.owner = CommandPayment.config;
+		(SELECT (CommandPayment.amount / 100.0) * DistributionConfigItem.percent) AS part
+	FROM CommandPayment LEFT JOIN DistributionConfigItem ON CommandPayment.config = DistributionConfigItem.owner;
 
 DROP VIEW IF EXISTS V_DistributionConfigItem;
 --CREATE VIEW V_DistributionConfigItem AS
@@ -71,7 +69,7 @@ DROP VIEW IF EXISTS V_DistributionConfigItem;
 --		) AS realizedAmount
 --	FROM DistributionConfigItem LEFT JOIN CommandItem ON DistributionConfigItem.owner = CommandItem.config ORDER BY id;
 
-DROP VIEW IF EXISTS V_BudgetRubric;
+DROP VIEW IF EXISTS V_BudgetRubric;-- mis en commentaire de la vue car, le gestion de plusieur devise pose proble dans la requette selection
 --CREATE VIEW V_BudgetRubric AS 
 --	SELECT 
 --		BudgetRubric.id AS id,
@@ -80,8 +78,8 @@ DROP VIEW IF EXISTS V_BudgetRubric;
 --		BudgetRubric.label AS label,
 --		BudgetRubric.description AS description,
 --		(SELECT 
---			SUM(V_DistributionConfigItem.realizedAmount) sumAmount FROM V_DistributionConfigItem 
---			WHERE V_DistributionConfigItem.rubric = BudgetRubric.id
+--			SUM(V_CommandPaymentPart.part) sumAmount FROM V_CommandPaymentPart 
+--			WHERE V_CommandPaymentPart.rubric = BudgetRubric.id
 --		) AS totalPayment
---	FROM BudgetRubric LEFT JOIN V_DistributionConfigItem ON V_DistributionConfigItem.rubric = BudgetRubric.id;
+--	FROM BudgetRubric;
 		

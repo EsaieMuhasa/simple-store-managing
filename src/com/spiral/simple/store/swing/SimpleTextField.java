@@ -36,5 +36,9 @@ public class SimpleTextField extends AbstractFormField {
 	public JTextField getField() {
 		return field;
 	}
-
+	
+	@Override
+	public void reset() {
+		field.setText("");
+	}
 }

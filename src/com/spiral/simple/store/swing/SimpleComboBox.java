@@ -39,5 +39,12 @@ public class SimpleComboBox <T> extends AbstractFormField {
 	public JComboBox<T> getField() {
 		return field;
 	}
+	
+	@Override
+	public void reset() {
+		if(field.getModel().getSize() == 0)
+			return;
+		field.setSelectedIndex(0);
+	}
 
 }

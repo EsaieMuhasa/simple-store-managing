@@ -48,5 +48,10 @@ public abstract class AbstractFormField extends JPanel {
 	 * @return
 	 */
 	public abstract JComponent getField();
+	
+	/**
+	 * reinitialisation des contenues du champ
+	 */
+	public abstract void reset () ;
 
 }

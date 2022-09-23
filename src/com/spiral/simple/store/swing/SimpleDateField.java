@@ -32,5 +32,10 @@ public class SimpleDateField extends AbstractFormField {
 	public JDateChooser getField() {
 		return field;
 	}
+	
+	@Override
+	public void reset() {
+		field.setDate(new Date());
+	}
 
 }

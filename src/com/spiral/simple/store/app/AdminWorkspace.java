@@ -12,6 +12,7 @@ import javax.swing.JPanel;
 
 import com.spiral.simple.store.app.admin.AdminDashboard;
 import com.spiral.simple.store.app.admin.PanelBudgetConfig;
+import com.spiral.simple.store.app.admin.PanelSpends;
 import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.swing.navs.Navbar;
 import com.spiral.simple.store.swing.navs.NavbarListener;
@@ -54,7 +55,7 @@ public class AdminWorkspace extends JPanel {
 		.addItem("Configurations");
 		
 		containers.add(new AdminDashboard());
-		containers.add(new JPanel());
+		containers.add(new PanelSpends());
 		containers.add(new PanelBudgetConfig());
 		
 		navbar.addNavbarListener(navbarListener);

@@ -7,7 +7,6 @@ import com.spiral.simple.store.beans.BudgetRubric;
 
 /**
  * @author Esaie MUHASA
- *
  */
 public interface BudgetRubricDao extends DAOInterface<BudgetRubric> {
 	

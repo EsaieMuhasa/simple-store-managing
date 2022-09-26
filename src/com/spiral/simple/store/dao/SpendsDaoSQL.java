@@ -17,8 +17,8 @@ import com.spiral.simple.store.beans.Spends;
  */
 class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 	private static final String [] 
-			TABLE_FIELDS = {"id", "amount", "currency", "rubric", "label", "recordingDate", "lastUpdateDate"},
-			UPDATEBLE_TABLE_FIELDS = {"amount", "currency", "rubric", "label", "lastUpdateDate"};
+			TABLE_FIELDS = {"id", "amount", "currency", "rubric", "date", "label", "recordingDate", "lastUpdateDate"},
+			UPDATEBLE_TABLE_FIELDS = {"amount", "currency", "rubric", "date", "label", "lastUpdateDate"};
 
 	public SpendsDaoSQL(DefaultDAOFactorySql daoFactory) {
 		super(daoFactory);
@@ -95,7 +95,7 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 		if(rubricId == null)
 			return getSumByDefaultRubric(currency, currencyOnly);
 		
-		String sql = "SELECT SUM(amount) AS montant FROM "+getViewName()+" WHERE rubric = ? AND currency = ? AND (date BETWEEN ? AND ?)";
+		String sql = "SELECT SUM(amount) AS montant FROM "+getViewName()+" WHERE rubric = ? AND currency = ?";
 		double amount = getSumByQuerry(sql, rubricId, currency.getId());
 		
 		if(!currencyOnly) {
@@ -198,8 +198,8 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 				entity.getAmount(),
 				entity.getCurrency().getId(),
 				entity.getRubric() != null? entity.getRubric().getId() : null,
-				entity.getLabel(),
 				entity.getDate().getTime(),
+				entity.getLabel(),
 				entity.getRecordingDate().getTime(),
 				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null
 		};
@@ -211,8 +211,8 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 				entity.getAmount(),
 				entity.getCurrency().getId(),
 				entity.getRubric() != null? entity.getRubric().getId() : null,
-				entity.getLabel(),
 				entity.getDate().getTime(),
+				entity.getLabel(),
 				entity.getLastUpdateDate() != null? entity.getLastUpdateDate().getTime() : null
 		};
 	}

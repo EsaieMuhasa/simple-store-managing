@@ -7,7 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
 
-import com.spiral.simple.store.beans.BudgetRubric;
 import com.spiral.simple.store.beans.Currency;
 import com.spiral.simple.store.beans.Spends;
 
@@ -221,10 +220,8 @@ class SpendsDaoSQL extends BaseCashMoneyDaoSQL<Spends> implements SpendsDao {
 	protected Spends mapping(ResultSet result) throws SQLException {
 		Spends spends = super.mapping(result);
 		spends.setLabel(result.getString("label"));
-		if(result.getString("rubric") != null){
-			spends.setRubric(new BudgetRubric());
-			spends.getRubric().setId(result.getString("rubric"));
-		}
+		if(result.getString("rubric") != null)
+			spends.setRubric(daoFactory.get(BudgetRubricDao.class).findById(result.getString("rubric")));
 		return spends;
 	}
 

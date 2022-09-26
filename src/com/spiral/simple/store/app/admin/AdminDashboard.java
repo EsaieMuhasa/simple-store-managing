@@ -74,18 +74,60 @@ public class AdminDashboard extends JPanel {
 	private final PaymentPartDao paymentDao = DAOFactory.getDao(PaymentPartDao.class);
 	
 	private final DAOListenerAdapter<Command> commandAdapter = new DAOListenerAdapter<Command>() {
+		@Override
+		public void onCreate(Command... data) {
+			reloadChartRecipe();
+		}
+
+		@Override
+		public void onUpdate(Command newState, Command oldState) {
+			reloadChartRecipe();
+		}
+
+		@Override
+		public void onDelete(Command... data) {
+			reloadChartRecipe();
+		}
 	};
 	
 	private final DAOListenerAdapter<CommandPayment> paymentAdapter = new DAOListenerAdapter<CommandPayment>() {
+		@Override
+		public void onCreate(CommandPayment... data) {
+			reloadChartRecipe();
+		}
+
+		@Override
+		public void onUpdate(CommandPayment newState, CommandPayment oldState) {
+			reloadChartRecipe();
+		}
+
+		@Override
+		public void onDelete(CommandPayment... data) {
+			reloadChartRecipe();
+		}
 	};
 	
 	private final DAOListenerAdapter<Spends> spendsAdapter = new DAOListenerAdapter<Spends>() {
+		@Override
+		public void onCreate(Spends... data) {
+			reloadChartSpends();
+		}
+
+		@Override
+		public void onUpdate(Spends newState, Spends oldState) {
+			reloadChartSpends();
+		}
+
+		@Override
+		public void onDelete(Spends... data) {
+			reloadChartSpends();
+		}
 	};
-	
 	
 	public AdminDashboard() {
 		super(new BorderLayout());
 		init();
+		reload();
 	}
 	
 	/**
@@ -122,6 +164,42 @@ public class AdminDashboard extends JPanel {
 		spendsDao.removeBaseListener(spendsAdapter);
 		commandDao.removeBaseListener(commandAdapter);
 	}
+	
+	/**
+	 * mis en jours des models des graphiques 
+	 */
+	public synchronized void reload () {
+		histogrammPanel.reload();
+		piePanel.reload();
+	}
+	
+	/**
+	 * mis en jour du modele du graphique de repartition des recettes,
+	 * conformement aux donnees dans la BDD
+	 */
+	public synchronized void reloadChartRecipe () {
+		histogrammPanel.reload();
+		if(piePanel.getChartType() == PieChartType.RECIPE_CHART || piePanel.getChartType() == PieChartType.AVAILABLE_CHART)
+			piePanel.reload();
+	}
+	
+	/**
+	 * mis en jours du modele du grahique de realisation des depenses
+	 */
+	public synchronized void reloadChartSpends () {
+		if(piePanel.getChartType() == PieChartType.SPENDS_CHART)
+			piePanel.reload();
+	}
+	
+	/**
+	 * @author Esaie Muhasa
+	 * Enumeration des tyles des graphiques de type chart
+	 */
+	private enum PieChartType {
+		RECIPE_CHART,
+		SPENDS_CHART,
+		AVAILABLE_CHART
+	}
 
 	/**
 	 * @author Esaie Muhasa
@@ -137,11 +215,12 @@ public class AdminDashboard extends JPanel {
 		private final JCheckBox checkCurrency = new JCheckBox("Convertiseur", true);
 		
 		private final JRadioButton [] radios = {
-				new JRadioButton("Recettes", false),
+				new JRadioButton("Recettes", true),
 				new JRadioButton("Dépenses", false),
-				new JRadioButton("Etat de la caisse", true)};
+				new JRadioButton("Etat de la caisse", false)};
 		private int chartType = 1;//1: pour un grahique des recette, 2: pour graphique des depenses
 		private final ActionListener checkCurrencyActionListener = event -> reload();
+		private final ItemListener currencyBoxListener = event-> onCurrencyItemChange(event);
 		private final ActionListener radioListener = event -> {
 			JRadioButton radio = (JRadioButton) event.getSource();
 			chartType = Integer.parseInt(radio.getName());
@@ -160,8 +239,10 @@ public class AdminDashboard extends JPanel {
 			
 			pieModel.setTitle("Montant disponible ne caisse");
 			pieModel.setRealMaxPriority(true);
+			piePanel.setBorderColor(Color.LIGHT_GRAY.brighter().brighter().brighter().brighter());
 			
 			currencyBox.setPreferredSize(new Dimension(200, 26));
+			currencyBox.addItemListener(currencyBoxListener);
 			checkCurrency.addActionListener(checkCurrencyActionListener);
 			
 			top.add(radios, BorderLayout.CENTER);
@@ -201,6 +282,32 @@ public class AdminDashboard extends JPanel {
 				for (BudgetRubric br : brs)
 					rubrics.add(br);
 			}
+		}
+		
+		/**
+		 * renvoe le tyle de graphique actuelement selectionee
+		 * @return
+		 */
+		public PieChartType getChartType () {
+			if(chartType == 1)
+				return PieChartType.RECIPE_CHART;
+			if (chartType == 2)
+				return PieChartType.SPENDS_CHART;
+			if (chartType == 3)
+				return PieChartType.AVAILABLE_CHART;
+			throw new RuntimeException("Impossible de determiner le type de graphique");
+		}
+		
+		/**
+		 * lors du changement de l'element selectionnee
+		 * dans le combo box des devises prise en charge
+		 * @param event
+		 */
+		private void onCurrencyItemChange (ItemEvent event) {
+			if (event.getStateChange() != ItemEvent.SELECTED)
+				return;
+			
+			reload();
 		}
 		
 		/**
@@ -264,7 +371,7 @@ public class AdminDashboard extends JPanel {
 		
 		private DefaultAxis yAxis = new DefaultAxis();
 		private DateAxis xAxis = new DateAxis();
-		private Interval interval = new Interval(-31, 0);
+		private Interval interval = new Interval(-28, 1);
 		
 		private final DefaultPointCloud cloudInput = new DefaultPointCloud("Recette", Utility.getColorAt(5), Utility.getColorAlphaAt(5), Utility.getColorAlphaAt(8).darker());
 		private final DefaultPointCloud cloudOutput = new DefaultPointCloud("Depenses", Color.RED.darker(), Color.RED.darker().darker(), Color.RED.darker());
@@ -358,6 +465,7 @@ public class AdminDashboard extends JPanel {
 		 */
 		private void reload () {
 			cloudInput.removePoints();
+			cloudOutput.removePoints();
 			if(currencyModel.getSize() == 0)
 				return;
 			
@@ -367,14 +475,23 @@ public class AdminDashboard extends JPanel {
 			Currency currency = currencyModel.getElementAt(currencyBox.getSelectedIndex());
 			for (double i = interval.getMin(); i <= interval.getMax(); i += 1d) {
 				Date date = UIComponentBuilder.fromDateAxisValue(i);
-				double amount = commandPaymentDao.getSumByDate(date, currency, false);
+				double amount = commandPaymentDao.getSumByDate(date, currency, !checkCurrency.isSelected());
+				double spends = -spendsDao.getSumByDate(date, currency, !checkCurrency.isSelected());
 				
-				DefaultMaterialPoint point = new DefaultMaterialPoint(Color.RED.darker());
-				point.setX(i);
-				point.setY(amount);
-				point.setLabelX(CommandPayment.DATE_FORMAT.format(date));
-				point.setLabelY(CommandPayment.DECIMAL_FORMAT.format(amount)+" "+currency.getShortName());
-				cloudInput.addPoint(point);
+				DefaultMaterialPoint in = new DefaultMaterialPoint(Color.GREEN.darker());
+				DefaultMaterialPoint out = new  DefaultMaterialPoint(Color.RED.darker());
+				
+				out.setX(i);
+				out.setY(spends);
+				out.setLabelX(CommandPayment.DATE_FORMAT.format(date));
+				out.setLabelY(CommandPayment.DECIMAL_FORMAT.format(spends)+" "+currency.getShortName());
+				
+				in.setX(i);
+				in.setY(amount);
+				in.setLabelX(CommandPayment.DATE_FORMAT.format(date));
+				in.setLabelY(CommandPayment.DECIMAL_FORMAT.format(amount)+" "+currency.getShortName());
+				cloudInput.addPoint(in);
+				cloudOutput.addPoint(out);
 			}
 			
 			String title = String.format("Statistiques du %s au %s (en %s)", 

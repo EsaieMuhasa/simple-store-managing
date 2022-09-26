@@ -180,8 +180,8 @@ public class SpendsForm extends AbstractForm<Spends> {
 			pieModels.put(currency, model);
 		}
 		
-		DefaultPieModel model = pieModels.get(currencyModel.getElementAt(0));
-		model.setSelectedIndex(0);
+		DefaultPieModel model = pieModels.get(currencyModel.getElementAt(fieldCurrency.getField().getSelectedIndex()));
+		model.setSelectedIndex(model.indexOf(model.findByData(rubricModel.getElementAt(fieldRubric.getField().getSelectedIndex()))));
 		piePanel.setModel(model);
 	}
 	

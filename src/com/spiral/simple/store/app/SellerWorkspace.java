@@ -209,6 +209,8 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 			@Override
 			public void onCreate(Command... data) {
 				for (Command command : data) {
+					if(!Command.DATE_FORMAT.format(command.getDate()).equals(Command.DATE_FORMAT.format(selectedDate)))
+						continue;
 					addCommandAt(command, 0);
 					revalidate();
 					repaint();
@@ -218,6 +220,8 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 			@Override
 			public void onDelete(Command... data) {
 				for (Command command : data) {
+					if(!Command.DATE_FORMAT.format(command.getDate()).equals(Command.DATE_FORMAT.format(selectedDate)))
+						continue;
 					for (int i=0, count = commandViews.size(); i < count; i++) {
 						CommandView view = commandViews.get(i);
 						if(view.getCommand().getId().equals(command.getId())) {
@@ -461,7 +465,7 @@ public class SellerWorkspace extends JPanel implements SellerSidebarListener {
 			
 			CommandPayment com = payment;
 			if (payment.getId() != null)
-				com = commandPaymentDao.findById(command.getId());
+				com = commandPaymentDao.findById(payment.getId());
 			
 			com.setCommand(command);
 			paymentForm.setPayment(com);

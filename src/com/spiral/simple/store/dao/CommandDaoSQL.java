@@ -56,7 +56,12 @@ class CommandDaoSQL extends UtilSQL<Command> implements CommandDao {
 		super.create(connection, requestId, t);
 		for (Command c : t) {			
 			((CommandItemDaoSQL)daoFactory.get(CommandItemDao.class)).create(connection, requestId, c.getItems());
-			((CommandPaymentDaoSQL)daoFactory.get(CommandPaymentDao.class)).create(connection, requestId, c.getPayments());
+			CommandPayment [] ps = c.getPayments();
+			if(ps == null || ps.length == 0)
+				continue;
+			for (CommandPayment p : ps)
+				p.setDate(c.getDate());
+			((CommandPaymentDaoSQL)daoFactory.get(CommandPaymentDao.class)).create(connection, requestId, ps);
 		}
 	}
 	

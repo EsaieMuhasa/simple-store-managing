@@ -108,6 +108,8 @@ public class SellerSidebar extends JPanel {
 		public void onCreate(Command... data) {
 			if(Command.DATE_FORMAT.format(data[0].getDate()).equals(Command.DATE_FORMAT.format(calendar.getDate()))) {
 				reload();
+			} else {
+				reloadChart();
 			}
 		}
 
@@ -115,6 +117,8 @@ public class SellerSidebar extends JPanel {
 		public void onUpdate(Command newState, Command oldState) {
 			if(Command.DATE_FORMAT.format(newState.getDate()).equals(Command.DATE_FORMAT.format(calendar.getDate()))) {
 				reload();
+			} else {
+				reloadChart();
 			}
 		}
 
@@ -122,6 +126,8 @@ public class SellerSidebar extends JPanel {
 		public void onDelete(Command... data) {
 			if(Command.DATE_FORMAT.format(data[0].getDate()).equals(Command.DATE_FORMAT.format(calendar.getDate()))) {
 				reload();
+			} else {
+				reloadChart();
 			}
 		}
 	};
@@ -214,6 +220,14 @@ public class SellerSidebar extends JPanel {
 	 */
 	private synchronized void reload() {
 		stateContainer.onDateChange(calendar.getDate());
+		chartContainer.reload(calendar.getDate());
+	}
+	
+	/**
+	 * demande le model du graphique de se metre en jour, conformement aux donnees
+	 * dans la BDD
+	 */
+	private synchronized void reloadChart () {
 		chartContainer.reload(calendar.getDate());
 	}
 	

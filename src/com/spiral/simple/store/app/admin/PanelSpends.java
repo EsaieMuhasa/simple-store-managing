@@ -14,15 +14,18 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import com.spiral.simple.store.app.MainWindow;
 import com.spiral.simple.store.app.form.AbstractForm;
 import com.spiral.simple.store.app.form.FormListener;
 import com.spiral.simple.store.app.form.SpendsForm;
+import com.spiral.simple.store.app.models.SpendsTableModel;
 import com.spiral.simple.store.beans.Spends;
 import com.spiral.simple.store.dao.DAOFactory;
 import com.spiral.simple.store.dao.DAOListenerAdapter;
 import com.spiral.simple.store.dao.SpendsDao;
+import com.spiral.simple.store.swing.CustomTable;
 import com.spiral.simple.store.tools.Config;
 import com.spiral.simple.store.tools.UIComponentBuilder;
 
@@ -33,6 +36,8 @@ import com.spiral.simple.store.tools.UIComponentBuilder;
 public class PanelSpends extends JPanel {
 	private static final long serialVersionUID = -1551276937438934800L;
 	private final JButton btnAdd = new JButton("Nouvelle dépense", new ImageIcon(Config.getIcon("new")));
+	private final SpendsTableModel tableModel = new SpendsTableModel();
+	private final CustomTable table = new CustomTable(tableModel);
 	
 	private ActionListener actionListener = event -> showCreateSpends();
 	
@@ -74,11 +79,18 @@ public class PanelSpends extends JPanel {
 	 */
 	private void init() {
 		final JPanel top = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		final JPanel center = new JPanel(new BorderLayout());
+		
+		JScrollPane scroll = new JScrollPane(table, 
+				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+		center.add(scroll, BorderLayout.CENTER);
 
 		top.add(btnAdd);
 		add(top, BorderLayout.NORTH);
+		add(center, BorderLayout.CENTER);
 		
 		spendsDao.addBaseListener(spendsAdapter);
+		tableModel.reload();
 	}
 	
 	/**

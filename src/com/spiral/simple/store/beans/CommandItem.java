@@ -223,6 +223,9 @@ public class CommandItem extends DBEntity {
 	 */
 	public boolean isValidable () {
 		PhysicalSize [] sizes = getAvailabelStock();
+		if (sizes == null)
+			return false;
+		
 		for (PhysicalSize size : sizes) {
 			if(size.getUnit().equals(measureUnit) && quantity <= size.getValue())
 				return true;
